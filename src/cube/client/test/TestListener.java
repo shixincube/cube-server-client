@@ -1,0 +1,80 @@
+/**
+ * This source file is part of Cube.
+ *
+ * The MIT License (MIT)
+ *
+ * Copyright (c) 2020-2021 Shixin Cube Team.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
+package cube.client.test;
+
+
+import cube.client.CubeClient;
+import cube.client.listener.ContactListener;
+import cube.common.entity.Contact;
+import cube.common.entity.Device;
+
+/**
+ * 测试监听器。
+ */
+public class TestListener {
+
+
+    public static void main(String[] args) {
+        Object mutex = new Object();
+
+        CubeClient client = new CubeClient("127.0.0.1");
+
+        Helper.sleepInSeconds(3);
+
+        // 注册监听器
+        client.registerListener(new ContactListener() {
+            @Override
+            public void onSignIn(CubeClient client, Contact contact, Device device) {
+                System.out.println("[TestListener] onSignIn : " + contact.getId() + " - " + device.getName());
+
+                synchronized (mutex) {
+                    mutex.notify();
+                }
+            }
+
+            @Override
+            public void onSignOut(CubeClient client, Contact contact, Device device) {
+            }
+
+            @Override
+            public void onDeviceTimeout(CubeClient client, Contact contact, Device device) {
+            }
+        });
+
+        System.out.println("[TestListener] Waiting");
+        synchronized (mutex) {
+            try {
+                mutex.wait(10 * 60 * 1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+        System.out.println("** END ***");
+        client.destroy();
+    }
+}
