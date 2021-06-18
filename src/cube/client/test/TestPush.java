@@ -24,30 +24,43 @@
  * SOFTWARE.
  */
 
-package cube.client;
+package cube.client.test;
+
+
+import cube.client.CubeClient;
+import cube.common.entity.Contact;
+import cube.common.entity.Device;
+import org.json.JSONObject;
+
+import java.util.List;
 
 /**
- * 动作枚举。
+ * 测试监听器。
  */
-public enum Actions {
+public class TestPush {
 
-    LOGIN("Login"),
 
-    LOGOUT("Logout"),
+    public static void main(String[] args) {
 
-    ListenEvent("ListenEvent"),
+        CubeClient client = new CubeClient("127.0.0.1");
 
-    NotifyEvent("NotifyEvent"),
+        Helper.sleepInSeconds(3);
 
-    ListOnlineContacts("ListOnlineContacts"),
+        System.out.println("[TestPush] Push Message");
 
-    PushMessage("PushMessage")
+        Contact receiver = new Contact(500100L, "shixincube.com", "Cube-500100");
 
-    ;
+        Contact pretender = new Contact(500200L, "shixincube.com", "Pretender");
 
-    public final String name;
+        Device device = new Device("Server", "Server Client");
 
-    Actions(String name) {
-        this.name = name;
+        JSONObject payload = new JSONObject();
+        payload.put("content", "来自伪装者的消息");
+
+        boolean result = client.pushMessageWithPretender(receiver, pretender, device, payload);
+        System.out.println("[TestPush] Push Result: " + result);
+
+        System.out.println("** END ***");
+        client.destroy();
     }
 }

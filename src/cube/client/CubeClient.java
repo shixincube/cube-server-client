@@ -31,6 +31,10 @@ import cell.util.Utils;
 import cell.util.log.Logger;
 import cube.client.listener.ContactListener;
 import cube.common.entity.Contact;
+import cube.common.entity.Device;
+import cube.common.entity.Message;
+import cube.common.entity.MessageState;
+import cube.common.state.MessagingStateCode;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -157,7 +161,7 @@ public final class CubeClient {
 
         ActionDialect actionDialect = new ActionDialect(Actions.ListOnlineContacts.name);
 
-        // 阻塞结果
+        // 阻塞线程，并等待返回结果
         ActionDialect result = this.connector.send(notifier, actionDialect);
 
         JSONObject data = result.getParamAsJson("data");
@@ -172,6 +176,43 @@ public final class CubeClient {
         }
 
         return resultList;
+    }
+
+    /**
+     * 使用伪装身份推送消息。
+     *
+     * @param receiver
+     * @param pretender
+     * @param device
+     * @param payload
+     * @return
+     */
+    public boolean pushMessageWithPretender(Contact receiver, Contact pretender, Device device, JSONObject payload) {
+        long timestamp = System.currentTimeMillis();
+        // 创建消息
+        Message message = new Message(receiver.getDomain().getName(), Utils.generateSerialNumber(),
+                pretender.getId(), receiver.getId(), 0L,
+                0L, timestamp, 0L, MessageState.Sending.getCode(), 0,
+                device.toCompactJSON(), payload, null);
+
+        Notifier notifier = new Notifier();
+
+        this.receiver.inject(notifier);
+
+        ActionDialect actionDialect = new ActionDialect(Actions.PushMessage.name);
+        actionDialect.addParam("message", message.toJSON());
+        actionDialect.addParam("pretender", pretender.toCompactJSON());
+        actionDialect.addParam("device", device.toCompactJSON());
+
+        // 阻塞线程，并等待返回结果
+        ActionDialect result = this.connector.send(notifier, actionDialect);
+        if (!result.containsParam("result")) {
+            // 推送失败
+            return false;
+        }
+
+        JSONObject pushResult = result.getParamAsJson("result");
+        return pushResult.getInt("state") == MessagingStateCode.Ok.code;
     }
 
     /**
