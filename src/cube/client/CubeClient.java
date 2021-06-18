@@ -181,11 +181,24 @@ public final class CubeClient {
     /**
      * 使用伪装身份推送消息。
      *
-     * @param receiver
-     * @param pretender
-     * @param device
-     * @param payload
-     * @return
+     * @param receiver 指定消息接收者。
+     * @param pretender 指定伪装的联系人。
+     * @param payload 指定消息数据负载。
+     * @return 如果消息被服务器处理返回 {@code true} 。
+     */
+    public boolean pushMessageWithPretender(Contact receiver, Contact pretender, JSONObject payload) {
+        return this.pushMessageWithPretender(receiver, pretender,
+                new Device("Client", "Cube Server Client " + VERSION), payload);
+    }
+
+    /**
+     * 使用伪装身份推送消息。
+     *
+     * @param receiver 指定消息接收者。
+     * @param pretender 指定伪装的联系人。
+     * @param device 指定发送消息的设备。
+     * @param payload 指定消息数据负载。
+     * @return 如果消息被服务器处理返回 {@code true} 。
      */
     public boolean pushMessageWithPretender(Contact receiver, Contact pretender, Device device, JSONObject payload) {
         long timestamp = System.currentTimeMillis();
