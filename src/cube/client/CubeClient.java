@@ -179,6 +179,34 @@ public final class CubeClient {
     }
 
     /**
+     * 获取指定 ID 的联系人。
+     *
+     * @param id 指定联系人的 ID 。
+     * @return 返回指定的联系人实例。
+     */
+    public Contact getContact(Long id) {
+        if (!this.connector.isConnected()) {
+            return null;
+        }
+
+        Notifier notifier = new Notifier();
+
+        this.receiver.inject(notifier);
+
+        ActionDialect actionDialect = new ActionDialect(Actions.GetContact.name);
+        actionDialect.addParam("contactId", id.longValue());
+
+        // 阻塞线程，并等待返回结果
+        ActionDialect result = this.connector.send(notifier, actionDialect);
+
+        JSONObject data = result.getParamAsJson("contact");
+
+        Contact contact = new Contact(data);
+
+        return contact;
+    }
+
+    /**
      * 使用伪装身份推送消息。
      *
      * @param receiver 指定消息接收者。

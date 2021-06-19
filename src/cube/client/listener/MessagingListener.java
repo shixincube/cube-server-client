@@ -26,37 +26,12 @@
 
 package cube.client.listener;
 
-import cube.client.CubeClient;
-import cube.common.entity.Contact;
-import cube.common.entity.Device;
+import cube.common.entity.Message;
 
 /**
- * 联系人模块监听器。
+ * 消息监听器。
  */
-public interface ContactListener {
+public interface MessagingListener {
 
-    /**
-     *
-     * @param client
-     * @param contact
-     * @param device
-     */
-    void onSignIn(CubeClient client, Contact contact, Device device);
-
-    /**
-     *
-     * @param client
-     * @param contact
-     * @param device
-     */
-    void onSignOut(CubeClient client, Contact contact, Device device);
-
-    /**
-     *
-     * @param client
-     * @param contact
-     * @param device
-     */
-    void onDeviceTimeout(CubeClient client, Contact contact, Device device);
-
+    void onReceived(Message message);
 }

@@ -41,6 +41,8 @@ public enum Actions {
 
     ListOnlineContacts("ListOnlineContacts"),
 
+    GetContact("GetContact"),
+
     PushMessage("PushMessage")
 
     ;
