@@ -181,10 +181,11 @@ public final class CubeClient {
     /**
      * 获取指定 ID 的联系人。
      *
+     * @param domain 指定域名称。
      * @param id 指定联系人的 ID 。
      * @return 返回指定的联系人实例。
      */
-    public Contact getContact(Long id) {
+    public Contact getContact(String domain, Long id) {
         if (!this.connector.isConnected()) {
             return null;
         }
@@ -194,6 +195,7 @@ public final class CubeClient {
         this.receiver.inject(notifier);
 
         ActionDialect actionDialect = new ActionDialect(Actions.GetContact.name);
+        actionDialect.addParam("domain", domain);
         actionDialect.addParam("contactId", id.longValue());
 
         // 阻塞线程，并等待返回结果
