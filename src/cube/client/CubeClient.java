@@ -119,7 +119,7 @@ public final class CubeClient {
     }
 
     /**
-     * 注册联系人监听器。
+     * 注册联系人监听器。<b>仅对当前连接的服务器有效。</b>
      *
      * @param listener 联系人监听器。
      * @return 返回是否设置成功。
@@ -150,6 +150,7 @@ public final class CubeClient {
     }
 
     /**
+     * 注册监听指定联系接收到的消息。
      *
      * @param contact
      * @param listener
