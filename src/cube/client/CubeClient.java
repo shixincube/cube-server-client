@@ -30,10 +30,8 @@ import cell.core.talk.dialect.ActionDialect;
 import cell.util.Utils;
 import cell.util.log.Logger;
 import cube.client.listener.ContactListener;
-import cube.common.entity.Contact;
-import cube.common.entity.Device;
-import cube.common.entity.Message;
-import cube.common.entity.MessageState;
+import cube.client.listener.MessageReceiveListener;
+import cube.common.entity.*;
 import cube.common.state.MessagingStateCode;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -42,6 +40,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * 服务器客户端程序。
@@ -62,6 +62,8 @@ public final class CubeClient {
 
     protected ContactListener contactListener;
 
+    protected ConcurrentMap<String, MessageReceiver> messageReceiverMap;
+
     /**
      * 构造函数。
      *
@@ -79,6 +81,8 @@ public final class CubeClient {
      */
     public CubeClient(String address, int port) {
         this.id = Utils.generateSerialNumber();
+
+        this.messageReceiverMap = new ConcurrentHashMap<>();
 
         this.connector = new Connector(address, port);
         this.receiver = new Receiver(this);
@@ -146,6 +150,67 @@ public final class CubeClient {
     }
 
     /**
+     *
+     * @param contact
+     * @param listener
+     * @return
+     */
+    public boolean registerListener(Contact contact, MessageReceiveListener listener) {
+        if (!this.connector.isConnected()) {
+            return false;
+        }
+
+        MessageReceiver receiver = this.messageReceiverMap.get(contact.getUniqueKey());
+        if (null != receiver) {
+            receiver.listener = listener;
+            return true;
+        }
+
+        receiver = new MessageReceiver(contact, listener);
+        this.messageReceiverMap.put(contact.getUniqueKey(), receiver);
+
+        ActionDialect actionDialect = new ActionDialect(Actions.ListenEvent.name);
+        actionDialect.addParam("id", this.id.longValue());
+        actionDialect.addParam("event", Events.ReceiveMessage.name);
+
+        JSONObject param = new JSONObject();
+        param.put("domain", contact.getDomain().getName());
+        param.put("contactId", contact.getId().longValue());
+        actionDialect.addParam("param", param);
+
+        this.connector.send(actionDialect);
+
+        return true;
+    }
+
+    /**
+     *
+     * @param group
+     * @param listener
+     * @return
+     */
+    public boolean registerListener(Group group, MessageReceiveListener listener) {
+        return false;
+    }
+
+    /**
+     *
+     * @param domain
+     * @param id
+     * @param listener
+     * @return
+     */
+    public boolean registerListener(String domain, Long id, MessageReceiveListener listener) {
+        if (!this.connector.isConnected()) {
+            return false;
+        }
+
+
+
+        return true;
+    }
+
+    /**
      * 获取当前连接服务器上所有在线的联系人。
      *
      * @return 返回当前连接服务器上所有在线的联系人。
@@ -206,6 +271,38 @@ public final class CubeClient {
         Contact contact = new Contact(data);
 
         return contact;
+    }
+
+    /**
+     * 获取指定 ID 的群组。
+     *
+     * @param domain 指定域名称。
+     * @param id 指定群组的 ID 。
+     * @return 返回指定的群组实例，如果没有找到该群组返回 {@code null} 值。
+     */
+    public Group getGroup(String domain, Long id) {
+        if (!this.connector.isConnected()) {
+            return null;
+        }
+
+        Notifier notifier = new Notifier();
+
+        this.receiver.inject(notifier);
+
+        ActionDialect actionDialect = new ActionDialect(Actions.GetGroup.name);
+        actionDialect.addParam("domain", domain);
+        actionDialect.addParam("groupId", id.longValue());
+
+        // 阻塞线程，并等待返回结果
+        ActionDialect result = this.connector.send(notifier, actionDialect);
+
+        if (result.containsParam("group")) {
+            JSONObject data = result.getParamAsJson("group");
+            return new Group(data);
+        }
+        else {
+            return null;
+        }
     }
 
     /**

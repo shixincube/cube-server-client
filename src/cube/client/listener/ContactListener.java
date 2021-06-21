@@ -36,26 +36,29 @@ import cube.common.entity.Device;
 public interface ContactListener {
 
     /**
+     * 当有联系人签入系统时回调该方法。
      *
-     * @param client
-     * @param contact
-     * @param device
+     * @param client 客户端实例。
+     * @param contact 签入的联系人。
+     * @param device 签入的设备。
      */
     void onSignIn(CubeClient client, Contact contact, Device device);
 
     /**
+     * 当有联系人签出系统时回调该方法。
      *
-     * @param client
-     * @param contact
-     * @param device
+     * @param client 客户端实例。
+     * @param contact 签出的联系人。
+     * @param device 签出的设备。
      */
     void onSignOut(CubeClient client, Contact contact, Device device);
 
     /**
+     * 当有联系人的设备超时时回调该方法。
      *
-     * @param client
-     * @param contact
-     * @param device
+     * @param client 客户端实例。
+     * @param contact 联系人。
+     * @param device 超时的设备。
      */
     void onDeviceTimeout(CubeClient client, Contact contact, Device device);
 

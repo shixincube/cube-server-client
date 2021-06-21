@@ -29,9 +29,9 @@ package cube.client.listener;
 import cube.common.entity.Message;
 
 /**
- * 消息监听器。
+ * 消息发送监听器。
  */
-public interface MessagingListener {
+public interface MessageSendListener {
 
-    void onReceived(Message message);
+    void onSent(Message message);
 }

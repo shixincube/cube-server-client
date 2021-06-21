@@ -24,26 +24,14 @@
  * SOFTWARE.
  */
 
-package cube.client;
+package cube.client.listener;
+
+import cube.common.entity.Message;
 
 /**
- * 事件。
+ * 消息接收监听器。
  */
-public enum Events {
+public interface MessageReceiveListener {
 
-    SignIn("SignIn"),
-
-    SignOut("SignOut"),
-
-    DeviceTimeout("DeviceTimeout"),
-
-    ReceiveMessage("ReceiveMessage"),
-
-    ;
-
-    public final String name;
-
-    Events(String name) {
-        this.name = name;
-    }
+    void onReceived(Message message);
 }

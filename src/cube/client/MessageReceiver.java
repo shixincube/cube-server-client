@@ -26,24 +26,25 @@
 
 package cube.client;
 
+import cube.client.listener.MessageReceiveListener;
+import cube.common.entity.Contact;
+import cube.common.entity.Group;
+
 /**
- * 事件。
+ * 消息接收器。
  */
-public enum Events {
+public class MessageReceiver {
 
-    SignIn("SignIn"),
+    protected Contact contact;
 
-    SignOut("SignOut"),
+    protected Group group;
 
-    DeviceTimeout("DeviceTimeout"),
+    protected MessageReceiveListener listener;
 
-    ReceiveMessage("ReceiveMessage"),
-
-    ;
-
-    public final String name;
-
-    Events(String name) {
-        this.name = name;
+    public MessageReceiver(Contact contact, MessageReceiveListener listener) {
+        this.contact = contact;
+        this.listener = listener;
     }
+
+
 }

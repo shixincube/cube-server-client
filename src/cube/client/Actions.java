@@ -43,6 +43,8 @@ public enum Actions {
 
     GetContact("GetContact"),
 
+    GetGroup("GetGroup"),
+
     PushMessage("PushMessage")
 
     ;
