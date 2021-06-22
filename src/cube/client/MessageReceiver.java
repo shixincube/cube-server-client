@@ -46,5 +46,8 @@ public class MessageReceiver {
         this.listener = listener;
     }
 
-
+    public MessageReceiver(Group group, MessageReceiveListener listener) {
+        this.group = group;
+        this.listener = listener;
+    }
 }

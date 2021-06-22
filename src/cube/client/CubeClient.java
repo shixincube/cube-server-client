@@ -122,7 +122,7 @@ public final class CubeClient {
      * 注册联系人监听器。<b>仅对当前连接的服务器有效。</b>
      *
      * @param listener 联系人监听器。
-     * @return 返回是否设置成功。
+     * @return 返回操作是否有效。
      */
     public boolean registerListener(ContactListener listener) {
         if (!this.connector.isConnected()) {
@@ -131,17 +131,17 @@ public final class CubeClient {
 
         this.contactListener = listener;
 
-        ActionDialect actionDialect = new ActionDialect(Actions.ListenEvent.name);
+        ActionDialect actionDialect = new ActionDialect(Actions.AddEventListener.name);
         actionDialect.addParam("id", this.id.longValue());
         actionDialect.addParam("event", Events.SignIn.name);
         this.connector.send(actionDialect);
 
-        actionDialect = new ActionDialect(Actions.ListenEvent.name);
+        actionDialect = new ActionDialect(Actions.AddEventListener.name);
         actionDialect.addParam("id", this.id.longValue());
         actionDialect.addParam("event", Events.SignOut.name);
         this.connector.send(actionDialect);
 
-        actionDialect = new ActionDialect(Actions.ListenEvent.name);
+        actionDialect = new ActionDialect(Actions.AddEventListener.name);
         actionDialect.addParam("id", this.id.longValue());
         actionDialect.addParam("event", Events.DeviceTimeout.name);
         this.connector.send(actionDialect);
@@ -150,13 +150,48 @@ public final class CubeClient {
     }
 
     /**
-     * 注册监听指定联系接收到的消息。
+     * 注销联系人监听器。
+     *
+     * @param listener 联系人监听器。
+     * @return 返回操作是否有效。
+     */
+    public boolean deregisterListener(ContactListener listener) {
+        if (!this.connector.isConnected()) {
+            return false;
+        }
+
+        if (this.contactListener != listener) {
+            return false;
+        }
+
+        this.contactListener = null;
+
+        ActionDialect actionDialect = new ActionDialect(Actions.RemoveEventListener.name);
+        actionDialect.addParam("id", this.id.longValue());
+        actionDialect.addParam("event", Events.SignIn.name);
+        this.connector.send(actionDialect);
+
+        actionDialect = new ActionDialect(Actions.RemoveEventListener.name);
+        actionDialect.addParam("id", this.id.longValue());
+        actionDialect.addParam("event", Events.SignOut.name);
+        this.connector.send(actionDialect);
+
+        actionDialect = new ActionDialect(Actions.RemoveEventListener.name);
+        actionDialect.addParam("id", this.id.longValue());
+        actionDialect.addParam("event", Events.DeviceTimeout.name);
+        this.connector.send(actionDialect);
+
+        return true;
+    }
+
+    /**
+     * 注册监听指定联系人接收到的消息。
      *
      * @param contact
      * @param listener
      * @return
      */
-    public boolean registerListener(Contact contact, MessageReceiveListener listener) {
+    public boolean registerMessageReceiveListener(Contact contact, MessageReceiveListener listener) {
         if (!this.connector.isConnected()) {
             return false;
         }
@@ -170,7 +205,7 @@ public final class CubeClient {
         receiver = new MessageReceiver(contact, listener);
         this.messageReceiverMap.put(contact.getUniqueKey(), receiver);
 
-        ActionDialect actionDialect = new ActionDialect(Actions.ListenEvent.name);
+        ActionDialect actionDialect = new ActionDialect(Actions.AddEventListener.name);
         actionDialect.addParam("id", this.id.longValue());
         actionDialect.addParam("event", Events.ReceiveMessage.name);
 
@@ -185,28 +220,96 @@ public final class CubeClient {
     }
 
     /**
+     * 取消监听器。
+     *
+     * @param contact
+     * @return
+     */
+    public boolean deregisterMessageReceiveListener(Contact contact) {
+        if (!this.connector.isConnected()) {
+            return false;
+        }
+
+        MessageReceiver receiver = this.messageReceiverMap.remove(contact.getUniqueKey());
+        if (null == receiver) {
+            return false;
+        }
+
+        ActionDialect actionDialect = new ActionDialect(Actions.RemoveEventListener.name);
+        actionDialect.addParam("id", this.id.longValue());
+        actionDialect.addParam("event", Events.ReceiveMessage.name);
+
+        JSONObject param = new JSONObject();
+        param.put("domain", contact.getDomain().getName());
+        param.put("contactId", contact.getId().longValue());
+        actionDialect.addParam("param", param);
+
+        this.connector.send(actionDialect);
+
+        return true;
+    }
+
+    /**
+     * 注册监听指定群组的消息。
      *
      * @param group
      * @param listener
      * @return
      */
-    public boolean registerListener(Group group, MessageReceiveListener listener) {
-        return false;
-    }
-
-    /**
-     *
-     * @param domain
-     * @param id
-     * @param listener
-     * @return
-     */
-    public boolean registerListener(String domain, Long id, MessageReceiveListener listener) {
+    public boolean registerMessageReceiveListener(Group group, MessageReceiveListener listener) {
         if (!this.connector.isConnected()) {
             return false;
         }
 
+        MessageReceiver receiver = this.messageReceiverMap.get(group.getUniqueKey());
+        if (null != receiver) {
+            receiver.listener = listener;
+            return true;
+        }
 
+        receiver = new MessageReceiver(group, listener);
+        this.messageReceiverMap.put(group.getUniqueKey(), receiver);
+
+        ActionDialect actionDialect = new ActionDialect(Actions.AddEventListener.name);
+        actionDialect.addParam("id", this.id.longValue());
+        actionDialect.addParam("event", Events.ReceiveMessage.name);
+
+        JSONObject param = new JSONObject();
+        param.put("domain", group.getDomain().getName());
+        param.put("groupId", group.getId().longValue());
+        actionDialect.addParam("param", param);
+
+        this.connector.send(actionDialect);
+
+        return false;
+    }
+
+    /**
+     * 取消监听器。
+     *
+     * @param group
+     * @return
+     */
+    public boolean deregisterMessageReceiveListener(Group group) {
+        if (!this.connector.isConnected()) {
+            return false;
+        }
+
+        MessageReceiver receiver = this.messageReceiverMap.remove(group.getUniqueKey());
+        if (null == receiver) {
+            return false;
+        }
+
+        ActionDialect actionDialect = new ActionDialect(Actions.RemoveEventListener.name);
+        actionDialect.addParam("id", this.id.longValue());
+        actionDialect.addParam("event", Events.ReceiveMessage.name);
+
+        JSONObject param = new JSONObject();
+        param.put("domain", group.getDomain().getName());
+        param.put("groupId", group.getId().longValue());
+        actionDialect.addParam("param", param);
+
+        this.connector.send(actionDialect);
 
         return true;
     }
