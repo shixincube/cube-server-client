@@ -356,6 +356,15 @@ public final class CubeClient {
         return pushResult.getInt("state") == MessagingStateCode.Ok.code;
     }
 
+    protected MessageReceiveListener getMessageReceiveListener(Contact contact) {
+        MessageReceiver receiver = this.messageReceiverMap.get(contact.getUniqueKey());
+        if (null == receiver) {
+            return null;
+        }
+
+        return receiver.listener;
+    }
+
     /**
      * 守护任务。
      */
