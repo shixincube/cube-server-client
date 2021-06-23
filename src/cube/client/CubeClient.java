@@ -150,7 +150,7 @@ public final class CubeClient {
     }
 
     /**
-     * 注销联系人监听器。
+     * 注销联系人监听器。<b>仅对当前连接的服务器有效。</b>
      *
      * @param listener 联系人监听器。
      * @return 返回操作是否有效。
@@ -187,9 +187,9 @@ public final class CubeClient {
     /**
      * 注册监听指定联系人接收到的消息。
      *
-     * @param contact
-     * @param listener
-     * @return
+     * @param contact 指定被监听的联系人。
+     * @param listener 指定监听器。
+     * @return 返回操作是否有效。
      */
     public boolean registerMessageReceiveListener(Contact contact, MessageReceiveListener listener) {
         if (!this.connector.isConnected()) {
@@ -220,10 +220,10 @@ public final class CubeClient {
     }
 
     /**
-     * 取消监听器。
+     * 注销监听指定联系人接收消息的监听器。
      *
-     * @param contact
-     * @return
+     * @param contact 指定被监听的联系人。
+     * @return 返回操作是否有效。
      */
     public boolean deregisterMessageReceiveListener(Contact contact) {
         if (!this.connector.isConnected()) {
@@ -250,11 +250,11 @@ public final class CubeClient {
     }
 
     /**
-     * 注册监听指定群组的消息。
+     * 注册监听指定群组消息的监听器。
      *
-     * @param group
-     * @param listener
-     * @return
+     * @param group 指定被监听的群组。
+     * @param listener 指定监听器。
+     * @return 返回操作是否有效。
      */
     public boolean registerMessageReceiveListener(Group group, MessageReceiveListener listener) {
         if (!this.connector.isConnected()) {
@@ -281,14 +281,14 @@ public final class CubeClient {
 
         this.connector.send(actionDialect);
 
-        return false;
+        return true;
     }
 
     /**
-     * 取消监听器。
+     * 注销监听指定群组消息的监听器。
      *
-     * @param group
-     * @return
+     * @param group 指定被监听的群组。
+     * @return 返回操作是否有效。
      */
     public boolean deregisterMessageReceiveListener(Group group) {
         if (!this.connector.isConnected()) {
@@ -461,6 +461,15 @@ public final class CubeClient {
 
     protected MessageReceiveListener getMessageReceiveListener(Contact contact) {
         MessageReceiver receiver = this.messageReceiverMap.get(contact.getUniqueKey());
+        if (null == receiver) {
+            return null;
+        }
+
+        return receiver.listener;
+    }
+
+    protected MessageReceiveListener getMessageReceiveListener(Group group) {
+        MessageReceiver receiver = this.messageReceiverMap.get(group.getUniqueKey());
         if (null == receiver) {
             return null;
         }

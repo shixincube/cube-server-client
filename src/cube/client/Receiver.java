@@ -37,6 +37,7 @@ import cell.util.log.Logger;
 import cube.client.listener.MessageReceiveListener;
 import cube.common.entity.Contact;
 import cube.common.entity.Device;
+import cube.common.entity.Group;
 import cube.common.entity.Message;
 import org.json.JSONObject;
 
@@ -113,6 +114,12 @@ public class Receiver implements TalkListener {
             JSONObject data = actionDialect.getParamAsJson("data");
             if (data.has("contact")) {
                 MessageReceiveListener listener = this.client.getMessageReceiveListener(new Contact(data.getJSONObject("contact")));
+                if (null != listener) {
+                    listener.onReceived(new Message(data.getJSONObject("message")));
+                }
+            }
+            else if (data.has("group")) {
+                MessageReceiveListener listener = this.client.getMessageReceiveListener(new Group(data.getJSONObject("group")));
                 if (null != listener) {
                     listener.onReceived(new Message(data.getJSONObject("message")));
                 }
