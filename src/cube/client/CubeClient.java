@@ -31,6 +31,8 @@ import cell.util.Utils;
 import cell.util.log.Logger;
 import cube.client.listener.ContactListener;
 import cube.client.listener.MessageReceiveListener;
+import cube.client.tool.MessageIterator;
+import cube.client.tool.MessageReceiver;
 import cube.common.entity.*;
 import cube.common.state.MessagingStateCode;
 import org.json.JSONArray;
@@ -457,6 +459,19 @@ public final class CubeClient {
 
         JSONObject pushResult = result.getParamAsJson("result");
         return pushResult.getInt("state") == MessagingStateCode.Ok.code;
+    }
+
+    /**
+     * 查询与指定联系人相关的消息。
+     *
+     * @param beginning
+     * @param contact
+     * @return
+     */
+    public MessageIterator queryMessages(long beginning, Contact contact) {
+        MessageIterator iterator = new MessageIterator(this.connector, this.receiver);
+        iterator.prepare(beginning, contact);
+        return iterator;
     }
 
     protected MessageReceiveListener getMessageReceiveListener(Contact contact) {

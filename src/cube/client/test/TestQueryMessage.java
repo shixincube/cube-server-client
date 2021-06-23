@@ -24,30 +24,46 @@
  * SOFTWARE.
  */
 
-package cube.client;
+package cube.client.test;
 
-import cube.client.listener.MessageReceiveListener;
+
+import cube.client.CubeClient;
+import cube.client.tool.MessageIterator;
 import cube.common.entity.Contact;
-import cube.common.entity.Group;
+import cube.common.entity.Device;
+import cube.common.entity.Message;
+import org.json.JSONObject;
 
 /**
- * 消息接收器。
+ * 测试查询消息。
  */
-public class MessageReceiver {
+public class TestQueryMessage {
 
-    protected Contact contact;
 
-    protected Group group;
+    public static void main(String[] args) {
 
-    protected MessageReceiveListener listener;
+        CubeClient client = new CubeClient("127.0.0.1");
 
-    public MessageReceiver(Contact contact, MessageReceiveListener listener) {
-        this.contact = contact;
-        this.listener = listener;
-    }
+        Helper.sleepInSeconds(3);
 
-    public MessageReceiver(Group group, MessageReceiveListener listener) {
-        this.group = group;
-        this.listener = listener;
+        System.out.println("[TestQueryMessage] Query Message");
+
+        Contact contact = client.getContact("shixincube.com", 100100L);
+
+        long beginning = System.currentTimeMillis() - (60L * 60L * 1000L);
+
+        int count = 0;
+
+        MessageIterator iterator = client.queryMessages(beginning, contact);
+        while (iterator.hasNext()) {
+            ++count;
+
+            Message message = iterator.next();
+        }
+
+        System.out.println("[TestQueryMessage] Number: " + count);
+
+        System.out.println("** END ***");
+        client.destroy();
     }
 }

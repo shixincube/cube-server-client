@@ -24,43 +24,32 @@
  * SOFTWARE.
  */
 
-package cube.client.test;
+package cube.client.tool;
 
-
-import cube.client.CubeClient;
+import cube.client.listener.MessageReceiveListener;
 import cube.common.entity.Contact;
-import cube.common.entity.Device;
-import org.json.JSONObject;
-
-import java.util.List;
+import cube.common.entity.Group;
 
 /**
- * 测试监听器。
+ * 消息接收器。
  */
-public class TestPush {
+public class MessageReceiver {
 
+    public final Contact contact;
 
-    public static void main(String[] args) {
+    public final Group group;
 
-        CubeClient client = new CubeClient("127.0.0.1");
+    public MessageReceiveListener listener;
 
-        Helper.sleepInSeconds(3);
+    public MessageReceiver(Contact contact, MessageReceiveListener listener) {
+        this.contact = contact;
+        this.listener = listener;
+        this.group = null;
+    }
 
-        System.out.println("[TestPush] Push Message");
-
-        Contact receiver = new Contact(100100L, "shixincube.com", "Cube-500100");
-
-        Contact pretender = new Contact(100200L, "shixincube.com", "Pretender");
-
-        Device device = new Device("Server", "Server Client");
-
-        JSONObject payload = new JSONObject();
-        payload.put("content", "来自伪装者的消息");
-
-        boolean result = client.pushMessageWithPretender(receiver, pretender, device, payload);
-        System.out.println("[TestPush] Push Result: " + result);
-
-        System.out.println("** END ***");
-        client.destroy();
+    public MessageReceiver(Group group, MessageReceiveListener listener) {
+        this.group = group;
+        this.listener = listener;
+        this.contact = null;
     }
 }
