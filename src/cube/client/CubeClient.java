@@ -121,6 +121,15 @@ public final class CubeClient {
     }
 
     /**
+     * 是否已就绪。
+     *
+     * @return 如果就绪返回 <code>true</code> 。
+     */
+    public boolean isReady() {
+        return this.connector.isConnected();
+    }
+
+    /**
      * 注册联系人监听器。<b>仅对当前连接的服务器有效。</b>
      *
      * @param listener 联系人监听器。
@@ -347,6 +356,42 @@ public final class CubeClient {
         }
 
         return resultList;
+    }
+
+    /**
+     * 创建联系人。
+     *
+     * @param domain 指定域。
+     * @param id 指定联系人 ID 。
+     * @param name 指定联系人名称。
+     * @param context 指定联系人上下文数据。
+     * @return 返回创建的联系人。
+     */
+    public Contact createContact(String domain, Long id, String name, JSONObject context) {
+        if (!this.connector.isConnected()) {
+            return null;
+        }
+
+        Notifier notifier = new Notifier();
+
+        this.receiver.inject(notifier);
+
+        ActionDialect actionDialect = new ActionDialect(Actions.CreateContact.name);
+        actionDialect.addParam("domain", domain);
+        actionDialect.addParam("id", id.longValue());
+        actionDialect.addParam("name", name);
+        if (null != context) {
+            actionDialect.addParam("context", context);
+        }
+
+        // 阻塞线程，并等待返回结果
+        ActionDialect result = this.connector.send(notifier, actionDialect);
+
+        JSONObject data = result.getParamAsJson("contact");
+
+        Contact contact = new Contact(data);
+
+        return contact;
     }
 
     /**
