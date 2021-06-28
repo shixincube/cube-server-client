@@ -328,7 +328,7 @@ public final class CubeClient {
     /**
      * 获取当前连接服务器上所有在线的联系人。
      *
-     * @return 返回当前连接服务器上所有在线的联系人。
+     * @return 返回当前连接服务器上所有在线的联系人列表。
      */
     public List<Contact> getOnlineContacts() {
         if (!this.connector.isConnected()) {
@@ -364,8 +364,8 @@ public final class CubeClient {
      * @param domain 指定域。
      * @param id 指定联系人 ID 。
      * @param name 指定联系人名称。
-     * @param context 指定联系人上下文数据。
-     * @return 返回创建的联系人。
+     * @param context 指定联系人上下文数据。可以为 <code>null</code> 值。
+     * @return 返回创建的联系人。操作失败时返回 <code>null</code> 。
      */
     public Contact createContact(String domain, Long id, String name, JSONObject context) {
         if (!this.connector.isConnected()) {
@@ -392,6 +392,49 @@ public final class CubeClient {
         Contact contact = new Contact(data);
 
         return contact;
+    }
+
+    /**
+     * 更新联系人信息。
+     *
+     * @param domain 指定域。
+     * @param contactId 指定联系人 ID 。
+     * @param newName 指定联系人的新名称，设置为 <code>null</code> 值时不更新名称。
+     * @param newContact 指定上下文数据，设置为 <code>null</code> 值时不更新上下文数据。
+     * @return 返回联系人实例。操作失败时返回 <code>null</code> 。
+     */
+    public Contact updateContact(String domain, Long contactId, String newName, JSONObject newContact) {
+        if (!this.connector.isConnected()) {
+            return null;
+        }
+
+        Notifier notifier = new Notifier();
+
+        this.receiver.inject(notifier);
+
+        ActionDialect actionDialect = new ActionDialect(Actions.UpdateContact.name);
+        actionDialect.addParam("domain", domain);
+        actionDialect.addParam("id", id.longValue());
+
+        if (null != newName) {
+            actionDialect.addParam("name", newName);
+        }
+
+        if (null != newContact) {
+            actionDialect.addParam("context", newContact);
+        }
+
+        // 阻塞线程，并等待返回结果
+        ActionDialect result = this.connector.send(notifier, actionDialect);
+
+        JSONObject data = result.containsParam("contact") ? result.getParamAsJson("contact") : null;
+        if (null != data) {
+            Contact contact = new Contact(data);
+            return contact;
+        }
+        else {
+            return null;
+        }
     }
 
     /**
