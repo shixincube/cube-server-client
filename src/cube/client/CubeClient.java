@@ -445,7 +445,7 @@ public final class CubeClient {
 
         ActionDialect actionDialect = new ActionDialect(Actions.UpdateContact.name);
         actionDialect.addParam("domain", domain);
-        actionDialect.addParam("id", id.longValue());
+        actionDialect.addParam("id", contactId.longValue());
 
         if (null != newName) {
             actionDialect.addParam("name", newName);
