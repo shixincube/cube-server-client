@@ -30,6 +30,7 @@ import cell.core.net.Endpoint;
 import cell.core.talk.dialect.ActionDialect;
 import cell.util.Utils;
 import cell.util.log.Logger;
+import cube.auth.AuthToken;
 import cube.client.listener.ContactListener;
 import cube.client.listener.MessageReceiveListener;
 import cube.client.tool.MessageIterator;
@@ -354,6 +355,38 @@ public final class CubeClient {
         this.connector.send(actionDialect);
 
         return true;
+    }
+
+    /**
+     * 申请访问令牌。
+     *
+     * @param domainName
+     * @param appKey
+     * @param cid
+     * @param duration
+     * @return
+     */
+    public AuthToken applyToken(String domainName, String appKey, Long cid, long duration) {
+        if (!this.connector.isConnected()) {
+            return null;
+        }
+
+        Notifier notifier = new Notifier();
+
+        this.receiver.inject(notifier);
+
+        ActionDialect actionDialect = new ActionDialect(Actions.ApplyToken.name);
+        actionDialect.addParam("domain", domainName);
+        actionDialect.addParam("appKey", appKey);
+        actionDialect.addParam("cid", cid.longValue());
+        actionDialect.addParam("duration", duration);
+
+        // 发送请求并等待结果
+        ActionDialect result = this.connector.send(notifier, actionDialect);
+        JSONObject tokenJson = result.getParamAsJson("token");
+        AuthToken token = new AuthToken(tokenJson);
+
+        return token;
     }
 
     /**

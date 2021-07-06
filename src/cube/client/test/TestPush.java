@@ -35,7 +35,7 @@ import org.json.JSONObject;
 import java.util.List;
 
 /**
- * 测试监听器。
+ * 测试推送消息。
  */
 public class TestPush {
 

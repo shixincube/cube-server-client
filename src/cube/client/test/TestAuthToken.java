@@ -24,46 +24,38 @@
  * SOFTWARE.
  */
 
-package cube.client;
+package cube.client.test;
+
+
+import cube.auth.AuthToken;
+import cube.client.CubeClient;
+import cube.client.tool.TokenTools;
+import cube.common.entity.Contact;
+
+import java.util.List;
 
 /**
- * 动作枚举。
+ * 测试操作令牌。
  */
-public enum Actions {
+public class TestAuthToken {
 
-    LOGIN("Login"),
 
-    LOGOUT("Logout"),
+    public static void main(String[] args) {
 
-    AddEventListener("AddEventListener"),
+        CubeClient client = new CubeClient("127.0.0.1");
 
-    RemoveEventListener("RemoveEventListener"),
+        Helper.sleepInSeconds(2);
 
-    NotifyEvent("NotifyEvent"),
+        System.out.println("[TestAuthToken] apply token");
 
-    CreateDomainApp("CreateDomainApp"),
+        AuthToken token = client.applyToken("shixincube.com", "shixin-cubeteam-opensource-appkey",
+                1000L, 7L * 24L * 60L * 60L * 1000L);
 
-    ApplyToken("ApplyToken"),
+        System.out.println("[TestAuthToken] token : " + token.getCode());
 
-    ListOnlineContacts("ListOnlineContacts"),
+        TokenTools.saveAuthToken(token, "mytoken.json");
 
-    GetContact("GetContact"),
-
-    GetGroup("GetGroup"),
-
-    CreateContact("CreateContact"),
-
-    UpdateContact("UpdateContact"),
-
-    PushMessage("PushMessage"),
-
-    QueryMessages("QueryMessages")
-
-    ;
-
-    public final String name;
-
-    Actions(String name) {
-        this.name = name;
+        System.out.println("** END ***");
+        client.destroy();
     }
 }

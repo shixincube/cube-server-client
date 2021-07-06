@@ -24,46 +24,42 @@
  * SOFTWARE.
  */
 
-package cube.client;
+package cube.client.tool;
+
+import cube.auth.AuthToken;
+
+import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 
 /**
- * 动作枚举。
+ * 令牌工具。
  */
-public enum Actions {
+public final class TokenTools {
 
-    LOGIN("Login"),
+    private TokenTools() {
+    }
 
-    LOGOUT("Logout"),
+    /**
+     * 将令牌数据写入文件。
+     *
+     * @param token
+     * @param outputFile
+     * @return
+     */
+    public final static boolean saveAuthToken(AuthToken token, String outputFile) {
+        Path file = Paths.get(outputFile);
 
-    AddEventListener("AddEventListener"),
+        try {
+            Files.write(file, token.toJSON().toString(4).getBytes(Charset.forName("UTF-8")),
+                    StandardOpenOption.CREATE);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
-    RemoveEventListener("RemoveEventListener"),
-
-    NotifyEvent("NotifyEvent"),
-
-    CreateDomainApp("CreateDomainApp"),
-
-    ApplyToken("ApplyToken"),
-
-    ListOnlineContacts("ListOnlineContacts"),
-
-    GetContact("GetContact"),
-
-    GetGroup("GetGroup"),
-
-    CreateContact("CreateContact"),
-
-    UpdateContact("UpdateContact"),
-
-    PushMessage("PushMessage"),
-
-    QueryMessages("QueryMessages")
-
-    ;
-
-    public final String name;
-
-    Actions(String name) {
-        this.name = name;
+        return Files.exists(file);
     }
 }

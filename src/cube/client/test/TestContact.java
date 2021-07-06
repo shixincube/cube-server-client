@@ -35,7 +35,7 @@ import cube.common.entity.Device;
 import java.util.List;
 
 /**
- * 测试监听器。
+ * 测试联系人。
  */
 public class TestContact {
 
