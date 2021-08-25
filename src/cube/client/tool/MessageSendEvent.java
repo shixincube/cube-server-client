@@ -26,28 +26,28 @@
 
 package cube.client.tool;
 
-import cube.client.listener.MessageReceiveListener;
+import cube.client.listener.MessageSendListener;
 import cube.common.entity.Contact;
 import cube.common.entity.Group;
 
 /**
- * 消息接收器。
+ * 消息发送事件。
  */
-public class MessageReceiver {
+public class MessageSendEvent {
 
     public final Contact contact;
 
     public final Group group;
 
-    public MessageReceiveListener listener;
+    public MessageSendListener listener;
 
-    public MessageReceiver(Contact contact, MessageReceiveListener listener) {
+    public MessageSendEvent(Contact contact, MessageSendListener listener) {
         this.contact = contact;
         this.listener = listener;
         this.group = null;
     }
 
-    public MessageReceiver(Group group, MessageReceiveListener listener) {
+    public MessageSendEvent(Group group, MessageSendListener listener) {
         this.group = group;
         this.listener = listener;
         this.contact = null;

@@ -24,28 +24,32 @@
  * SOFTWARE.
  */
 
-package cube.client;
+package cube.client.tool;
+
+import cube.client.listener.MessageReceiveListener;
+import cube.common.entity.Contact;
+import cube.common.entity.Group;
 
 /**
- * 事件。
+ * 消息接收事件。
  */
-public enum Events {
+public class MessageReceiveEvent {
 
-    SignIn("SignIn"),
+    public final Contact contact;
 
-    SignOut("SignOut"),
+    public final Group group;
 
-    DeviceTimeout("DeviceTimeout"),
+    public MessageReceiveListener listener;
 
-    ReceiveMessage("ReceiveMessage"),
+    public MessageReceiveEvent(Contact contact, MessageReceiveListener listener) {
+        this.contact = contact;
+        this.listener = listener;
+        this.group = null;
+    }
 
-    SendMessage("SendMessage"),
-
-    ;
-
-    public final String name;
-
-    Events(String name) {
-        this.name = name;
+    public MessageReceiveEvent(Group group, MessageReceiveListener listener) {
+        this.group = group;
+        this.listener = listener;
+        this.contact = null;
     }
 }

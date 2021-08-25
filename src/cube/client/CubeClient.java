@@ -33,8 +33,11 @@ import cell.util.log.Logger;
 import cube.auth.AuthToken;
 import cube.client.listener.ContactListener;
 import cube.client.listener.MessageReceiveListener;
+import cube.client.listener.MessageSendListener;
 import cube.client.tool.MessageIterator;
-import cube.client.tool.MessageReceiver;
+import cube.client.tool.MessageReceiveEvent;
+import cube.client.tool.MessageSendEvent;
+import cube.common.UniqueKey;
 import cube.common.entity.*;
 import cube.common.state.MessagingStateCode;
 import org.json.JSONArray;
@@ -66,7 +69,9 @@ public final class CubeClient {
 
     protected ContactListener contactListener;
 
-    protected ConcurrentMap<String, MessageReceiver> messageReceiverMap;
+    protected ConcurrentMap<String, MessageReceiveEvent> messageReceiveEventMap;
+
+    protected ConcurrentMap<String, MessageSendEvent> messageSendEventMap;
 
     /**
      * 构造函数。
@@ -86,7 +91,8 @@ public final class CubeClient {
     public CubeClient(String address, int port) {
         this.id = Utils.generateSerialNumber();
 
-        this.messageReceiverMap = new ConcurrentHashMap<>();
+        this.messageReceiveEventMap = new ConcurrentHashMap<>();
+        this.messageSendEventMap = new ConcurrentHashMap<>();
 
         this.connector = new Connector(address, port);
         this.receiver = new Receiver(this);
@@ -209,14 +215,14 @@ public final class CubeClient {
             return false;
         }
 
-        MessageReceiver receiver = this.messageReceiverMap.get(contact.getUniqueKey());
-        if (null != receiver) {
-            receiver.listener = listener;
+        MessageReceiveEvent event = this.messageReceiveEventMap.get(contact.getUniqueKey());
+        if (null != event) {
+            event.listener = listener;
             return true;
         }
 
-        receiver = new MessageReceiver(contact, listener);
-        this.messageReceiverMap.put(contact.getUniqueKey(), receiver);
+        event = new MessageReceiveEvent(contact, listener);
+        this.messageReceiveEventMap.put(contact.getUniqueKey(), event);
 
         ActionDialect actionDialect = new ActionDialect(Actions.AddEventListener.name);
         actionDialect.addParam("id", this.id.longValue());
@@ -243,8 +249,8 @@ public final class CubeClient {
             return false;
         }
 
-        MessageReceiver receiver = this.messageReceiverMap.remove(contact.getUniqueKey());
-        if (null == receiver) {
+        MessageReceiveEvent event = this.messageReceiveEventMap.remove(contact.getUniqueKey());
+        if (null == event) {
             return false;
         }
 
@@ -274,14 +280,14 @@ public final class CubeClient {
             return false;
         }
 
-        MessageReceiver receiver = this.messageReceiverMap.get(group.getUniqueKey());
-        if (null != receiver) {
-            receiver.listener = listener;
+        MessageReceiveEvent event = this.messageReceiveEventMap.get(group.getUniqueKey());
+        if (null != event) {
+            event.listener = listener;
             return true;
         }
 
-        receiver = new MessageReceiver(group, listener);
-        this.messageReceiverMap.put(group.getUniqueKey(), receiver);
+        event = new MessageReceiveEvent(group, listener);
+        this.messageReceiveEventMap.put(group.getUniqueKey(), event);
 
         ActionDialect actionDialect = new ActionDialect(Actions.AddEventListener.name);
         actionDialect.addParam("id", this.id.longValue());
@@ -308,8 +314,8 @@ public final class CubeClient {
             return false;
         }
 
-        MessageReceiver receiver = this.messageReceiverMap.remove(group.getUniqueKey());
-        if (null == receiver) {
+        MessageReceiveEvent event = this.messageReceiveEventMap.remove(group.getUniqueKey());
+        if (null == event) {
             return false;
         }
 
@@ -320,6 +326,71 @@ public final class CubeClient {
         JSONObject param = new JSONObject();
         param.put("domain", group.getDomain().getName());
         param.put("groupId", group.getId().longValue());
+        actionDialect.addParam("param", param);
+
+        this.connector.send(actionDialect);
+
+        return true;
+    }
+
+    /**
+     * 注册监听指定联系人发送的消息。
+     *
+     * @param contact 指定被监听的联系人。
+     * @param listener 指定监听器。
+     * @return 返回操作是否有效。
+     */
+    public boolean registerMessageSendListener(Contact contact, MessageSendListener listener) {
+        if (!this.connector.isConnected()) {
+            return false;
+        }
+
+        MessageSendEvent event = this.messageSendEventMap.get(contact.getUniqueKey());
+        if (null != event) {
+            event.listener = listener;
+            return true;
+        }
+
+        event = new MessageSendEvent(contact, listener);
+        this.messageSendEventMap.put(contact.getUniqueKey(), event);
+
+        ActionDialect actionDialect = new ActionDialect(Actions.AddEventListener.name);
+        actionDialect.addParam("id", this.id.longValue());
+        actionDialect.addParam("event", Events.SendMessage.name);
+
+        JSONObject param = new JSONObject();
+        param.put("domain", contact.getDomain().getName());
+        param.put("contactId", contact.getId().longValue());
+        actionDialect.addParam("param", param);
+
+        this.connector.send(actionDialect);
+
+        return true;
+    }
+
+    /**
+     * 注销监听指定联系人发送消息的监听器。
+     *
+     * @param contact 指定被监听的联系人。
+     * @return 返回操作是否有效。
+     */
+    public boolean deregisterMessageSendListener(Contact contact) {
+        if (!this.connector.isConnected()) {
+            return false;
+        }
+
+        MessageSendEvent event = this.messageSendEventMap.remove(contact.getUniqueKey());
+        if (null == event) {
+            return false;
+        }
+
+        ActionDialect actionDialect = new ActionDialect(Actions.RemoveEventListener.name);
+        actionDialect.addParam("id", this.id.longValue());
+        actionDialect.addParam("event", Events.SendMessage.name);
+
+        JSONObject param = new JSONObject();
+        param.put("domain", contact.getDomain().getName());
+        param.put("contactId", contact.getId().longValue());
         actionDialect.addParam("param", param);
 
         this.connector.send(actionDialect);
@@ -626,22 +697,49 @@ public final class CubeClient {
         return iterator;
     }
 
-    protected MessageReceiveListener getMessageReceiveListener(Contact contact) {
-        MessageReceiver receiver = this.messageReceiverMap.get(contact.getUniqueKey());
-        if (null == receiver) {
+    protected MessageReceiveListener getMessageReceiveListener(long contactId, String domain) {
+        MessageReceiveEvent event = this.messageReceiveEventMap.get(UniqueKey.make(contactId, domain));
+        if (null == event) {
             return null;
         }
 
-        return receiver.listener;
+        return event.listener;
+    }
+
+    protected MessageReceiveListener getMessageReceiveListener(Contact contact) {
+        MessageReceiveEvent event = this.messageReceiveEventMap.get(contact.getUniqueKey());
+        if (null == event) {
+            return null;
+        }
+
+        return event.listener;
     }
 
     protected MessageReceiveListener getMessageReceiveListener(Group group) {
-        MessageReceiver receiver = this.messageReceiverMap.get(group.getUniqueKey());
-        if (null == receiver) {
+        MessageReceiveEvent event = this.messageReceiveEventMap.get(group.getUniqueKey());
+        if (null == event) {
             return null;
         }
 
-        return receiver.listener;
+        return event.listener;
+    }
+
+    protected MessageSendListener getMessageSendListener(long contactId, String domain) {
+        MessageSendEvent event = this.messageSendEventMap.get(UniqueKey.make(contactId, domain));
+        if (null == event) {
+            return null;
+        }
+
+        return event.listener;
+    }
+
+    protected MessageSendListener getMessageSendListener(Contact contact) {
+        MessageSendEvent event = this.messageSendEventMap.get(contact.getUniqueKey());
+        if (null == event) {
+            return null;
+        }
+
+        return event.listener;
     }
 
     /**

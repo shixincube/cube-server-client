@@ -35,6 +35,7 @@ import cell.core.talk.dialect.ActionDialect;
 import cell.core.talk.dialect.DialectFactory;
 import cell.util.log.Logger;
 import cube.client.listener.MessageReceiveListener;
+import cube.client.listener.MessageSendListener;
 import cube.common.entity.Contact;
 import cube.common.entity.Device;
 import cube.common.entity.Group;
@@ -113,7 +114,9 @@ public class Receiver implements TalkListener {
         else if (Events.ReceiveMessage.name.equals(event)) {
             JSONObject data = actionDialect.getParamAsJson("data");
             if (data.has("contact")) {
-                MessageReceiveListener listener = this.client.getMessageReceiveListener(new Contact(data.getJSONObject("contact")));
+                JSONObject contact = data.getJSONObject("contact");
+                MessageReceiveListener listener = this.client.getMessageReceiveListener(
+                        contact.getLong("id"), contact.getString("domain"));
                 if (null != listener) {
                     listener.onReceived(new Message(data.getJSONObject("message")));
                 }
@@ -122,6 +125,17 @@ public class Receiver implements TalkListener {
                 MessageReceiveListener listener = this.client.getMessageReceiveListener(new Group(data.getJSONObject("group")));
                 if (null != listener) {
                     listener.onReceived(new Message(data.getJSONObject("message")));
+                }
+            }
+        }
+        else if (Events.SendMessage.name.equals(event)) {
+            JSONObject data = actionDialect.getParamAsJson("data");
+            if (data.has("contact")) {
+                JSONObject contact = data.getJSONObject("contact");
+                MessageSendListener listener = this.client.getMessageSendListener(
+                        contact.getLong("id"), contact.getString("domain"));
+                if (null != listener) {
+                    listener.onSent(new Message(data.getJSONObject("message")));
                 }
             }
         }
