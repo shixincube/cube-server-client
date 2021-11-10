@@ -24,32 +24,17 @@
  * SOFTWARE.
  */
 
-package cube.client.tool;
+package cube.client.test;
 
-import cube.client.listener.MessageReceiveListener;
-import cube.common.entity.Contact;
-import cube.common.entity.Group;
+import cell.util.Utils;
 
-/**
- * 消息接收事件。
- */
-public class MessageReceiveEvent {
+import java.util.Date;
 
-    public final Contact contact;
+public class ReadTimestamp {
 
-    public final Group group;
-
-    public MessageReceiveListener listener;
-
-    public MessageReceiveEvent(Contact contact, MessageReceiveListener listener) {
-        this.contact = contact;
-        this.listener = listener;
-        this.group = null;
-    }
-
-    public MessageReceiveEvent(Group group, MessageReceiveListener listener) {
-        this.group = group;
-        this.listener = listener;
-        this.contact = null;
+    public static void main(String[] args) {
+        long timestamp = System.currentTimeMillis();
+        Date date = new Date(timestamp);
+        System.out.println(Utils.convertDateToSimpleString(date));
     }
 }

@@ -1,9 +1,9 @@
-/**
+/*
  * This source file is part of Cube.
  *
  * The MIT License (MIT)
  *
- * Copyright (c) 2020-2021 Shixin Cube Team.
+ * Copyright (c) 2020-2022 Cube Team.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -32,6 +32,7 @@ import cube.common.entity.Contact;
 import cube.common.entity.Device;
 import org.json.JSONObject;
 
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -48,14 +49,15 @@ public class TestPush {
 
         System.out.println("[TestPush] Push Message");
 
-        Contact receiver = new Contact(100100L, "shixincube.com", "Cube-500100");
+        Contact receiver = new Contact(11444455L, "shixincube.com", "Cube");
 
-        Contact pretender = new Contact(100200L, "shixincube.com", "Pretender");
+        Contact pretender = new Contact(50001001L, "shixincube.com", "Pretender");
 
         Device device = new Device("Server", "Server Client");
 
         JSONObject payload = new JSONObject();
-        payload.put("content", "来自伪装者的消息");
+        payload.put("type", "hypertext");
+        payload.put("content", "今天周四 11月4日 " + (new Date()).toString());
 
         boolean result = client.pushMessageWithPretender(receiver, pretender, device, payload);
         System.out.println("[TestPush] Push Result: " + result);

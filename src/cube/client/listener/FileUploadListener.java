@@ -24,32 +24,18 @@
  * SOFTWARE.
  */
 
-package cube.client.tool;
+package cube.client.listener;
 
-import cube.client.listener.MessageReceiveListener;
-import cube.common.entity.Contact;
-import cube.common.entity.Group;
+import java.io.File;
 
 /**
- * 消息接收事件。
+ * 文件上传监听器。
  */
-public class MessageReceiveEvent {
+public interface FileUploadListener {
 
-    public final Contact contact;
+    void onUploading(String streamName, long processedSize, Long contactId, String domain, File file);
 
-    public final Group group;
+    void onCompleted(String streamName, Long contactId, String domain, File file);
 
-    public MessageReceiveListener listener;
-
-    public MessageReceiveEvent(Contact contact, MessageReceiveListener listener) {
-        this.contact = contact;
-        this.listener = listener;
-        this.group = null;
-    }
-
-    public MessageReceiveEvent(Group group, MessageReceiveListener listener) {
-        this.group = group;
-        this.listener = listener;
-        this.contact = null;
-    }
+    void onFailed(String streamName, Long contactId, String domain, File file, Throwable throwable);
 }

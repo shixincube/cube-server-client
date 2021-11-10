@@ -28,47 +28,62 @@ package cube.client.test;
 
 
 import cube.client.CubeClient;
-import cube.client.listener.ContactListener;
-import cube.client.listener.MessageReceiveListener;
-import cube.client.listener.MessageSendListener;
+import cube.client.listener.FileUploadListener;
 import cube.common.entity.Contact;
 import cube.common.entity.Device;
-import cube.common.entity.Message;
+import org.json.JSONObject;
+
+import java.io.File;
+import java.util.Date;
 
 /**
- * 测试消息监听器监听器。
+ * 测试推送消息。
  */
-public class TestMessageListener {
+public class TestFileUpload {
 
 
     public static void main(String[] args) {
-        Object mutex = new Object();
 
         CubeClient client = new CubeClient("127.0.0.1");
 
         Helper.sleepInSeconds(3);
 
-        Contact contactA = client.getContact("shixincube.com", 50001001L);
-        Contact contactB = client.getContact("shixincube.com", 63045555L);
+        Long contactId = 50001001L;
 
-        client.registerMessageReceiveListener(contactA, new MessageReceiveListener() {
+        File targetFile = new File("data/cube-framework.png");
+
+        System.out.println("[TestFileUpload] Upload file : " + targetFile.getName());
+
+        client.getFileUploader().upload(contactId, "shixincube.com", targetFile, new FileUploadListener() {
             @Override
-            public void onReceived(Message message) {
-                System.out.println("[TestMessageListener] onReceived : " + contactA.getId() + " - " + message.getPayload().toString());
+            public void onUploading(String streamName, long processedSize, Long contactId, String domain, File file) {
+                System.out.println("[TestFileUpload] Uploading : " + processedSize + "/" + file.length());
+            }
+
+            @Override
+            public void onCompleted(String streamName, Long contactId, String domain, File file) {
+                System.out.println("[TestFileUpload] Completed : " + streamName);
+
+                synchronized (targetFile) {
+                    file.notify();
+                }
+            }
+
+            @Override
+            public void onFailed(String streamName, Long contactId, String domain, File file, Throwable throwable) {
+                throwable.printStackTrace();
+
+                synchronized (targetFile) {
+                    file.notify();
+                }
             }
         });
 
-        client.registerMessageSendListener(contactB, new MessageSendListener() {
-            @Override
-            public void onSent(Message message) {
-                System.out.println("[TestMessageListener] onSent : " + contactB.getId() + " - " + message.getPayload().toString());
-            }
-        });
+        System.out.println("[TestFileUpload] Start upload: " + contactId);
 
-        System.out.println("[TestMessageListener] Waiting");
-        synchronized (mutex) {
+        synchronized (targetFile) {
             try {
-                mutex.wait(10 * 60 * 1000);
+                targetFile.wait(5L * 60L * 1000L);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }

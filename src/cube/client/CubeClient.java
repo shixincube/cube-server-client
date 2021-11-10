@@ -1,9 +1,9 @@
-/**
+/*
  * This source file is part of Cube.
  *
  * The MIT License (MIT)
  *
- * Copyright (c) 2020-2021 Shixin Cube Team.
+ * Copyright (c) 2020-2022 Cube Team.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -34,6 +34,7 @@ import cube.auth.AuthToken;
 import cube.client.listener.ContactListener;
 import cube.client.listener.MessageReceiveListener;
 import cube.client.listener.MessageSendListener;
+import cube.client.tool.FileUploader;
 import cube.client.tool.MessageIterator;
 import cube.client.tool.MessageReceiveEvent;
 import cube.client.tool.MessageSendEvent;
@@ -64,6 +65,8 @@ public final class CubeClient {
     private Connector connector;
 
     private Receiver receiver;
+
+    private FileUploader uploader;
 
     private Timer timer;
 
@@ -135,6 +138,19 @@ public final class CubeClient {
      */
     public boolean isReady() {
         return this.connector.isConnected();
+    }
+
+    /**
+     * 获取文件上传器。
+     *
+     * @return
+     */
+    public FileUploader getFileUploader() {
+        if (null == this.uploader) {
+            this.uploader = new FileUploader(this.connector);
+        }
+
+        return this.uploader;
     }
 
     /**
