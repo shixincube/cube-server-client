@@ -1,5 +1,5 @@
 /*
- * This source file is part of Cube.
+ * This file is part of Cube.
  *
  * The MIT License (MIT)
  *
@@ -24,20 +24,19 @@
  * SOFTWARE.
  */
 
-package cube.client.listener;
-
-import cube.client.tool.FileUploader;
-
-import java.io.File;
+package cube.client.util;
 
 /**
- * 文件上传监听器。
+ * 任务的执行预期描述。
+ *
+ * @param <T>
  */
-public interface FileUploadListener {
+public interface Future<T> {
 
-    void onUploading(FileUploader.UploadMeta meta, long processedSize);
-
-    void onCompleted(FileUploader.UploadMeta meta);
-
-    void onFailed(FileUploader.UploadMeta meta, Throwable throwable);
+    /**
+     * 当异步任务执行 {@code emit} 之后通过句柄操作触发调用该方法。
+     *
+     * @param data 任务约定的数据。
+     */
+    void come(T data);
 }

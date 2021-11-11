@@ -34,6 +34,8 @@ import cube.util.FileUtils;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -49,11 +51,11 @@ public class FileUploader {
     /**
      * 流名称对应的上传器。
      */
-    private Map<String, Uploader> uploaderMap;
+    private Map<String, UploadMeta> uploadMetaMap;
 
     public FileUploader(Connector connector) {
         this.connector = connector;
-        this.uploaderMap = new ConcurrentHashMap<>();
+        this.uploadMetaMap = new ConcurrentHashMap<>();
     }
 
     /**
@@ -65,10 +67,10 @@ public class FileUploader {
      * @param listener
      */
     public void upload(Long contactId, String domain, File file, FileUploadListener listener) {
-        Uploader uploader = new Uploader(contactId, domain, file, listener);
         String fileCode = FileUtils.makeFileCode(contactId, domain, file.getName());
+        UploadMeta uploadMeta = new UploadMeta(contactId, domain, file, fileCode, listener);
 
-        this.uploaderMap.put(fileCode, uploader);
+        this.uploadMetaMap.put(fileCode, uploadMeta);
 
         (new Thread(() -> {
             PrimitiveOutputStream outputStream = connector.sendStream(fileCode);
@@ -83,13 +85,16 @@ public class FileUploader {
                 while ((length = fis.read(bytes)) > 0) {
                     outputStream.write(bytes, 0, length);
 
+                    uploadMeta.md5.update(bytes, 0, length);
+                    uploadMeta.sha1.update(bytes, 0, length);
+
                     totalSize += length;
-                    uploader.fireUploading(fileCode, totalSize);
+                    uploadMeta.fireUploading(totalSize);
                 }
 
                 outputStream.flush();
             } catch (IOException e) {
-                uploader.fireFailed(fileCode, e);
+                uploadMeta.fireFailed(e);
             } finally {
                 if (null != fis) {
                     try {
@@ -107,12 +112,13 @@ public class FileUploader {
             }
 
             try {
-                Thread.sleep(100L);
+                Thread.sleep(10L);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
 
-            uploader.fireCompleted(fileCode);
+            uploadMetaMap.remove(fileCode);
+            uploadMeta.fireCompleted();
         })).start();
     }
 
@@ -120,33 +126,66 @@ public class FileUploader {
     /**
      * 信息描述。
      */
-    protected class Uploader {
+    public class UploadMeta {
 
-        protected final Long contactId;
+        public final Long contactId;
 
-        protected final String domain;
+        public final String domain;
 
-        protected final File file;
+        public final File file;
+
+        public final String fileCode;
+
+        protected MessageDigest md5;
+
+        private String md5Code;
+
+        protected MessageDigest sha1;
+
+        private String sha1Code;
 
         protected final FileUploadListener listener;
 
-        Uploader(Long contactId, String domain, File file, FileUploadListener listener) {
+        UploadMeta(Long contactId, String domain, File file, String fileCode, FileUploadListener listener) {
             this.contactId = contactId;
             this.domain = domain;
             this.file = file;
+            this.fileCode = fileCode;
+            try {
+                this.md5 = MessageDigest.getInstance("MD5");
+                this.sha1 = MessageDigest.getInstance("SHA1");
+            } catch (NoSuchAlgorithmException e) {
+                e.printStackTrace();
+            }
             this.listener = listener;
         }
 
-        protected void fireUploading(String fileCode, long processedSize) {
-            this.listener.onUploading(fileCode, processedSize, this.contactId, this.domain, this.file);
+        public String getMD5Code() {
+            if (null == this.md5Code) {
+                byte[] hashMD5 = this.md5.digest();
+                this.md5Code = FileUtils.bytesToHexString(hashMD5);
+            }
+            return this.md5Code;
         }
 
-        protected void fireCompleted(String fileCode) {
-            this.listener.onCompleted(fileCode, this.contactId, this.domain, this.file);
+        public String getSHA1Code() {
+            if (null == this.sha1Code) {
+                byte[] hashSHA1 = this.sha1.digest();
+                this.sha1Code = FileUtils.bytesToHexString(hashSHA1);
+            }
+            return this.sha1Code;
         }
 
-        protected void fireFailed(String fileCode, Throwable throwable) {
-            this.listener.onFailed(fileCode, this.contactId, this.domain, this.file, throwable);
+        protected void fireUploading(long processedSize) {
+            this.listener.onUploading(this, processedSize);
+        }
+
+        protected void fireCompleted() {
+            this.listener.onCompleted(this);
+        }
+
+        protected void fireFailed(Throwable throwable) {
+            this.listener.onFailed(this, throwable);
         }
     }
 }

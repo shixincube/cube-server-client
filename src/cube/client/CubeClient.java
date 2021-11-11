@@ -32,24 +32,34 @@ import cell.util.Utils;
 import cell.util.log.Logger;
 import cube.auth.AuthToken;
 import cube.client.listener.ContactListener;
+import cube.client.listener.FileUploadListener;
 import cube.client.listener.MessageReceiveListener;
 import cube.client.listener.MessageSendListener;
 import cube.client.tool.FileUploader;
 import cube.client.tool.MessageIterator;
 import cube.client.tool.MessageReceiveEvent;
 import cube.client.tool.MessageSendEvent;
+import cube.client.util.Future;
+import cube.client.util.Promise;
+import cube.client.util.PromiseFuture;
+import cube.client.util.PromiseHandler;
 import cube.common.UniqueKey;
 import cube.common.entity.*;
+import cube.common.state.FileStorageStateCode;
 import cube.common.state.MessagingStateCode;
+import cube.util.FileType;
+import cube.util.FileUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * 服务器客户端程序。
@@ -143,7 +153,7 @@ public final class CubeClient {
     /**
      * 获取文件上传器。
      *
-     * @return
+     * @return 返回文件上传器。
      */
     public FileUploader getFileUploader() {
         if (null == this.uploader) {
@@ -447,11 +457,11 @@ public final class CubeClient {
     /**
      * 申请访问令牌。
      *
-     * @param domainName
-     * @param appKey
-     * @param cid
-     * @param duration
-     * @return
+     * @param domainName 指定域名称。
+     * @param appKey 指定 App Key 。
+     * @param cid 指定联系人 ID 。
+     * @param duration 指定有效时长。
+     * @return 返回访问令牌。
      */
     public AuthToken applyToken(String domainName, String appKey, Long cid, long duration) {
         if (!this.connector.isConnected()) {
@@ -680,6 +690,112 @@ public final class CubeClient {
                 0L, timestamp, 0L, MessageState.Sending.getCode(), 0,
                 device.toCompactJSON(), payload, null);
 
+        // 推送消息
+        return pushMessage(message, pretender, device);
+    }
+
+    /**
+     * 使用伪装身份推送文件消息。
+     *
+     * @param receiver 指定消息接收者。
+     * @param pretender 指定伪装的联系人。
+     * @param file 指定文件。
+     * @return 如果消息被服务器处理返回 {@code true} 。
+     */
+    public boolean pushFileMessageWithPretender(Contact receiver, Contact pretender, File file) {
+        AtomicBoolean state = new AtomicBoolean(false);
+
+        Promise.create(new PromiseHandler<FileUploader.UploadMeta>() {
+            @Override
+            public void emit(PromiseFuture<FileUploader.UploadMeta> promise) {
+                Logger.d(CubeClient.class, "#pushFileMessageWithPretender - push file: \"" + file.getName() + "\" to \""
+                        + receiver.getId() + "\" from \"" + pretender.getId() + "\"");
+
+                // 上传文件数据
+                getFileUploader().upload(pretender.getId(), pretender.getDomain().getName(), file, new FileUploadListener() {
+                    @Override
+                    public void onUploading(FileUploader.UploadMeta meta, long processedSize) {
+                        Logger.d(CubeClient.class, "#pushFileMessageWithPretender - onUploading : " +
+                                processedSize + "/" + meta.file.length());
+                    }
+
+                    @Override
+                    public void onCompleted(FileUploader.UploadMeta meta) {
+                        Logger.i(CubeClient.class, "#pushFileMessageWithPretender - onCompleted : " + meta.fileCode);
+                        promise.resolve(meta);
+                    }
+
+                    @Override
+                    public void onFailed(FileUploader.UploadMeta meta, Throwable throwable) {
+                        Logger.w(CubeClient.class, "#pushFileMessageWithPretender - onFailed : " + file.getName(), throwable);
+                        promise.reject(meta);
+                    }
+                });
+            }
+        }).then(new Future<FileUploader.UploadMeta>() {
+            @Override
+            public void come(FileUploader.UploadMeta meta) {
+                // 放置文件
+                FileLabel fileLabel = putFileLabel(pretender, meta.fileCode, meta.file, meta.getMD5Code(), meta.getSHA1Code());
+                if (null == fileLabel) {
+                    // 放置标签失败
+                    synchronized (state) {
+                        state.notify();
+                    }
+                    return;
+                }
+
+                // 上传完成，查询文件标签
+                fileLabel = queryFileLabel(pretender.getDomain().getName(), fileLabel.getFileCode());
+                if (null == fileLabel) {
+                    synchronized (state) {
+                        state.notify();
+                    }
+                    return;
+                }
+
+                // 创建消息
+                long timestamp = System.currentTimeMillis();
+                Device device = new Device("Client", "Cube Server Client " + VERSION);
+
+                JSONObject payload = new JSONObject();
+                payload.put("type", "file");
+
+                FileAttachment fileAttachment = new FileAttachment(fileLabel);
+
+                Message message = new Message(receiver.getDomain().getName(), Utils.generateSerialNumber(),
+                        pretender.getId(), receiver.getId(), 0L, 0L, timestamp, 0L, MessageState.Sending.getCode(), 0,
+                        device.toCompactJSON(), payload, fileAttachment.toJSON());
+
+                // 推送消息
+                boolean result = pushMessage(message, pretender, device);
+
+                state.set(result);
+                synchronized (state) {
+                    state.notify();
+                }
+            }
+        }).catchReject(new Future<FileUploader.UploadMeta>() {
+            @Override
+            public void come(FileUploader.UploadMeta fileCode) {
+                synchronized (state) {
+                    state.notify();
+                }
+            }
+        }).launch();
+
+        synchronized (state) {
+            try {
+                state.wait(5 * 60 * 1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+        return state.get();
+    }
+
+    private boolean pushMessage(Message message, Contact pretender, Device device) {
         Notifier notifier = new Notifier();
 
         this.receiver.inject(notifier);
@@ -701,11 +817,80 @@ public final class CubeClient {
     }
 
     /**
+     * 查询标签。
+     *
+     * @param domain
+     * @param fileCode
+     * @return
+     */
+    private FileLabel queryFileLabel(String domain, String fileCode) {
+        Notifier notifier = new Notifier();
+
+        this.receiver.inject(notifier);
+
+        ActionDialect actionDialect = new ActionDialect(Actions.GetFile.name);
+        actionDialect.addParam("domain", domain);
+        actionDialect.addParam("fileCode", fileCode);
+
+        // 阻塞线程，并等待返回结果
+        ActionDialect result = this.connector.send(notifier, actionDialect);
+
+        int code = result.getParamAsInt("code");
+        if (code != FileStorageStateCode.Ok.code) {
+            Logger.w(CubeClient.class, "#queryFileLabel - error : " + code);
+            return null;
+        }
+
+        JSONObject data = result.getParamAsJson("fileLabel");
+        return new FileLabel(data);
+    }
+
+    /**
+     * 放置标签。
+     *
+     * @param contact
+     * @param fileCode
+     * @param file
+     * @param md5Code
+     * @param sha1Code
+     * @return
+     */
+    private FileLabel putFileLabel(Contact contact, String fileCode, File file, String md5Code, String sha1Code) {
+        // 判断文件类型
+        FileType fileType = FileUtils.extractFileExtensionType(file.getName());
+
+        FileLabel fileLabel = new FileLabel(contact.getDomain().getName(), fileCode,
+                contact.getId(), file.getName(), file.length(), file.lastModified(), System.currentTimeMillis(), 0);
+        fileLabel.setFileType(fileType);
+        fileLabel.setMD5Code(md5Code);
+        fileLabel.setSHA1Code(sha1Code);
+
+        Notifier notifier = new Notifier();
+
+        this.receiver.inject(notifier);
+
+        ActionDialect actionDialect = new ActionDialect(Actions.PutFile.name);
+        actionDialect.addParam("fileLabel", fileLabel.toJSON());
+
+        // 阻塞线程，并等待返回结果
+        ActionDialect result = this.connector.send(notifier, actionDialect);
+
+        int code = result.getParamAsInt("code");
+        if (code != FileStorageStateCode.Ok.code) {
+            Logger.w(CubeClient.class, "#putFileLabel - error : " + code);
+            return null;
+        }
+
+        JSONObject data = result.getParamAsJson("fileLabel");
+        return new FileLabel(data);
+    }
+
+    /**
      * 查询与指定联系人相关的消息。
      *
-     * @param beginning
-     * @param contact
-     * @return
+     * @param beginning 指定查询开始时间。
+     * @param contact 指定待查询的联系人。
+     * @return 返回消息数据迭代器。
      */
     public MessageIterator queryMessages(long beginning, Contact contact) {
         MessageIterator iterator = new MessageIterator(this.connector, this.receiver);

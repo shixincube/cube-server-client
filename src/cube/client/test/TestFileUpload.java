@@ -29,12 +29,9 @@ package cube.client.test;
 
 import cube.client.CubeClient;
 import cube.client.listener.FileUploadListener;
-import cube.common.entity.Contact;
-import cube.common.entity.Device;
-import org.json.JSONObject;
+import cube.client.tool.FileUploader;
 
 import java.io.File;
-import java.util.Date;
 
 /**
  * 测试推送消息。
@@ -56,25 +53,25 @@ public class TestFileUpload {
 
         client.getFileUploader().upload(contactId, "shixincube.com", targetFile, new FileUploadListener() {
             @Override
-            public void onUploading(String streamName, long processedSize, Long contactId, String domain, File file) {
-                System.out.println("[TestFileUpload] Uploading : " + processedSize + "/" + file.length());
+            public void onUploading(FileUploader.UploadMeta meta, long processedSize) {
+                System.out.println("[TestFileUpload] Uploading : " + processedSize + "/" + meta.file.length());
             }
 
             @Override
-            public void onCompleted(String streamName, Long contactId, String domain, File file) {
-                System.out.println("[TestFileUpload] Completed : " + streamName);
+            public void onCompleted(FileUploader.UploadMeta meta) {
+                System.out.println("[TestFileUpload] Completed : " + meta.fileCode);
 
                 synchronized (targetFile) {
-                    file.notify();
+                    targetFile.notify();
                 }
             }
 
             @Override
-            public void onFailed(String streamName, Long contactId, String domain, File file, Throwable throwable) {
+            public void onFailed(FileUploader.UploadMeta meta, Throwable throwable) {
                 throwable.printStackTrace();
 
                 synchronized (targetFile) {
-                    file.notify();
+                    targetFile.notify();
                 }
             }
         });
