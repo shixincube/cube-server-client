@@ -24,33 +24,21 @@
  * SOFTWARE.
  */
 
-package cube.client.test;
+package cube.client.util;
 
-import cell.util.Utils;
+import cube.common.entity.FileLabel;
 
-import java.util.Date;
+/**
+ * 可变的文件标签。
+ */
+public class MutableFileLabel {
 
-public class ReadTimestamp {
+    public FileLabel value;
 
-    public static void main(String[] args) {
-        long timestamp = System.currentTimeMillis();
-        Date date = new Date(timestamp);
-        System.out.println(Utils.convertDateToSimpleString(date));
+    public MutableFileLabel() {
+    }
 
-
-        String path = "/path/thisisafile.type";
-        String name = null;
-        String type = null;
-        int typeSplit = path.lastIndexOf(".");
-        int nameSplit = path.lastIndexOf("/");
-        if (typeSplit != -1 && nameSplit != -1) {
-            name = path.substring(nameSplit + 1, typeSplit);
-        }
-        if (typeSplit != -1) {
-            type = path.substring(typeSplit, path.length());
-        }
-        System.out.println("Path : " + path);
-        System.out.println("Name : " + name);
-        System.out.println("Type : " + type);
+    public MutableFileLabel(FileLabel value) {
+        this.value = value;
     }
 }

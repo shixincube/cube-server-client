@@ -71,6 +71,19 @@ public class TestPush {
         System.out.println("[TestPush] Push file message result: " + result);
     }
 
+    public static void testPushImageMessage(CubeClient client) {
+        System.out.println("[TestPush] Push image message");
+
+        File targetFile = new File("data/cube-framework.png");
+
+        Contact receiver = new Contact(11444455L, "shixincube.com", "Cube");
+
+        Contact pretender = new Contact(50001001L, "shixincube.com", "Pretender");
+
+        boolean result = client.pushImageMessageWithPretender(receiver, pretender, targetFile);
+        System.out.println("[TestPush] Push image message result: " + result);
+    }
+
 
     public static void main(String[] args) {
 
@@ -78,7 +91,7 @@ public class TestPush {
 
         Helper.sleepInSeconds(3);
 
-        testPushFileMessage(client);
+        testPushImageMessage(client);
 
         System.out.println("** END ***");
         client.destroy();

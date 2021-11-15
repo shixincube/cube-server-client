@@ -39,10 +39,7 @@ import cube.client.tool.FileUploader;
 import cube.client.tool.MessageIterator;
 import cube.client.tool.MessageReceiveEvent;
 import cube.client.tool.MessageSendEvent;
-import cube.client.util.Future;
-import cube.client.util.Promise;
-import cube.client.util.PromiseFuture;
-import cube.client.util.PromiseHandler;
+import cube.client.util.*;
 import cube.common.UniqueKey;
 import cube.common.entity.*;
 import cube.common.state.FileStorageStateCode;
@@ -59,7 +56,6 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * 服务器客户端程序。
@@ -697,37 +693,108 @@ public final class CubeClient {
     /**
      * 使用伪装身份推送文件消息。
      *
-     * @param receiver 指定消息接收者。
+     * @param receiver 指定消息收件人。
      * @param pretender 指定伪装的联系人。
      * @param file 指定文件。
      * @return 如果消息被服务器处理返回 {@code true} 。
      */
     public boolean pushFileMessageWithPretender(Contact receiver, Contact pretender, File file) {
-        AtomicBoolean state = new AtomicBoolean(false);
+        Logger.d(CubeClient.class, "#pushFileMessageWithPretender - push file: \"" + file.getName() + "\" to \""
+                + receiver.getId() + "\" from \"" + pretender.getId() + "\"");
+
+        // 将文件发送给服务器
+        FileLabel fileLabel = this.putFileWithPretender(pretender, file);
+        if (null == fileLabel) {
+            Logger.d(CubeClient.class, "#pushFileMessageWithPretender - push file: \"" + file.getName() + "\" failed");
+            return false;
+        }
+
+        // 创建消息
+        long timestamp = System.currentTimeMillis();
+        Device device = new Device("Client", "Cube Server Client " + VERSION);
+
+        JSONObject payload = new JSONObject();
+        payload.put("type", "file");
+
+        FileAttachment fileAttachment = new FileAttachment(fileLabel);
+
+        Message message = new Message(receiver.getDomain().getName(), Utils.generateSerialNumber(),
+                pretender.getId(), receiver.getId(), 0L, 0L, timestamp, 0L, MessageState.Sending.getCode(), 0,
+                device.toCompactJSON(), payload, fileAttachment.toJSON());
+
+        // 推送消息
+        boolean result = this.pushMessage(message, pretender, device);
+        return result;
+    }
+
+    /**
+     * 使用伪装身份推送图片消息。
+     *
+     * @param receiver
+     * @param pretender
+     * @param file
+     * @return
+     */
+    public boolean pushImageMessageWithPretender(Contact receiver, Contact pretender, File file) {
+        Logger.d(CubeClient.class, "#pushImageMessageWithPretender - push file: \"" + file.getName() + "\" to \""
+                + receiver.getId() + "\" from \"" + pretender.getId() + "\"");
+
+        // 将文件发送给服务器
+        FileLabel fileLabel = this.putFileWithPretender(pretender, file);
+        if (null == fileLabel) {
+            Logger.d(CubeClient.class, "#pushImageMessageWithPretender - push file: \"" + file.getName() + "\" failed");
+            return false;
+        }
+
+        // 创建消息
+        long timestamp = System.currentTimeMillis();
+        Device device = new Device("Client", "Cube Server Client " + VERSION);
+
+        JSONObject payload = new JSONObject();
+        payload.put("type", "image");
+
+        FileAttachment fileAttachment = new FileAttachment(fileLabel);
+        fileAttachment.enableThumbConfig();
+
+        Message message = new Message(receiver.getDomain().getName(), Utils.generateSerialNumber(),
+                pretender.getId(), receiver.getId(), 0L, 0L, timestamp, 0L, MessageState.Sending.getCode(), 0,
+                device.toCompactJSON(), payload, fileAttachment.toJSON());
+
+        // 推送消息
+        boolean result = this.pushMessage(message, pretender, device);
+        return result;
+    }
+
+    /**
+     * 使用伪装身份发送文件。
+     *
+     * @param pretender 指定伪装的联系人。
+     * @param file 指定文件。
+     * @return 如果消息被服务器处理返回 {@code true} 。
+     */
+    private FileLabel putFileWithPretender(Contact pretender, File file) {
+        MutableFileLabel mutableFileLabel = new MutableFileLabel();
 
         Promise.create(new PromiseHandler<FileUploader.UploadMeta>() {
             @Override
             public void emit(PromiseFuture<FileUploader.UploadMeta> promise) {
-                Logger.d(CubeClient.class, "#pushFileMessageWithPretender - push file: \"" + file.getName() + "\" to \""
-                        + receiver.getId() + "\" from \"" + pretender.getId() + "\"");
-
                 // 上传文件数据
                 getFileUploader().upload(pretender.getId(), pretender.getDomain().getName(), file, new FileUploadListener() {
                     @Override
                     public void onUploading(FileUploader.UploadMeta meta, long processedSize) {
-                        Logger.d(CubeClient.class, "#pushFileMessageWithPretender - onUploading : " +
+                        Logger.d(CubeClient.class, "#putFileWithPretender - onUploading : " +
                                 processedSize + "/" + meta.file.length());
                     }
 
                     @Override
                     public void onCompleted(FileUploader.UploadMeta meta) {
-                        Logger.i(CubeClient.class, "#pushFileMessageWithPretender - onCompleted : " + meta.fileCode);
+                        Logger.i(CubeClient.class, "#putFileWithPretender - onCompleted : " + meta.fileCode);
                         promise.resolve(meta);
                     }
 
                     @Override
                     public void onFailed(FileUploader.UploadMeta meta, Throwable throwable) {
-                        Logger.w(CubeClient.class, "#pushFileMessageWithPretender - onFailed : " + file.getName(), throwable);
+                        Logger.w(CubeClient.class, "#putFileWithPretender - onFailed : " + file.getName(), throwable);
                         promise.reject(meta);
                     }
                 });
@@ -739,8 +806,8 @@ public final class CubeClient {
                 FileLabel fileLabel = putFileLabel(pretender, meta.fileCode, meta.file, meta.getMD5Code(), meta.getSHA1Code());
                 if (null == fileLabel) {
                     // 放置标签失败
-                    synchronized (state) {
-                        state.notify();
+                    synchronized (mutableFileLabel) {
+                        mutableFileLabel.notify();
                     }
                     return;
                 }
@@ -748,51 +815,37 @@ public final class CubeClient {
                 // 上传完成，查询文件标签
                 fileLabel = queryFileLabel(pretender.getDomain().getName(), fileLabel.getFileCode());
                 if (null == fileLabel) {
-                    synchronized (state) {
-                        state.notify();
+                    synchronized (mutableFileLabel) {
+                        mutableFileLabel.notify();
                     }
                     return;
                 }
 
-                // 创建消息
-                long timestamp = System.currentTimeMillis();
-                Device device = new Device("Client", "Cube Server Client " + VERSION);
+                // 赋值
+                mutableFileLabel.value = fileLabel;
 
-                JSONObject payload = new JSONObject();
-                payload.put("type", "file");
-
-                FileAttachment fileAttachment = new FileAttachment(fileLabel);
-
-                Message message = new Message(receiver.getDomain().getName(), Utils.generateSerialNumber(),
-                        pretender.getId(), receiver.getId(), 0L, 0L, timestamp, 0L, MessageState.Sending.getCode(), 0,
-                        device.toCompactJSON(), payload, fileAttachment.toJSON());
-
-                // 推送消息
-                boolean result = pushMessage(message, pretender, device);
-
-                state.set(result);
-                synchronized (state) {
-                    state.notify();
+                synchronized (mutableFileLabel) {
+                    mutableFileLabel.notify();
                 }
             }
         }).catchReject(new Future<FileUploader.UploadMeta>() {
             @Override
             public void come(FileUploader.UploadMeta fileCode) {
-                synchronized (state) {
-                    state.notify();
+                synchronized (mutableFileLabel) {
+                    mutableFileLabel.notify();
                 }
             }
         }).launch();
 
-        synchronized (state) {
+        synchronized (mutableFileLabel) {
             try {
-                state.wait(5 * 60 * 1000);
+                mutableFileLabel.wait(5 * 60 * 1000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
         }
 
-        return state.get();
+        return mutableFileLabel.value;
     }
 
     private boolean pushMessage(Message message, Contact pretender, Device device) {
