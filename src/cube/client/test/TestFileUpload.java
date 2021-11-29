@@ -86,7 +86,7 @@ public class TestFileUpload {
             }
         }
 
-        System.out.println("** END ***");
+        System.out.println("*** END ***");
         client.destroy();
     }
 }

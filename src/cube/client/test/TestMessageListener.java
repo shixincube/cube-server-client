@@ -74,7 +74,7 @@ public class TestMessageListener {
             }
         }
 
-        System.out.println("** END ***");
+        System.out.println("*** END ***");
         client.destroy();
     }
 }

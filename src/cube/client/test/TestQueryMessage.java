@@ -62,7 +62,7 @@ public class TestQueryMessage {
 
         System.out.println("[TestQueryMessage] Number: " + count);
 
-        System.out.println("** END ***");
+        System.out.println("*** END ***");
         client.destroy();
     }
 }

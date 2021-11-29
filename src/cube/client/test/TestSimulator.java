@@ -26,54 +26,29 @@
 
 package cube.client.test;
 
-
 import cube.client.CubeClient;
-import cube.client.listener.ContactListener;
+import cube.client.simulator.ConversationSimulator;
 import cube.common.entity.Contact;
-import cube.common.entity.Device;
 
 /**
- * 测试监听器。
+ * 测试模拟器。
  */
-public class TestListener {
-
+public class TestSimulator {
 
     public static void main(String[] args) {
-        Object mutex = new Object();
 
         CubeClient client = new CubeClient("127.0.0.1");
 
-        Helper.sleepInSeconds(3);
+        Contact self = new Contact(50001001L, "shixincube.com", "Self");
+        Contact partner = new Contact(11444455L, "shixincube.com", "Partner");
 
-        // 注册监听器
-        client.registerListener(new ContactListener() {
-            @Override
-            public void onSignIn(CubeClient client, Contact contact, Device device) {
-                System.out.println("[TestListener] onSignIn : " + contact.getId() + " - " + device.getName());
+        // 创建模拟器
+        ConversationSimulator simulator = new ConversationSimulator(client, self, partner);
 
-                synchronized (mutex) {
-                    mutex.notify();
-                }
-            }
+        // 在控制台中运行模拟器，可以输入交互命令
+        simulator.runInConsole("exit");
 
-            @Override
-            public void onSignOut(CubeClient client, Contact contact, Device device) {
-            }
-
-            @Override
-            public void onDeviceTimeout(CubeClient client, Contact contact, Device device) {
-            }
-        });
-
-        System.out.println("[TestListener] Waiting");
-        synchronized (mutex) {
-            try {
-                mutex.wait(10 * 60 * 1000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
-
+        Helper.sleepInSeconds(1);
         System.out.println("*** END ***");
         client.destroy();
     }

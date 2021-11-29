@@ -41,6 +41,7 @@ import cube.client.tool.MessageReceiveEvent;
 import cube.client.tool.MessageSendEvent;
 import cube.client.util.*;
 import cube.common.UniqueKey;
+import cube.common.action.ContactAction;
 import cube.common.entity.*;
 import cube.common.state.FileStorageStateCode;
 import cube.common.state.MessagingStateCode;
@@ -657,6 +658,37 @@ public final class CubeClient {
     }
 
     /**
+     * 强制向指定联系人的分区添加参与人。
+     *
+     * @param contact
+     * @param zoneName
+     * @param participant
+     * @return
+     */
+    public ContactZone addParticipantToZoneByForce(Contact contact, String zoneName, Contact participant) {
+        ActionDialect actionDialect = new ActionDialect(Actions.ModifyContactZone.name);
+        actionDialect.addParam("domain", contact.getDomain().getName());
+        actionDialect.addParam("contactId", contact.getId());
+        actionDialect.addParam("zoneName", zoneName);
+        actionDialect.addParam("action", ContactAction.AddParticipantToZone.name);
+        ContactZoneParticipant zoneParticipant = new ContactZoneParticipant(participant.getId(),
+                ContactZoneParticipantType.Contact, participant.getTimestamp(),
+                contact.getId(), "Operated by administrator", ContactZoneParticipantState.Normal);
+        actionDialect.addParam("participant", zoneParticipant.toJSON());
+
+        Notifier notifier = new Notifier();
+        this.receiver.inject(notifier);
+
+        ActionDialect result = this.connector.send(notifier, actionDialect);
+        if (result.containsParam("contactZone")) {
+            return new ContactZone(result.getParamAsJson("contactZone"));
+        }
+        else {
+            return null;
+        }
+    }
+
+    /**
      * 使用伪装身份推送消息。
      *
      * @param receiver 指定消息接收者。
@@ -754,7 +786,7 @@ public final class CubeClient {
         payload.put("type", "image");
 
         FileAttachment fileAttachment = new FileAttachment(fileLabel);
-        fileAttachment.enableThumbConfig();
+        fileAttachment.setCompressed(true);
 
         Message message = new Message(receiver.getDomain().getName(), Utils.generateSerialNumber(),
                 pretender.getId(), receiver.getId(), 0L, 0L, timestamp, 0L, MessageState.Sending.getCode(), 0,
@@ -949,6 +981,57 @@ public final class CubeClient {
         MessageIterator iterator = new MessageIterator(this.connector, this.receiver);
         iterator.prepare(beginning, contact);
         return iterator;
+    }
+
+    /**
+     * 标记消息已读。
+     *
+     * @param receiver 指定消息的收件人。
+     * @param sender 指定消息的发件人。
+     * @param messagesList 指定消息列表。
+     * @return 返回被修改状态的消息列表，该列表里的消息为紧凑格式。发送错误返回 {@code null} 值。
+     */
+    public List<Message> markRead(Contact receiver, Contact sender, List<Message> messagesList) {
+        JSONArray idList = new JSONArray();
+        for (Message message : messagesList) {
+            if (message.getSource() > 0 || message.getState() != MessageState.Sent) {
+                continue;
+            }
+
+            if (message.getTo().longValue() == receiver.getId().longValue()
+                    && message.getFrom().longValue() == sender.getId().longValue()) {
+                idList.put(message.getId().longValue());
+            }
+        }
+
+        if (idList.length() == 0) {
+            return null;
+        }
+
+        JSONObject data = new JSONObject();
+        data.put("to", receiver.getId().longValue());
+        data.put("from", sender.getId().longValue());
+        data.put("list", idList);
+
+        ActionDialect actionDialect = new ActionDialect(Actions.MarkReadMessages.name);
+        actionDialect.addParam("domain", receiver.getDomain().getName());
+        actionDialect.addParam("data", data);
+
+        Notifier notifier = new Notifier();
+        this.receiver.inject(notifier);
+        ActionDialect response = this.connector.send(notifier, actionDialect);
+        JSONObject result = response.getParamAsJson("result");
+        if (result.has("messages")) {
+            JSONArray messageArray = result.getJSONArray("messages");
+            List<Message> list = new ArrayList<>();
+            for (int i = 0; i < messageArray.length(); ++i) {
+                Message message = new Message(messageArray.getJSONObject(i));
+                list.add(message);
+            }
+            return list;
+        }
+
+        return null;
     }
 
     protected MessageReceiveListener getMessageReceiveListener(long contactId, String domain) {

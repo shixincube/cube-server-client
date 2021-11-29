@@ -55,7 +55,7 @@ public class TestAuthToken {
 
         TokenTools.saveAuthToken(token, "mytoken.json");
 
-        System.out.println("** END ***");
+        System.out.println("*** END ***");
         client.destroy();
     }
 }

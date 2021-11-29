@@ -52,7 +52,7 @@ public class TestPush {
 
         JSONObject payload = new JSONObject();
         payload.put("type", "hypertext");
-        payload.put("content", "今天周四 11月4日 " + (new Date()).toString());
+        payload.put("content", "今天周二 11月16日 " + (new Date()).toString());
 
         boolean result = client.pushMessageWithPretender(receiver, pretender, device, payload);
         System.out.println("[TestPush] Push message result: " + result);
@@ -91,9 +91,9 @@ public class TestPush {
 
         Helper.sleepInSeconds(3);
 
-        testPushImageMessage(client);
+        testPushMessage(client);
 
-        System.out.println("** END ***");
+        System.out.println("*** END ***");
         client.destroy();
     }
 }

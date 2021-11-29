@@ -24,41 +24,24 @@
  * SOFTWARE.
  */
 
-package cube.client.test;
+package cube.client.tool;
 
+import org.json.JSONObject;
 
-import cube.client.CubeClient;
-import cube.client.listener.ContactListener;
-import cube.common.entity.Contact;
-import cube.common.entity.Device;
-
-import java.util.List;
+import java.util.Date;
 
 /**
- * 测试联系人。
+ * 消息工具。
  */
-public class TestContact {
+public final class MessageTools {
 
+    private MessageTools() {
+    }
 
-    public static void main(String[] args) {
-
-        CubeClient client = new CubeClient("127.0.0.1");
-
-        Helper.sleepInSeconds(3);
-
-        System.out.println("[TestContact] getOnlineContacts");
-
-        List<Contact> list = client.getOnlineContacts();
-
-        System.out.println("[TestContact] num : " + list.size());
-
-        for (Contact contact : list) {
-            System.out.println("[TestContact] contact: " + contact.getId());
-        }
-
-        Helper.sleepInSeconds(1);
-
-        System.out.println("*** END ***");
-        client.destroy();
+    public static JSONObject buildHypertextMessagePayload(String text) {
+        JSONObject payload = new JSONObject();
+        payload.put("type", "hypertext");
+        payload.put("content", text);
+        return payload;
     }
 }
