@@ -34,6 +34,7 @@ import cube.client.listener.MessageReceiveListener;
 import cube.client.listener.MessageSendListener;
 import cube.client.tool.MessageIterator;
 import cube.client.tool.MessageTools;
+import cube.common.action.MessagingAction;
 import cube.common.entity.Contact;
 import cube.common.entity.Message;
 
@@ -46,6 +47,8 @@ import java.util.Scanner;
  * 会话模拟器。
  */
 public class ConversationSimulator implements MessageReceiveListener, MessageSendListener {
+
+    private final static String HELP = "help";
 
     private final static String LIST = "list";
 
@@ -121,7 +124,9 @@ public class ConversationSimulator implements MessageReceiveListener, MessageSen
     }
 
     private void start() {
-        this.listMessages();
+        (new Thread(() -> {
+            listMessages();
+        })).start();
 
         this.client.registerMessageReceiveListener(this.self, this);
         this.client.registerMessageSendListener(this.self, this);
@@ -188,33 +193,54 @@ public class ConversationSimulator implements MessageReceiveListener, MessageSen
         }
         else if (READ.equals(command)) {
             // 标记为已读
+            List<Message> result = null;
+
             if (data.length <= 1) {
-                List<Message> result = this.client.markRead(this.self, this.partner, this.messageList);
-                if (null != result) {
-                    System.out.println("Mark read messages: " + result.size());
-                    System.out.println("-------------------------------------------------------");
-                    for (Message message : result) {
-                        StringBuilder buf = new StringBuilder();
-                        printMessage(buf, message);
-                        System.out.println(buf.toString());
-                    }
-                    System.out.println("-------------------------------------------------------");
-                }
-                else {
-                    System.out.println("Mark read error");
-                }
+                result = this.client.markRead(this.self, this.partner, this.messageList);
             }
             else {
                 // 标记指定 ID 的消息
+                List<Message> list = new ArrayList<>();
+                for (int i = 1; i < data.length; ++i) {
+                    Message message = findMessage(Long.parseLong(data[i]));
+                    if (null != message) {
+                        list.add(message);
+                    }
+                }
+                result = this.client.markRead(this.self, this.partner, list);
+            }
 
+            if (null != result) {
+                System.out.println("Mark read messages: " + result.size());
+                System.out.println("-------------------------------------------------------");
+                for (Message message : result) {
+                    StringBuilder buf = new StringBuilder();
+                    printMessage(buf, message);
+                    System.out.println(buf.toString());
+                }
+                System.out.println("-------------------------------------------------------");
+            }
+            else {
+                System.out.println("Mark read error");
             }
         }
         else if (this.exitCommand.equals(command)) {
             System.out.println("Exit simulator");
         }
-        else {
-
+        else if (HELP.equals(command)) {
+            StringBuilder buf = new StringBuilder();
+            printUsage(buf);
+            System.out.println(buf.toString());
         }
+    }
+
+    private Message findMessage(Long id) {
+        for (Message message : this.messageList) {
+            if (message.getId().longValue() == id.longValue()) {
+                return message;
+            }
+        }
+        return null;
     }
 
     @Override
@@ -254,5 +280,13 @@ public class ConversationSimulator implements MessageReceiveListener, MessageSen
         else {
             buf.append("none");
         }
+    }
+
+    private void printUsage(StringBuilder buf) {
+        buf.append("Cube conversation simulator usage:\n");
+        buf.append("\t").append(LIST).append(" [-reset]\t").append("List last 30 days messages.").append("\n");
+        buf.append("\t").append(SEND).append(" <text>  \t").append("Send text as text message.").append("\n");
+        buf.append("\t").append(READ).append(" [mid]   \t").append("Mark message read state.").append("\n");
+        buf.append("\t").append(this.exitCommand).append("\t\t\t").append("Exit simulator.").append("\n");
     }
 }
