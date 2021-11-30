@@ -31,6 +31,7 @@ import cube.client.CubeClient;
 import cube.common.entity.Contact;
 import cube.common.entity.ContactZone;
 import cube.common.entity.ContactZoneParticipant;
+import cube.common.entity.ContactZoneParticipantState;
 
 import java.util.List;
 
@@ -54,6 +55,21 @@ public class TestContactZone {
         }
     }
 
+    public static void testModifyParticipant(CubeClient client) {
+        Contact contact = new Contact(50001004L, "shixincube.com", "Cube");
+        Contact participant = new Contact(11444455L, "shixincube.com", "Participant");
+
+        ContactZoneParticipant zoneParticipant = client.modifyParticipantByForce(contact, "contacts",
+                participant, ContactZoneParticipantState.Normal);
+        if (null != zoneParticipant) {
+            System.out.println("[TestContactZone] testModifyParticipant - "
+                    + zoneParticipant.id + " - " + zoneParticipant.state.name());
+        }
+        else {
+            System.out.println("[TestContactZone] testModifyParticipant ERROR");
+        }
+    }
+
 
     public static void main(String[] args) {
 
@@ -61,7 +77,9 @@ public class TestContactZone {
 
         Helper.sleepInSeconds(3);
 
-        testAddParticipant(client);
+//        testAddParticipant(client);
+
+        testModifyParticipant(client);
 
         Helper.sleepInSeconds(1);
 

@@ -688,6 +688,42 @@ public final class CubeClient {
         }
     }
 
+    public ContactZone removeParticipantFromZoneByForce(Contact contact, String zoneName, Contact participant) {
+        return null;
+    }
+
+    /**
+     * 强制修改指定分区里参与人的状态。
+     *
+     * @param contact
+     * @param zoneName
+     * @param participant
+     * @param state
+     * @return
+     */
+    public ContactZoneParticipant modifyParticipantByForce(Contact contact, String zoneName, Contact participant, ContactZoneParticipantState state) {
+        ActionDialect actionDialect = new ActionDialect(Actions.ModifyContactZone.name);
+        actionDialect.addParam("domain", contact.getDomain().getName());
+        actionDialect.addParam("contactId", contact.getId());
+        actionDialect.addParam("zoneName", zoneName);
+        actionDialect.addParam("action", ContactAction.ModifyZoneParticipant.name);
+        ContactZoneParticipant zoneParticipant = new ContactZoneParticipant(participant.getId(),
+                ContactZoneParticipantType.Contact, participant.getTimestamp(),
+                contact.getId(), "Operated by administrator", state);
+        actionDialect.addParam("participant", zoneParticipant.toJSON());
+
+        Notifier notifier = new Notifier();
+        this.receiver.inject(notifier);
+
+        ActionDialect result = this.connector.send(notifier, actionDialect);
+        if (result.containsParam("participant")) {
+            return new ContactZoneParticipant(result.getParamAsJson("participant"));
+        }
+        else {
+            return null;
+        }
+    }
+
     /**
      * 使用伪装身份推送消息。
      *
