@@ -715,7 +715,8 @@ public final class CubeClient {
      * @param state
      * @return
      */
-    public ContactZoneParticipant modifyParticipantByForce(Contact contact, String zoneName, Contact participant, ContactZoneParticipantState state) {
+    public ContactZoneParticipant modifyParticipantByForce(Contact contact, String zoneName, Contact participant,
+                                                           ContactZoneParticipantState state) {
         ActionDialect actionDialect = new ActionDialect(Actions.ModifyContactZone.name);
         actionDialect.addParam("domain", contact.getDomain().getName());
         actionDialect.addParam("contactId", contact.getId());
@@ -912,7 +913,7 @@ public final class CubeClient {
             }
         }).catchReject(new Future<FileUploader.UploadMeta>() {
             @Override
-            public void come(FileUploader.UploadMeta fileCode) {
+            public void come(FileUploader.UploadMeta meta) {
                 synchronized (mutableFileLabel) {
                     mutableFileLabel.notify();
                 }

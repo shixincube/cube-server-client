@@ -28,8 +28,12 @@ package cube.client.file;
 
 import cell.core.talk.dialect.ActionDialect;
 import cell.util.log.Logger;
-import cube.client.*;
+import cube.client.Actions;
+import cube.client.Connector;
+import cube.client.Notifier;
+import cube.client.Receiver;
 import cube.client.listener.FileUploadListener;
+import cube.client.util.*;
 import cube.common.entity.FileLabel;
 import cube.common.state.FileStorageStateCode;
 import cube.util.FileType;
@@ -81,7 +85,7 @@ public class FileProcessor {
 
         int code = result.getParamAsInt("code");
         if (code != FileStorageStateCode.Ok.code) {
-            Logger.w(CubeClient.class, "#getFileLabel - error : " + code);
+            Logger.w(FileProcessor.class, "#getFileLabel - error : " + code);
             return null;
         }
 
@@ -102,6 +106,24 @@ public class FileProcessor {
             return null;
         }
 
+        FileLabel fileLabel = this.checkAndGet(file);
+        if (null == fileLabel) {
+            Logger.i(FileProcessor.class, "#call - Can NOT get file : " + file.getName());
+            return null;
+        }
+
+        System.out.println("File is OK");
+
+        return null;
+    }
+
+    /**
+     * 检查并获取文件。
+     *
+     * @param file
+     * @return
+     */
+    private FileLabel checkAndGet(File file) {
         Notifier notifier = new Notifier();
 
         this.receiver.inject(notifier);
@@ -115,75 +137,116 @@ public class FileProcessor {
 
         ActionDialect result = this.connector.send(notifier, actionDialect);
 
-        FileLabel fileLabel = null;
-        StringBuilder fileCode = new StringBuilder();
+        MutableFileLabel mutableFileLabel = new MutableFileLabel();
 
         int code = result.getParamAsInt("code");
         if (code != FileStorageStateCode.Ok.code) {
-            Logger.i(FileProcessor.class, "#call - Not find file : " + file.getName());
+            Logger.i(FileProcessor.class, "#checkAndGet - Not find file : " + file.getName());
 
-            Object mutex = new Object();
-
-            // 上传文件
-            this.uploader.upload(this.contactId, this.domainName, file, new FileUploadListener() {
+            Promise.create(new PromiseHandler<FileUploader.UploadMeta>() {
                 @Override
-                public void onUploading(FileUploader.UploadMeta meta, long processedSize) {
-                    Logger.d(FileProcessor.class, "Uploading file");
-                }
-
-                @Override
-                public void onCompleted(FileUploader.UploadMeta meta) {
-                    Logger.i(FileProcessor.class, "#call - Upload file : " + file.getName());
-
-                    (new Thread() {
+                public void emit(PromiseFuture<FileUploader.UploadMeta> promise) {
+                    // 上传文件数据
+                    uploader.upload(contactId, domainName, file, new FileUploadListener() {
                         @Override
-                        public void run() {
-                            try {
-                                Thread.sleep(1000);
-                            } catch (InterruptedException e) {
-                                e.printStackTrace();
-                            }
-
-                            fileCode.append(meta.fileCode);
-
-                            synchronized (mutex) {
-                                mutex.notify();
-                            }
+                        public void onUploading(FileUploader.UploadMeta meta, long processedSize) {
+                            Logger.d(FileProcessor.class, "#checkAndGet - onUploading : " +
+                                    processedSize + "/" + meta.file.length());
                         }
-                    }).start();
-                }
 
+                        @Override
+                        public void onCompleted(FileUploader.UploadMeta meta) {
+                            Logger.i(FileProcessor.class, "#checkAndGet - onCompleted : " + meta.fileCode);
+                            promise.resolve(meta);
+                        }
+
+                        @Override
+                        public void onFailed(FileUploader.UploadMeta meta, Throwable throwable) {
+                            Logger.w(FileProcessor.class, "#checkAndGet - onFailed : " + file.getName(), throwable);
+                            promise.reject(meta);
+                        }
+                    });
+                }
+            }).then(new Future<FileUploader.UploadMeta>() {
                 @Override
-                public void onFailed(FileUploader.UploadMeta meta, Throwable throwable) {
-                    synchronized (mutex) {
-                        mutex.notify();
+                public void come(FileUploader.UploadMeta meta) {
+                    // 放置文件
+                    FileLabel fileLabel = putFileLabel(meta.fileCode, meta.file, meta.getMD5Code(), meta.getSHA1Code());
+                    if (null == fileLabel) {
+                        // 放置标签失败
+                        synchronized (mutableFileLabel) {
+                            mutableFileLabel.notify();
+                        }
+                        return;
+                    }
+
+                    // 上传完成，查询文件标签
+                    fileLabel = getFileLabel(fileLabel.getFileCode());
+                    if (null == fileLabel) {
+                        synchronized (mutableFileLabel) {
+                            mutableFileLabel.notify();
+                        }
+                        return;
+                    }
+
+                    // 赋值
+                    mutableFileLabel.value = fileLabel;
+
+                    synchronized (mutableFileLabel) {
+                        mutableFileLabel.notify();
                     }
                 }
-            });
+            }).catchReject(new Future<FileUploader.UploadMeta>() {
+                @Override
+                public void come(FileUploader.UploadMeta meta) {
+                    synchronized (mutableFileLabel) {
+                        mutableFileLabel.notify();
+                    }
+                }
+            }).launch();
 
-            synchronized (mutex) {
+            synchronized (mutableFileLabel) {
                 try {
-                    mutex.wait(5 * 60 * 1000);
+                    mutableFileLabel.wait(5 * 60 * 1000);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
             }
         }
         else {
-            fileLabel = new FileLabel(result.getParamAsJson("fileLabel"));
+            mutableFileLabel.value = new FileLabel(result.getParamAsJson("fileLabel"));
         }
 
-        if (null == fileLabel && fileCode.length() > 0) {
-            fileLabel = this.getFileLabel(fileCode.toString());
-        }
+        return mutableFileLabel.value;
+    }
 
-        if (null == fileLabel) {
-            Logger.i(FileProcessor.class, "#call - Can NOT get file : " + file.getName());
+    private FileLabel putFileLabel(String fileCode, File file, String md5Code, String sha1Code) {
+        // 判断文件类型
+        FileType fileType = FileUtils.extractFileExtensionType(file.getName());
+
+        FileLabel fileLabel = new FileLabel(this.domainName, fileCode,
+                this.contactId, file.getName(), file.length(), file.lastModified(), System.currentTimeMillis(), 0);
+        fileLabel.setFileType(fileType);
+        fileLabel.setMD5Code(md5Code);
+        fileLabel.setSHA1Code(sha1Code);
+
+        Notifier notifier = new Notifier();
+
+        this.receiver.inject(notifier);
+
+        ActionDialect actionDialect = new ActionDialect(Actions.PutFile.name);
+        actionDialect.addParam("fileLabel", fileLabel.toJSON());
+
+        // 阻塞线程，并等待返回结果
+        ActionDialect result = this.connector.send(notifier, actionDialect);
+
+        int code = result.getParamAsInt("code");
+        if (code != FileStorageStateCode.Ok.code) {
+            Logger.w(FileProcessor.class, "#putFileLabel - error : " + code);
             return null;
         }
 
-        System.out.println(fileLabel.getFileURL());
-
-        return null;
+        JSONObject data = result.getParamAsJson("fileLabel");
+        return new FileLabel(data);
     }
 }
