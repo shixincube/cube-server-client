@@ -35,6 +35,7 @@ import cube.client.Receiver;
 import cube.client.listener.FileUploadListener;
 import cube.client.util.*;
 import cube.common.entity.FileLabel;
+import cube.common.state.FileProcessorStateCode;
 import cube.common.state.FileStorageStateCode;
 import cube.util.FileType;
 import cube.util.FileUtils;
@@ -112,7 +113,20 @@ public class FileProcessor {
             return null;
         }
 
-        System.out.println("File is OK");
+        Notifier notifier = new Notifier();
+
+        this.receiver.inject(notifier);
+
+        ActionDialect actionDialect = new ActionDialect(Actions.ProcessFile.name);
+        actionDialect.addParam("domain", this.domainName);
+        actionDialect.addParam("fileCode", fileLabel.getFileCode());
+        actionDialect.addParam("process", process.process);
+
+        ActionDialect result = this.connector.send(notifier, actionDialect);
+        int code = result.getParamAsInt("code");
+        if (code != FileProcessorStateCode.Ok.code) {
+
+        }
 
         return null;
     }

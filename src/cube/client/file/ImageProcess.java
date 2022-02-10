@@ -26,6 +26,8 @@
 
 package cube.client.file;
 
+import cube.common.action.FileProcessorAction;
+
 /**
  * 图片操作。
  */
@@ -34,5 +36,13 @@ public enum ImageProcess {
     /**
      * 字符识别
      */
-    OCR
+    OCR(FileProcessorAction.OCR.name)
+
+    ;
+
+    public final String process;
+
+    ImageProcess(String process) {
+        this.process = process;
+    }
 }
