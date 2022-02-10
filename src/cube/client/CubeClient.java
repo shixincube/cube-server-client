@@ -31,14 +31,13 @@ import cell.core.talk.dialect.ActionDialect;
 import cell.util.Utils;
 import cell.util.log.Logger;
 import cube.auth.AuthToken;
+import cube.client.file.FileProcessor;
+import cube.client.file.FileUploader;
 import cube.client.listener.ContactListener;
 import cube.client.listener.FileUploadListener;
 import cube.client.listener.MessageReceiveListener;
 import cube.client.listener.MessageSendListener;
-import cube.client.tool.FileUploader;
-import cube.client.tool.MessageIterator;
-import cube.client.tool.MessageReceiveEvent;
-import cube.client.tool.MessageSendEvent;
+import cube.client.tool.*;
 import cube.client.util.*;
 import cube.common.UniqueKey;
 import cube.common.action.ContactAction;
@@ -74,6 +73,8 @@ public final class CubeClient {
     private Receiver receiver;
 
     private FileUploader uploader;
+
+    private FileProcessor processor;
 
     private Timer timer;
 
@@ -158,6 +159,19 @@ public final class CubeClient {
         }
 
         return this.uploader;
+    }
+
+    /**
+     * 获取文件处理器。
+     *
+     * @return 返回文件处理器。
+     */
+    public FileProcessor getFileProcessor() {
+        if (null == this.processor) {
+            this.processor = new FileProcessor(this.connector, this.receiver);
+        }
+
+        return this.processor;
     }
 
     /**

@@ -26,9 +26,7 @@
 
 package cube.client.listener;
 
-import cube.client.tool.FileUploader;
-
-import java.io.File;
+import cube.client.file.FileUploader;
 
 /**
  * 文件上传监听器。

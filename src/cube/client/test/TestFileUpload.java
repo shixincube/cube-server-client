@@ -29,7 +29,7 @@ package cube.client.test;
 
 import cube.client.CubeClient;
 import cube.client.listener.FileUploadListener;
-import cube.client.tool.FileUploader;
+import cube.client.file.FileUploader;
 
 import java.io.File;
 

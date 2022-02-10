@@ -24,56 +24,34 @@
  * SOFTWARE.
  */
 
-package cube.client;
+package cube.client.test;
+
+import cube.client.CubeClient;
+import cube.client.file.FileProcessResult;
+import cube.client.file.FileProcessor;
+import cube.client.file.ImageProcess;
+
+import java.io.File;
 
 /**
- * 动作枚举。
+ * 测试文件处理器。
  */
-public enum Actions {
+public class TestFileProcessor {
 
-    LOGIN("Login"),
+    public static void main(String[] args) {
 
-    LOGOUT("Logout"),
+        CubeClient client = new CubeClient("127.0.0.1");
 
-    AddEventListener("AddEventListener"),
+        Helper.sleepInSeconds(3);
 
-    RemoveEventListener("RemoveEventListener"),
+        FileProcessor fileProcessor = client.getFileProcessor();
 
-    NotifyEvent("NotifyEvent"),
+        fileProcessor.setContactId(10000L);
+        fileProcessor.setDomainName("shixincube.com");
 
-    CreateDomainApp("CreateDomainApp"),
+        FileProcessResult result = fileProcessor.call(ImageProcess.OCR, new File("data/screenshot_shixincube.jpg"));
 
-    ApplyToken("ApplyToken"),
-
-    ListOnlineContacts("ListOnlineContacts"),
-
-    GetContact("GetContact"),
-
-    GetGroup("GetGroup"),
-
-    CreateContact("CreateContact"),
-
-    UpdateContact("UpdateContact"),
-
-    PushMessage("PushMessage"),
-
-    QueryMessages("QueryMessages"),
-
-    MarkReadMessages("MarkReadMessages"),
-
-    ModifyContactZone("ModifyContactZone"),
-
-    GetFile("GetFile"),
-
-    PutFile("PutFile"),
-
-    FindFile("FindFile"),
-
-    Cube("Cube");
-
-    public final String name;
-
-    Actions(String name) {
-        this.name = name;
+        System.out.println("*** END ***");
+        client.destroy();
     }
 }

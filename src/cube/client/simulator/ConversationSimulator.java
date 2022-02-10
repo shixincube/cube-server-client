@@ -34,7 +34,6 @@ import cube.client.listener.MessageReceiveListener;
 import cube.client.listener.MessageSendListener;
 import cube.client.tool.MessageIterator;
 import cube.client.tool.MessageTools;
-import cube.common.action.MessagingAction;
 import cube.common.entity.Contact;
 import cube.common.entity.Message;
 

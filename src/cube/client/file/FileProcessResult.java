@@ -24,56 +24,14 @@
  * SOFTWARE.
  */
 
-package cube.client;
+package cube.client.file;
 
 /**
- * 动作枚举。
+ * 文件处理结果。
  */
-public enum Actions {
+public class FileProcessResult {
 
-    LOGIN("Login"),
+    public FileProcessResult() {
 
-    LOGOUT("Logout"),
-
-    AddEventListener("AddEventListener"),
-
-    RemoveEventListener("RemoveEventListener"),
-
-    NotifyEvent("NotifyEvent"),
-
-    CreateDomainApp("CreateDomainApp"),
-
-    ApplyToken("ApplyToken"),
-
-    ListOnlineContacts("ListOnlineContacts"),
-
-    GetContact("GetContact"),
-
-    GetGroup("GetGroup"),
-
-    CreateContact("CreateContact"),
-
-    UpdateContact("UpdateContact"),
-
-    PushMessage("PushMessage"),
-
-    QueryMessages("QueryMessages"),
-
-    MarkReadMessages("MarkReadMessages"),
-
-    ModifyContactZone("ModifyContactZone"),
-
-    GetFile("GetFile"),
-
-    PutFile("PutFile"),
-
-    FindFile("FindFile"),
-
-    Cube("Cube");
-
-    public final String name;
-
-    Actions(String name) {
-        this.name = name;
     }
 }

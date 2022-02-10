@@ -24,7 +24,7 @@
  * SOFTWARE.
  */
 
-package cube.client.tool;
+package cube.client.file;
 
 import cell.core.talk.PrimitiveOutputStream;
 import cube.client.Connector;
