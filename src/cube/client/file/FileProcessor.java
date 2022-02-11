@@ -125,10 +125,13 @@ public class FileProcessor {
         ActionDialect result = this.connector.send(notifier, actionDialect);
         int code = result.getParamAsInt("code");
         if (code != FileProcessorStateCode.Ok.code) {
-
+            Logger.w(FileProcessor.class, "#call - " + process.process + " - error : " + code);
+            return null;
         }
 
-        return null;
+        JSONObject data = result.getParamAsJson("result");
+        FileProcessResult processResult = new FileProcessResult(data);
+        return processResult;
     }
 
     /**

@@ -26,12 +26,63 @@
 
 package cube.client.file;
 
+import cube.common.action.FileProcessorAction;
+import cube.common.entity.FileLabel;
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * 文件处理结果。
  */
 public class FileProcessResult {
 
-    public FileProcessResult() {
+    public final String process;
 
+    private OCRProcessResult ocrResult;
+
+    public FileProcessResult(JSONObject json) {
+        this.process = json.getString("process");
+
+        if (FileProcessorAction.OCR.name.equals(this.process)) {
+            this.ocrResult = new OCRProcessResult(json);
+        }
+    }
+
+    public OCRProcessResult getOCRResult() {
+        return this.ocrResult;
+    }
+
+    /**
+     *
+     */
+    public class OCRProcessResult {
+
+        private List<String> resultText;
+
+        private FileLabel imageFile;
+
+        public OCRProcessResult(JSONObject json) {
+            this.resultText = new ArrayList<>();
+
+            JSONArray textArray = json.getJSONArray("text");
+            for (int i = 0; i < textArray.length(); ++i) {
+                this.resultText.add(textArray.getString(i));
+            }
+
+            if (json.has("image")) {
+                this.imageFile = new FileLabel(json.getJSONObject("image"));
+            }
+        }
+
+        public List<String> getResultText() {
+            return this.resultText;
+        }
+
+        public FileLabel getImageFile() {
+            return this.imageFile;
+        }
     }
 }

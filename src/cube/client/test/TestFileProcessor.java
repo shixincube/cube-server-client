@@ -49,7 +49,14 @@ public class TestFileProcessor {
         fileProcessor.setContactId(10000L);
         fileProcessor.setDomainName("shixincube.com");
 
+        System.out.println("*** START OCR ***");
+
         FileProcessResult result = fileProcessor.call(ImageProcess.OCR, new File("data/screenshot_shixincube.jpg"));
+        FileProcessResult.OCRProcessResult ocrResult = result.getOCRResult();
+
+        for (String text : ocrResult.getResultText()) {
+            System.out.println("LINE: " + text);
+        }
 
         System.out.println("*** END ***");
         client.destroy();
