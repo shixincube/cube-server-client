@@ -28,6 +28,7 @@ package cube.client.file;
 
 import cube.common.action.FileProcessorAction;
 import cube.common.entity.FileLabel;
+import cube.util.file.OCRFile;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -62,6 +63,8 @@ public class FileProcessResult {
 
         private List<String> resultText;
 
+        private OCRFile ocr;
+
         private FileLabel imageFile;
 
         public OCRProcessResult(JSONObject json) {
@@ -71,6 +74,8 @@ public class FileProcessResult {
             for (int i = 0; i < textArray.length(); ++i) {
                 this.resultText.add(textArray.getString(i));
             }
+
+            this.ocr = new OCRFile(json.getJSONObject("ocr"));
 
             if (json.has("image")) {
                 this.imageFile = new FileLabel(json.getJSONObject("image"));
