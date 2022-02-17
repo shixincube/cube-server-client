@@ -149,6 +149,32 @@ public final class CubeClient {
     }
 
     /**
+     * 等待客户端就绪。
+     *
+     * @return
+     */
+    public boolean waitReady() {
+        boolean result = true;
+
+        long time = System.currentTimeMillis();
+
+        while (!this.connector.isConnected()) {
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
+            if (System.currentTimeMillis() - time > 10000) {
+                result = false;
+                break;
+            }
+        }
+
+        return result;
+    }
+
+    /**
      * 获取文件上传器。
      *
      * @return 返回文件上传器。

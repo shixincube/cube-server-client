@@ -31,18 +31,23 @@ import cube.common.action.FileProcessorAction;
 /**
  * 图片操作。
  */
-public enum ImageProcess {
+public enum FileOperation {
 
     /**
-     * 字符识别
+     * 字符识别。
      */
-    OCR(FileProcessorAction.OCR.name)
+    OCR(FileProcessorAction.OCR.name),
+
+    /**
+     * 视频快照。
+     */
+    Snapshot(FileProcessorAction.Snapshot.name)
 
     ;
 
     public final String process;
 
-    ImageProcess(String process) {
+    FileOperation(String process) {
         this.process = process;
     }
 }

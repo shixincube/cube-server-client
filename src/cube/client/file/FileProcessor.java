@@ -101,12 +101,7 @@ public class FileProcessor {
      * @param file
      * @return
      */
-    public FileProcessResult call(ImageProcess process, File file) {
-        FileType fileType = FileUtils.extractFileExtensionType(file.getName());
-        if (!FileUtils.isImageType(fileType)) {
-            return null;
-        }
-
+    public FileProcessResult call(FileOperation process, File file) {
         FileLabel fileLabel = this.checkAndGet(file);
         if (null == fileLabel) {
             Logger.i(FileProcessor.class, "#call - Can NOT get file : " + file.getName());
@@ -123,6 +118,11 @@ public class FileProcessor {
         actionDialect.addParam("process", process.process);
 
         ActionDialect result = this.connector.send(notifier, actionDialect);
+        if (null == result) {
+            Logger.w(this.getClass(), "#call timeout");
+            return null;
+        }
+
         int code = result.getParamAsInt("code");
         if (code != FileProcessorStateCode.Ok.code) {
             Logger.w(FileProcessor.class, "#call - " + process.process + " - error : " + code);

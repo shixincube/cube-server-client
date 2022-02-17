@@ -29,7 +29,7 @@ package cube.client.test;
 import cube.client.CubeClient;
 import cube.client.file.FileProcessResult;
 import cube.client.file.FileProcessor;
-import cube.client.file.ImageProcess;
+import cube.client.file.FileOperation;
 
 import java.io.File;
 
@@ -38,20 +38,10 @@ import java.io.File;
  */
 public class TestFileProcessor {
 
-    public static void main(String[] args) {
-
-        CubeClient client = new CubeClient("127.0.0.1");
-
-        Helper.sleepInSeconds(3);
-
-        FileProcessor fileProcessor = client.getFileProcessor();
-
-        fileProcessor.setContactId(10000L);
-        fileProcessor.setDomainName("shixincube.com");
-
+    public static void testORC(FileProcessor fileProcessor) {
         System.out.println("*** START OCR ***");
 
-        FileProcessResult result = fileProcessor.call(ImageProcess.OCR, new File("data/screenshot_shixincube.jpg"));
+        FileProcessResult result = fileProcessor.call(FileOperation.OCR, new File("data/screenshot_shixincube.jpg"));
         FileProcessResult.OCRProcessResult ocrResult = result.getOCRResult();
 
         for (String text : ocrResult.getResultText()) {
@@ -59,6 +49,32 @@ public class TestFileProcessor {
         }
 
         System.out.println("*** END ***");
+    }
+
+    public static void testSnapshot(FileProcessor fileProcessor) {
+        System.out.println("*** START Snapshot ***");
+
+        FileProcessResult result = fileProcessor.call(FileOperation.Snapshot, new File("data/video.mp4"));
+
+        System.out.println("*** END ***");
+    }
+
+    public static void main(String[] args) {
+
+        CubeClient client = new CubeClient("127.0.0.1");
+
+        if (!client.waitReady()) {
+            client.destroy();
+            return;
+        }
+
+        FileProcessor fileProcessor = client.getFileProcessor();
+
+        fileProcessor.setContactId(10000L);
+        fileProcessor.setDomainName("shixincube.com");
+
+        testSnapshot(fileProcessor);
+
         client.destroy();
     }
 }

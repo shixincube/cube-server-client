@@ -50,6 +50,9 @@ public class FileProcessResult {
         if (FileProcessorAction.OCR.name.equals(this.process)) {
             this.ocrResult = new OCRProcessResult(json);
         }
+        else if (FileProcessorAction.Snapshot.name.equals(this.process)) {
+
+        }
     }
 
     public OCRProcessResult getOCRResult() {
