@@ -28,13 +28,11 @@ package cube.client.file;
 
 import cell.core.talk.dialect.ActionDialect;
 import cell.util.log.Logger;
-import cube.client.Actions;
-import cube.client.Connector;
-import cube.client.Notifier;
-import cube.client.Receiver;
+import cube.client.*;
 import cube.client.listener.FileUploadListener;
 import cube.client.util.*;
 import cube.common.entity.FileLabel;
+import cube.common.entity.ProcessResultStream;
 import cube.common.state.FileProcessorStateCode;
 import cube.common.state.FileStorageStateCode;
 import cube.util.FileType;
@@ -131,6 +129,31 @@ public class FileProcessor {
 
         JSONObject data = result.getParamAsJson("result");
         FileProcessResult processResult = new FileProcessResult(data);
+
+        if (processResult.hasResultStream()) {
+            final ProcessResultStream resultStream = processResult.getResultStream();
+            // 添加监听器
+            this.receiver.setStreamListener(resultStream.streamName, new StreamListener() {
+                @Override
+                public void onCompleted(String streamName, File streamFile) {
+                    synchronized (resultStream) {
+                        resultStream.notify();
+                    }
+                }
+            });
+
+            synchronized (resultStream) {
+                try {
+                    resultStream.wait(10 * 1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            // 移除监听器
+            this.receiver.setStreamListener(resultStream.streamName, null);
+        }
+
         return processResult;
     }
 

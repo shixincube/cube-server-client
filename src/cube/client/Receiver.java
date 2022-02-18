@@ -42,8 +42,16 @@ import cube.common.entity.Group;
 import cube.common.entity.Message;
 import org.json.JSONObject;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * 数据接收器。
@@ -54,9 +62,77 @@ public class Receiver implements TalkListener {
 
     private ConcurrentMap<Long, Notifier> notifiers;
 
+    private Map<String, AtomicLong> receivingStreamMap;
+
+    private ExecutorService executor;
+
+    private Map<String, StreamListener> streamListenerMap;
+
     public Receiver(CubeClient client) {
         this.client = client;
         this.notifiers = new ConcurrentHashMap<>();
+        this.receivingStreamMap = new ConcurrentHashMap<>();
+        this.executor = Executors.newCachedThreadPool();
+        this.streamListenerMap = new ConcurrentHashMap<>();
+    }
+
+    /**
+     * 销毁接收器。
+     */
+    public void destroy() {
+        long start = System.currentTimeMillis();
+        while (!this.receivingStreamMap.isEmpty()) {
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
+            if (System.currentTimeMillis() - start > 30000) {
+                break;
+            }
+        }
+
+        this.executor.shutdown();
+    }
+
+    /**
+     * 指定流名称的文件是否存在。
+     *
+     * @param streamName
+     * @return
+     */
+    public boolean existsStreamFile(String streamName, long size) {
+        File file = new File(this.client.getFilePath(), streamName);
+        return (file.exists() && file.length() == size);
+    }
+
+    /**
+     * 是否正在接收指定的流。
+     *
+     * @param streamName
+     * @return
+     */
+    public boolean isReceiving(String streamName) {
+        return this.receivingStreamMap.containsKey(streamName);
+    }
+
+    /**
+     * 是否正在接收数据。
+     *
+     * @return
+     */
+    public boolean isReceiving() {
+        return !this.receivingStreamMap.isEmpty();
+    }
+
+    public void setStreamListener(String streamName, StreamListener listener) {
+        if (null == listener) {
+            this.streamListenerMap.remove(streamName);
+            return;
+        }
+
+        this.streamListenerMap.put(streamName, listener);
     }
 
     /**
@@ -158,7 +234,50 @@ public class Receiver implements TalkListener {
 
     @Override
     public void onListened(Speakable speakable, String cellet, PrimitiveInputStream primitiveInputStream) {
-        // Nothing
+        // 接收到文件流
+        if (Logger.isDebugLevel()) {
+            Logger.d(this.getClass(), "#onListened - Input Stream : " + cellet + " - " + primitiveInputStream.getName());
+        }
+
+        this.receivingStreamMap.put(primitiveInputStream.getName(), new AtomicLong(System.currentTimeMillis()));
+
+        this.executor.execute(new Runnable() {
+            @Override
+            public void run() {
+                File targetFile = new File(client.getFilePath(), primitiveInputStream.getName());
+
+                FileOutputStream fos = null;
+                byte[] bytes = new byte[4096];
+                int length = 0;
+                try {
+                    fos = new FileOutputStream(targetFile);
+
+                    while (((length = primitiveInputStream.read(bytes)) > 0)) {
+                        fos.write(bytes, 0, length);
+                    }
+
+                    primitiveInputStream.close();
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                } finally {
+                    if (null != fos) {
+                        try {
+                            fos.close();
+                        } catch (IOException e) {
+                        }
+                    }
+                }
+
+                receivingStreamMap.remove(primitiveInputStream.getName());
+
+                StreamListener listener = streamListenerMap.get(primitiveInputStream.getName());
+                if (null != listener) {
+                    listener.onCompleted(primitiveInputStream.getName(), targetFile);
+                }
+            }
+        });
     }
 
     @Override

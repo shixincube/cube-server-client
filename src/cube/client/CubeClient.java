@@ -84,6 +84,8 @@ public final class CubeClient {
 
     protected ConcurrentMap<String, MessageSendEvent> messageSendEventMap;
 
+    protected File filePath;
+
     /**
      * 构造函数。
      *
@@ -105,8 +107,15 @@ public final class CubeClient {
         this.messageReceiveEventMap = new ConcurrentHashMap<>();
         this.messageSendEventMap = new ConcurrentHashMap<>();
 
+        this.filePath = new File("data/");
+        if (!this.filePath.exists()) {
+            this.filePath.mkdirs();
+        }
+
         this.connector = new Connector(address, port);
         this.receiver = new Receiver(this);
+
+        // 关联
         this.connector.setListener(this.receiver);
 
         try {
@@ -135,8 +144,19 @@ public final class CubeClient {
         this.timer.cancel();
         this.timer = null;
 
+        this.receiver.destroy();
+
         this.connector.disconnect();
         this.connector.destroy();
+    }
+
+    /**
+     * 返回文件存储路径。
+     *
+     * @return
+     */
+    public File getFilePath() {
+        return this.filePath;
     }
 
     /**

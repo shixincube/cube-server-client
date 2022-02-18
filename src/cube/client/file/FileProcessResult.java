@@ -28,6 +28,7 @@ package cube.client.file;
 
 import cube.common.action.FileProcessorAction;
 import cube.common.entity.FileLabel;
+import cube.common.entity.ProcessResultStream;
 import cube.util.file.OCRFile;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -44,6 +45,8 @@ public class FileProcessResult {
 
     private OCRProcessResult ocrResult;
 
+    private ProcessResultStream resultStream;
+
     public FileProcessResult(JSONObject json) {
         this.process = json.getString("process");
 
@@ -53,6 +56,18 @@ public class FileProcessResult {
         else if (FileProcessorAction.Snapshot.name.equals(this.process)) {
 
         }
+
+        if (json.has("stream")) {
+            this.resultStream = new ProcessResultStream(json.getJSONObject("stream"));
+        }
+    }
+
+    public boolean hasResultStream() {
+        return (null != this.resultStream);
+    }
+
+    public ProcessResultStream getResultStream() {
+        return this.resultStream;
     }
 
     public OCRProcessResult getOCRResult() {
