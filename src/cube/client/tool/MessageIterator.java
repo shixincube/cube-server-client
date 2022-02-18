@@ -27,10 +27,10 @@
 package cube.client.tool;
 
 import cell.core.talk.dialect.ActionDialect;
-import cube.client.Actions;
 import cube.client.Connector;
 import cube.client.Notifier;
 import cube.client.Receiver;
+import cube.common.action.ClientAction;
 import cube.common.entity.Contact;
 import cube.common.entity.Message;
 import org.json.JSONArray;
@@ -185,7 +185,7 @@ public class MessageIterator implements Iterator<Message> {
 
         this.receiver.inject(notifier);
 
-        ActionDialect actionDialect = new ActionDialect(Actions.QueryMessages.name);
+        ActionDialect actionDialect = new ActionDialect(ClientAction.QueryMessages.name);
         actionDialect.addParam("beginning", this.currentBeginning);
         actionDialect.addParam("ending", this.currentEnding);
         actionDialect.addParam("domain", this.contact.getDomain().getName());

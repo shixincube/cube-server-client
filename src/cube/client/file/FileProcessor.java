@@ -28,9 +28,13 @@ package cube.client.file;
 
 import cell.core.talk.dialect.ActionDialect;
 import cell.util.log.Logger;
-import cube.client.*;
+import cube.client.Connector;
+import cube.client.Notifier;
+import cube.client.Receiver;
+import cube.client.StreamListener;
 import cube.client.listener.FileUploadListener;
 import cube.client.util.*;
+import cube.common.action.ClientAction;
 import cube.common.entity.FileLabel;
 import cube.common.entity.ProcessResultStream;
 import cube.common.state.FileProcessorStateCode;
@@ -75,7 +79,7 @@ public class FileProcessor {
 
         this.receiver.inject(notifier);
 
-        ActionDialect actionDialect = new ActionDialect(Actions.GetFile.name);
+        ActionDialect actionDialect = new ActionDialect(ClientAction.GetFile.name);
         actionDialect.addParam("domain", this.domainName);
         actionDialect.addParam("fileCode", fileCode);
 
@@ -110,7 +114,7 @@ public class FileProcessor {
 
         this.receiver.inject(notifier);
 
-        ActionDialect actionDialect = new ActionDialect(Actions.ProcessFile.name);
+        ActionDialect actionDialect = new ActionDialect(ClientAction.ProcessFile.name);
         actionDialect.addParam("domain", this.domainName);
         actionDialect.addParam("fileCode", fileLabel.getFileCode());
         actionDialect.addParam("process", process.process);
@@ -168,7 +172,7 @@ public class FileProcessor {
 
         this.receiver.inject(notifier);
 
-        ActionDialect actionDialect = new ActionDialect(Actions.FindFile.name);
+        ActionDialect actionDialect = new ActionDialect(ClientAction.FindFile.name);
         actionDialect.addParam("domain", this.domainName);
         actionDialect.addParam("contactId", this.contactId.longValue());
         actionDialect.addParam("fileName", file.getName());
@@ -274,7 +278,7 @@ public class FileProcessor {
 
         this.receiver.inject(notifier);
 
-        ActionDialect actionDialect = new ActionDialect(Actions.PutFile.name);
+        ActionDialect actionDialect = new ActionDialect(ClientAction.PutFile.name);
         actionDialect.addParam("fileLabel", fileLabel.toJSON());
 
         // 阻塞线程，并等待返回结果

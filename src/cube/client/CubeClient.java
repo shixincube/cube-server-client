@@ -37,9 +37,12 @@ import cube.client.listener.ContactListener;
 import cube.client.listener.FileUploadListener;
 import cube.client.listener.MessageReceiveListener;
 import cube.client.listener.MessageSendListener;
-import cube.client.tool.*;
+import cube.client.tool.MessageIterator;
+import cube.client.tool.MessageReceiveEvent;
+import cube.client.tool.MessageSendEvent;
 import cube.client.util.*;
 import cube.common.UniqueKey;
+import cube.common.action.ClientAction;
 import cube.common.action.ContactAction;
 import cube.common.entity.*;
 import cube.common.state.FileStorageStateCode;
@@ -83,6 +86,8 @@ public final class CubeClient {
     private FileProcessor processor;
 
     private Timer timer;
+
+    private Contact pretender;
 
     protected ContactListener contactListener;
 
@@ -258,6 +263,15 @@ public final class CubeClient {
     }
 
     /**
+     * 设置伪装。
+     *
+     * @param pretender
+     */
+    public void pretend(Contact pretender) {
+        
+    }
+
+    /**
      * 获取文件上传器。
      *
      * @return 返回文件上传器。
@@ -296,17 +310,17 @@ public final class CubeClient {
 
         this.contactListener = listener;
 
-        ActionDialect actionDialect = new ActionDialect(Actions.AddEventListener.name);
+        ActionDialect actionDialect = new ActionDialect(ClientAction.AddEventListener.name);
         actionDialect.addParam("id", this.id.longValue());
         actionDialect.addParam("event", Events.SignIn.name);
         this.connector.send(actionDialect);
 
-        actionDialect = new ActionDialect(Actions.AddEventListener.name);
+        actionDialect = new ActionDialect(ClientAction.AddEventListener.name);
         actionDialect.addParam("id", this.id.longValue());
         actionDialect.addParam("event", Events.SignOut.name);
         this.connector.send(actionDialect);
 
-        actionDialect = new ActionDialect(Actions.AddEventListener.name);
+        actionDialect = new ActionDialect(ClientAction.AddEventListener.name);
         actionDialect.addParam("id", this.id.longValue());
         actionDialect.addParam("event", Events.DeviceTimeout.name);
         this.connector.send(actionDialect);
@@ -331,17 +345,17 @@ public final class CubeClient {
 
         this.contactListener = null;
 
-        ActionDialect actionDialect = new ActionDialect(Actions.RemoveEventListener.name);
+        ActionDialect actionDialect = new ActionDialect(ClientAction.RemoveEventListener.name);
         actionDialect.addParam("id", this.id.longValue());
         actionDialect.addParam("event", Events.SignIn.name);
         this.connector.send(actionDialect);
 
-        actionDialect = new ActionDialect(Actions.RemoveEventListener.name);
+        actionDialect = new ActionDialect(ClientAction.RemoveEventListener.name);
         actionDialect.addParam("id", this.id.longValue());
         actionDialect.addParam("event", Events.SignOut.name);
         this.connector.send(actionDialect);
 
-        actionDialect = new ActionDialect(Actions.RemoveEventListener.name);
+        actionDialect = new ActionDialect(ClientAction.RemoveEventListener.name);
         actionDialect.addParam("id", this.id.longValue());
         actionDialect.addParam("event", Events.DeviceTimeout.name);
         this.connector.send(actionDialect);
@@ -370,7 +384,7 @@ public final class CubeClient {
         event = new MessageReceiveEvent(contact, listener);
         this.messageReceiveEventMap.put(contact.getUniqueKey(), event);
 
-        ActionDialect actionDialect = new ActionDialect(Actions.AddEventListener.name);
+        ActionDialect actionDialect = new ActionDialect(ClientAction.AddEventListener.name);
         actionDialect.addParam("id", this.id.longValue());
         actionDialect.addParam("event", Events.ReceiveMessage.name);
 
@@ -400,7 +414,7 @@ public final class CubeClient {
             return false;
         }
 
-        ActionDialect actionDialect = new ActionDialect(Actions.RemoveEventListener.name);
+        ActionDialect actionDialect = new ActionDialect(ClientAction.RemoveEventListener.name);
         actionDialect.addParam("id", this.id.longValue());
         actionDialect.addParam("event", Events.ReceiveMessage.name);
 
@@ -435,7 +449,7 @@ public final class CubeClient {
         event = new MessageReceiveEvent(group, listener);
         this.messageReceiveEventMap.put(group.getUniqueKey(), event);
 
-        ActionDialect actionDialect = new ActionDialect(Actions.AddEventListener.name);
+        ActionDialect actionDialect = new ActionDialect(ClientAction.AddEventListener.name);
         actionDialect.addParam("id", this.id.longValue());
         actionDialect.addParam("event", Events.ReceiveMessage.name);
 
@@ -465,7 +479,7 @@ public final class CubeClient {
             return false;
         }
 
-        ActionDialect actionDialect = new ActionDialect(Actions.RemoveEventListener.name);
+        ActionDialect actionDialect = new ActionDialect(ClientAction.RemoveEventListener.name);
         actionDialect.addParam("id", this.id.longValue());
         actionDialect.addParam("event", Events.ReceiveMessage.name);
 
@@ -500,7 +514,7 @@ public final class CubeClient {
         event = new MessageSendEvent(contact, listener);
         this.messageSendEventMap.put(contact.getUniqueKey(), event);
 
-        ActionDialect actionDialect = new ActionDialect(Actions.AddEventListener.name);
+        ActionDialect actionDialect = new ActionDialect(ClientAction.AddEventListener.name);
         actionDialect.addParam("id", this.id.longValue());
         actionDialect.addParam("event", Events.SendMessage.name);
 
@@ -530,7 +544,7 @@ public final class CubeClient {
             return false;
         }
 
-        ActionDialect actionDialect = new ActionDialect(Actions.RemoveEventListener.name);
+        ActionDialect actionDialect = new ActionDialect(ClientAction.RemoveEventListener.name);
         actionDialect.addParam("id", this.id.longValue());
         actionDialect.addParam("event", Events.SendMessage.name);
 
@@ -561,7 +575,7 @@ public final class CubeClient {
             return false;
         }
 
-        ActionDialect actionDialect = new ActionDialect(Actions.CreateDomainApp.name);
+        ActionDialect actionDialect = new ActionDialect(ClientAction.CreateDomainApp.name);
         actionDialect.addParam("domainName", domainName);
         actionDialect.addParam("appKey", appKey);
         actionDialect.addParam("appId", appId);
@@ -592,7 +606,7 @@ public final class CubeClient {
 
         this.receiver.inject(notifier);
 
-        ActionDialect actionDialect = new ActionDialect(Actions.ApplyToken.name);
+        ActionDialect actionDialect = new ActionDialect(ClientAction.ApplyToken.name);
         actionDialect.addParam("domain", domainName);
         actionDialect.addParam("appKey", appKey);
         actionDialect.addParam("cid", cid.longValue());
@@ -620,7 +634,7 @@ public final class CubeClient {
 
         this.receiver.inject(notifier);
 
-        ActionDialect actionDialect = new ActionDialect(Actions.ListOnlineContacts.name);
+        ActionDialect actionDialect = new ActionDialect(ClientAction.ListOnlineContacts.name);
 
         // 阻塞线程，并等待返回结果
         ActionDialect result = this.connector.send(notifier, actionDialect);
@@ -657,7 +671,7 @@ public final class CubeClient {
 
         this.receiver.inject(notifier);
 
-        ActionDialect actionDialect = new ActionDialect(Actions.CreateContact.name);
+        ActionDialect actionDialect = new ActionDialect(ClientAction.CreateContact.name);
         actionDialect.addParam("domain", domain);
         actionDialect.addParam("id", id.longValue());
         actionDialect.addParam("name", name);
@@ -693,7 +707,7 @@ public final class CubeClient {
 
         this.receiver.inject(notifier);
 
-        ActionDialect actionDialect = new ActionDialect(Actions.UpdateContact.name);
+        ActionDialect actionDialect = new ActionDialect(ClientAction.UpdateContact.name);
         actionDialect.addParam("domain", domain);
         actionDialect.addParam("id", contactId.longValue());
 
@@ -734,7 +748,7 @@ public final class CubeClient {
 
         this.receiver.inject(notifier);
 
-        ActionDialect actionDialect = new ActionDialect(Actions.GetContact.name);
+        ActionDialect actionDialect = new ActionDialect(ClientAction.GetContact.name);
         actionDialect.addParam("domain", domain);
         actionDialect.addParam("contactId", id.longValue());
 
@@ -764,7 +778,7 @@ public final class CubeClient {
 
         this.receiver.inject(notifier);
 
-        ActionDialect actionDialect = new ActionDialect(Actions.GetGroup.name);
+        ActionDialect actionDialect = new ActionDialect(ClientAction.GetGroup.name);
         actionDialect.addParam("domain", domain);
         actionDialect.addParam("groupId", id.longValue());
 
@@ -789,7 +803,7 @@ public final class CubeClient {
      * @return
      */
     public ContactZone addParticipantToZoneByForce(Contact contact, String zoneName, Contact participant) {
-        ActionDialect actionDialect = new ActionDialect(Actions.ModifyContactZone.name);
+        ActionDialect actionDialect = new ActionDialect(ClientAction.ModifyContactZone.name);
         actionDialect.addParam("domain", contact.getDomain().getName());
         actionDialect.addParam("contactId", contact.getId());
         actionDialect.addParam("zoneName", zoneName);
@@ -812,6 +826,7 @@ public final class CubeClient {
     }
 
     public ContactZone removeParticipantFromZoneByForce(Contact contact, String zoneName, Contact participant) {
+        // TODO
         return null;
     }
 
@@ -826,7 +841,7 @@ public final class CubeClient {
      */
     public ContactZoneParticipant modifyParticipantByForce(Contact contact, String zoneName, Contact participant,
                                                            ContactZoneParticipantState state) {
-        ActionDialect actionDialect = new ActionDialect(Actions.ModifyContactZone.name);
+        ActionDialect actionDialect = new ActionDialect(ClientAction.ModifyContactZone.name);
         actionDialect.addParam("domain", contact.getDomain().getName());
         actionDialect.addParam("contactId", contact.getId());
         actionDialect.addParam("zoneName", zoneName);
@@ -1045,7 +1060,7 @@ public final class CubeClient {
 
         this.receiver.inject(notifier);
 
-        ActionDialect actionDialect = new ActionDialect(Actions.PushMessage.name);
+        ActionDialect actionDialect = new ActionDialect(ClientAction.PushMessage.name);
         actionDialect.addParam("message", message.toJSON());
         actionDialect.addParam("pretender", pretender.toCompactJSON());
         actionDialect.addParam("device", device.toCompactJSON());
@@ -1073,7 +1088,7 @@ public final class CubeClient {
 
         this.receiver.inject(notifier);
 
-        ActionDialect actionDialect = new ActionDialect(Actions.GetFile.name);
+        ActionDialect actionDialect = new ActionDialect(ClientAction.GetFile.name);
         actionDialect.addParam("domain", domain);
         actionDialect.addParam("fileCode", fileCode);
 
@@ -1114,7 +1129,7 @@ public final class CubeClient {
 
         this.receiver.inject(notifier);
 
-        ActionDialect actionDialect = new ActionDialect(Actions.PutFile.name);
+        ActionDialect actionDialect = new ActionDialect(ClientAction.PutFile.name);
         actionDialect.addParam("fileLabel", fileLabel.toJSON());
 
         // 阻塞线程，并等待返回结果
@@ -1173,7 +1188,7 @@ public final class CubeClient {
         data.put("from", sender.getId().longValue());
         data.put("list", idList);
 
-        ActionDialect actionDialect = new ActionDialect(Actions.MarkReadMessages.name);
+        ActionDialect actionDialect = new ActionDialect(ClientAction.MarkReadMessages.name);
         actionDialect.addParam("domain", receiver.getDomain().getName());
         actionDialect.addParam("data", data);
 

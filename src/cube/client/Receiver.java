@@ -36,6 +36,7 @@ import cell.core.talk.dialect.DialectFactory;
 import cell.util.log.Logger;
 import cube.client.listener.MessageReceiveListener;
 import cube.client.listener.MessageSendListener;
+import cube.common.action.ClientAction;
 import cube.common.entity.Contact;
 import cube.common.entity.Device;
 import cube.common.entity.Group;
@@ -155,7 +156,7 @@ public class Receiver implements TalkListener {
             else {
                 String action = actionDialect.getName();
 
-                if (Actions.NotifyEvent.name.equals(action)) {
+                if (ClientAction.NotifyEvent.name.equals(action)) {
                     this.processNotifyEvent(actionDialect);
                 }
                 else {
@@ -300,7 +301,7 @@ public class Receiver implements TalkListener {
 
     @Override
     public void onContacted(Speakable speakable) {
-        ActionDialect actionDialect = new ActionDialect(Actions.LOGIN.name);
+        ActionDialect actionDialect = new ActionDialect(ClientAction.LOGIN.name);
         actionDialect.addParam("id", this.client.getId().longValue());
         actionDialect.addParam("name", this.client.getName());
         actionDialect.addParam("password", this.client.getPassword());
