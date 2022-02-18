@@ -245,6 +245,9 @@ public class Receiver implements TalkListener {
             @Override
             public void run() {
                 File targetFile = new File(client.getFilePath(), primitiveInputStream.getName());
+                if (targetFile.exists()) {
+                    targetFile.delete();
+                }
 
                 FileOutputStream fos = null;
                 byte[] bytes = new byte[4096];
@@ -299,12 +302,14 @@ public class Receiver implements TalkListener {
     public void onContacted(Speakable speakable) {
         ActionDialect actionDialect = new ActionDialect(Actions.LOGIN.name);
         actionDialect.addParam("id", this.client.getId().longValue());
+        actionDialect.addParam("name", this.client.getName());
+        actionDialect.addParam("password", this.client.getPassword());
         speakable.speak(CubeClient.NAME, actionDialect);
     }
 
     @Override
     public void onQuitted(Speakable speakable) {
-        // Nothing
+        this.client.interrupt();
     }
 
     @Override

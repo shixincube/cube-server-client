@@ -42,18 +42,25 @@ public class TestAuthToken {
 
     public static void main(String[] args) {
 
-        CubeClient client = new CubeClient("127.0.0.1");
+        CubeClient client = new CubeClient("127.0.0.1", "admin", "shixincube.com");
 
-        Helper.sleepInSeconds(2);
+        if (!client.waitReady()) {
+            return;
+        }
 
         System.out.println("[TestAuthToken] apply token");
 
         AuthToken token = client.applyToken("shixincube.com", "shixin-cubeteam-opensource-appkey",
-                1000L, 7L * 24L * 60L * 60L * 1000L);
+                10000L, 7L * 24L * 60L * 60L * 1000L);
 
         System.out.println("[TestAuthToken] token : " + token.getCode());
 
-        TokenTools.saveAuthToken(token, "mytoken.json");
+        TokenTools.saveAuthToken(token, "data/mytoken.json");
+
+        // 加载
+        AuthToken tokenFromFile = TokenTools.loadAuthToken("data/mytoken.json");
+
+        System.out.println("[TestAuthToken] token : " + tokenFromFile.getCode());
 
         System.out.println("*** END ***");
         client.destroy();

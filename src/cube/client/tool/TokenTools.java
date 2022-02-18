@@ -27,6 +27,7 @@
 package cube.client.tool;
 
 import cube.auth.AuthToken;
+import org.json.JSONObject;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -61,5 +62,26 @@ public final class TokenTools {
         }
 
         return Files.exists(file);
+    }
+
+    /**
+     * 从令牌数据文件里读取令牌。
+     *
+     * @param file
+     * @return
+     */
+    public final static AuthToken loadAuthToken(String file) {
+        AuthToken authToken = null;
+
+        try {
+            byte[] data = Files.readAllBytes(Paths.get(file));
+            String jsonString = new String(data, Charset.forName("UTF-8"));
+            JSONObject json = new JSONObject(jsonString);
+            authToken = new AuthToken(json);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return authToken;
     }
 }

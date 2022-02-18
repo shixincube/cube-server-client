@@ -37,7 +37,7 @@ public class TestSimulator {
 
     public static void main(String[] args) {
 
-        CubeClient client = new CubeClient("127.0.0.1");
+        CubeClient client = new CubeClient("127.0.0.1", "admin", "shixincube.com");
 
         Contact self = new Contact(50001001L, "shixincube.com", "Self");
         Contact partner = new Contact(11444455L, "shixincube.com", "Partner");

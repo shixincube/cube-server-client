@@ -50,6 +50,8 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.File;
+import java.nio.charset.Charset;
+import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Timer;
@@ -65,6 +67,10 @@ public final class CubeClient {
     public final static String VERSION = "1.0.0";
 
     public final static String NAME = "Client";
+
+    private String name;
+
+    private String password;
 
     private Long id;
 
@@ -91,8 +97,8 @@ public final class CubeClient {
      *
      * @param address 服务器地址。
      */
-    public CubeClient(String address) {
-        this(address, 6000);
+    public CubeClient(String address, String name, String password) {
+        this(address, 6000, name, password);
     }
 
     /**
@@ -101,8 +107,18 @@ public final class CubeClient {
      * @param address 服务器地址。
      * @param port 服务器端口。
      */
-    public CubeClient(String address, int port) {
+    public CubeClient(String address, int port, String name, String password) {
         this.id = Utils.generateSerialNumber();
+        this.name = name;
+
+        try {
+            MessageDigest md5 = MessageDigest.getInstance("MD5");
+            md5.update(password.getBytes(Charset.forName("UTF-8")));
+            byte[] hashMD5 = md5.digest();
+            this.password = FileUtils.bytesToHexString(hashMD5).toLowerCase();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
         this.messageReceiveEventMap = new ConcurrentHashMap<>();
         this.messageSendEventMap = new ConcurrentHashMap<>();
@@ -138,16 +154,54 @@ public final class CubeClient {
     }
 
     /**
+     * 获取客户端登录名。
+     *
+     * @return 返回客户端登录名。
+     */
+    public String getName() {
+        return this.name;
+    }
+
+    /**
+     * 获取登录密码的 HASH 码。
+     *
+     * @return 返回登录密码的 HASH 码。
+     */
+    public String getPassword() {
+        return this.password;
+    }
+
+    /**
      * 销毁客户端。
      */
-    public void destroy() {
-        this.timer.cancel();
-        this.timer = null;
+    public synchronized void destroy() {
+        if (null != this.timer) {
+            this.timer.cancel();
+            this.timer = null;
+        }
 
-        this.receiver.destroy();
+        if (null != this.receiver) {
+            this.receiver.destroy();
+            this.receiver = null;
+        }
 
-        this.connector.disconnect();
-        this.connector.destroy();
+        if (null != this.connector) {
+            this.connector.disconnect();
+            this.connector.destroy();
+            this.connector = null;
+        }
+    }
+
+    /**
+     * 中断客户端。
+     */
+    public void interrupt() {
+        (new Thread() {
+            @Override
+            public void run() {
+                CubeClient.this.destroy();
+            }
+        }).start();
     }
 
     /**
@@ -174,11 +228,13 @@ public final class CubeClient {
      * @return
      */
     public boolean waitReady() {
+        Logger.d(this.getClass(), "Waiting client ready");
+
         boolean result = true;
 
         long time = System.currentTimeMillis();
 
-        while (!this.connector.isConnected()) {
+        while (null != this.connector && !this.connector.isConnected()) {
             try {
                 Thread.sleep(500);
             } catch (InterruptedException e) {
@@ -190,6 +246,13 @@ public final class CubeClient {
                 break;
             }
         }
+
+        if (null == this.connector) {
+            Logger.d(this.getClass(), "Interrupted");
+            return false;
+        }
+
+        Logger.d(this.getClass(), "Ready state : " + result);
 
         return result;
     }

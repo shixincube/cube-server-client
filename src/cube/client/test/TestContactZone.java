@@ -73,7 +73,7 @@ public class TestContactZone {
 
     public static void main(String[] args) {
 
-        CubeClient client = new CubeClient("127.0.0.1");
+        CubeClient client = new CubeClient("127.0.0.1", "admin", "shixincube.com");
 
         Helper.sleepInSeconds(3);
 
