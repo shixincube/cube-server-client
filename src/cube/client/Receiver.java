@@ -145,6 +145,17 @@ public class Receiver implements TalkListener {
         this.notifiers.put(notifier.sn, notifier);
     }
 
+    /**
+     * 注入并返回通知器。
+     *
+     * @return
+     */
+    public Notifier inject() {
+        Notifier notifier = new Notifier();
+        this.notifiers.put(notifier.sn, notifier);
+        return notifier;
+    }
+
     @Override
     public void onListened(Speakable speakable, String cellet, Primitive primitive) {
         if (CubeClient.NAME.equals(cellet)) {

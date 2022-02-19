@@ -45,6 +45,7 @@ import cube.common.UniqueKey;
 import cube.common.action.ClientAction;
 import cube.common.action.ContactAction;
 import cube.common.entity.*;
+import cube.common.state.AuthStateCode;
 import cube.common.state.FileStorageStateCode;
 import cube.common.state.MessagingStateCode;
 import cube.util.FileType;
@@ -268,7 +269,7 @@ public final class CubeClient {
      * @param pretender
      */
     public void pretend(Contact pretender) {
-        
+        this.pretender = pretender;
     }
 
     /**
@@ -602,9 +603,7 @@ public final class CubeClient {
             return null;
         }
 
-        Notifier notifier = new Notifier();
-
-        this.receiver.inject(notifier);
+        Notifier notifier = this.receiver.inject();
 
         ActionDialect actionDialect = new ActionDialect(ClientAction.ApplyToken.name);
         actionDialect.addParam("domain", domainName);
@@ -617,6 +616,31 @@ public final class CubeClient {
         JSONObject tokenJson = result.getParamAsJson("token");
         AuthToken token = new AuthToken(tokenJson);
 
+        return token;
+    }
+
+    /**
+     * 获取指定联系人的令牌。
+     *
+     * @param contactId
+     * @return
+     */
+    public AuthToken getAuthToken(Long contactId) {
+        if (!this.connector.isConnected()) {
+            return null;
+        }
+
+        Notifier notifier = this.receiver.inject();
+        ActionDialect actionDialect = new ActionDialect(ClientAction.GetAuthToken.name);
+        actionDialect.addParam("contactId", contactId);
+
+        // 发送请求并等待结果
+        ActionDialect result = this.connector.send(notifier, actionDialect);
+        if (result.getParamAsInt("code") != AuthStateCode.Ok.code) {
+            return null;
+        }
+
+        AuthToken token = new AuthToken(result.getParamAsJson("token"));
         return token;
     }
 
