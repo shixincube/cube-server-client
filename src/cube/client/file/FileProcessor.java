@@ -74,10 +74,14 @@ public class FileProcessor {
         this.domainName = domainName;
     }
 
+    /**
+     * 获取文件标签。
+     *
+     * @param fileCode
+     * @return
+     */
     public FileLabel getFileLabel(String fileCode) {
-        Notifier notifier = new Notifier();
-
-        this.receiver.inject(notifier);
+        Notifier notifier = this.receiver.inject();
 
         ActionDialect actionDialect = new ActionDialect(ClientAction.GetFile.name);
         actionDialect.addParam("domain", this.domainName);
@@ -94,6 +98,10 @@ public class FileProcessor {
 
         JSONObject data = result.getParamAsJson("fileLabel");
         return new FileLabel(data);
+    }
+
+    public String getMediaSource(String fileCode) {
+        return null;
     }
 
     /**

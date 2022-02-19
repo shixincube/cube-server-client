@@ -273,6 +273,15 @@ public final class CubeClient {
     }
 
     /**
+     * 获取当前伪装的联系人。
+     *
+     * @return
+     */
+    public Contact getPretender() {
+        return this.pretender;
+    }
+
+    /**
      * 获取文件上传器。
      *
      * @return 返回文件上传器。
