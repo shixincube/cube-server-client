@@ -45,10 +45,7 @@ import cube.util.FileType;
 import cube.util.FileUtils;
 import org.json.JSONObject;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -193,6 +190,86 @@ public class FileProcessor {
     }
 
     /**
+     * 为指定的文件准备 M3U8 流文件。
+     *
+     * @param fileCode
+     * @param dispatcherHttpAddress
+     * @return
+     */
+    public String prepareM3U8(String fileCode, String dispatcherHttpAddress) {
+        FileLabel fileLabel = this.getFileLabel(fileCode);
+        if (null == fileLabel) {
+            Logger.w(FileProcessor.class, "#prepareM3U8 - No file label : " + fileCode);
+            return null;
+        }
+
+        String sourceURL = this.getMediaSource(dispatcherHttpAddress, fileLabel.getFileCode());
+        if (null == sourceURL) {
+            Logger.w(FileProcessor.class, "#prepareM3U8 - Can NOT gets media source : " + fileLabel.getFileCode());
+            return null;
+        }
+
+        // 获取令牌
+        AuthToken authToken = TokenTools.getAuthToken(this.connector, this.receiver, this.contactId);
+
+        StringBuilder buf = new StringBuilder(sourceURL);
+        buf.append("?t=");
+        buf.append(authToken.getCode());
+        sourceURL = buf.toString();
+
+        HttpURLConnection connection = null;
+        BufferedReader reader = null;
+        boolean success = false;
+
+        long time = System.currentTimeMillis();
+
+        // 访问 M3U8 文件
+        try {
+            URL url = new URL(sourceURL);
+            connection = (HttpURLConnection) url.openConnection();
+            connection.setRequestProperty("Charset", "UTF-8");
+            connection.setRequestProperty("Connection", "keep-alive");
+            connection.setDoOutput(false);
+            connection.setDoInput(true);
+            connection.setUseCaches(true);
+            connection.setRequestMethod("GET");
+            connection.setConnectTimeout(5000);
+            // 连接
+            connection.connect();
+            int code = connection.getResponseCode();
+            if (code == HttpURLConnection.HTTP_OK) {
+                success = true;
+
+                reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+                String line = null;
+                while ((line = reader.readLine()) != null) {
+                    Logger.d(FileProcessor.class, "[M3U8] " + line);
+                }
+            }
+            else {
+                Logger.w(FileProcessor.class, "#prepareM3U8 - Request failed : " + code);
+            }
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            if (null != reader) {
+                try {
+                    reader.close();
+                } catch (IOException e) {
+                }
+            }
+
+            connection.disconnect();
+        }
+
+        Logger.d(FileProcessor.class, "#prepareM3U8 - Elapsed : " + (System.currentTimeMillis() - time));
+
+        return success ? sourceURL : null;
+    }
+
+    /**
      * 对指定文件进行操作。
      *
      * @param process
@@ -206,9 +283,7 @@ public class FileProcessor {
             return null;
         }
 
-        Notifier notifier = new Notifier();
-
-        this.receiver.inject(notifier);
+        Notifier notifier = this.receiver.inject();
 
         ActionDialect actionDialect = new ActionDialect(ClientAction.ProcessFile.name);
         actionDialect.addParam("domain", this.domainName);

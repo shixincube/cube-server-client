@@ -48,12 +48,12 @@ public class TestFileProcessor {
         if (null != fileLabel) {
             System.out.println("Find file: " + file.getName() + " - " + fileLabel.getFileCode());
 
-            String url = fileProcessor.getMediaSource("http://127.0.0.1:7010", fileLabel.getFileCode());
+            String url = fileProcessor.prepareM3U8(fileLabel.getFileCode(), "http://127.0.0.1:7010");
             if (null != url) {
                 System.out.println("URL : " + url);
             }
             else {
-                System.out.println("No media source: " + file.getName());
+                System.out.println("Can NOT create M3U8 : " + file.getName());
             }
         }
         else {

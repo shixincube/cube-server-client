@@ -41,11 +41,14 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 令牌工具。
  */
 public final class TokenTools {
+
+    private final static ConcurrentHashMap<Long, AuthToken> sContactTokenMap = new ConcurrentHashMap<>();
 
     private TokenTools() {
     }
@@ -100,6 +103,11 @@ public final class TokenTools {
      * @return
      */
     public static AuthToken getAuthToken(Connector connector, Receiver receiver, Long contactId) {
+        AuthToken token = sContactTokenMap.get(contactId);
+        if (null != token) {
+            return token;
+        }
+
         if (!connector.isConnected()) {
             return null;
         }
@@ -114,7 +122,7 @@ public final class TokenTools {
             return null;
         }
 
-        AuthToken token = new AuthToken(result.getParamAsJson("token"));
+        token = new AuthToken(result.getParamAsJson("token"));
         return token;
     }
 }
