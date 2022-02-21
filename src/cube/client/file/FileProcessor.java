@@ -28,11 +28,13 @@ package cube.client.file;
 
 import cell.core.talk.dialect.ActionDialect;
 import cell.util.log.Logger;
+import cube.auth.AuthToken;
 import cube.client.Connector;
 import cube.client.Notifier;
 import cube.client.Receiver;
 import cube.client.StreamListener;
 import cube.client.listener.FileUploadListener;
+import cube.client.tool.TokenTools;
 import cube.client.util.*;
 import cube.common.action.ClientAction;
 import cube.common.entity.FileLabel;
@@ -43,7 +45,13 @@ import cube.util.FileType;
 import cube.util.FileUtils;
 import org.json.JSONObject;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
 
 /**
  * 文件处理器。
@@ -100,7 +108,87 @@ public class FileProcessor {
         return new FileLabel(data);
     }
 
-    public String getMediaSource(String fileCode) {
+    public FileLabel getFileLabel(File file) {
+        Notifier notifier = this.receiver.inject();
+
+        ActionDialect actionDialect = new ActionDialect(ClientAction.FindFile.name);
+        actionDialect.addParam("domain", this.domainName);
+        actionDialect.addParam("contactId", this.contactId.longValue());
+        actionDialect.addParam("fileName", file.getName());
+        actionDialect.addParam("fileSize", file.length());
+        actionDialect.addParam("lastModified", file.lastModified());
+
+        ActionDialect result = this.connector.send(notifier, actionDialect);
+        if (result.getParamAsInt("code") == FileStorageStateCode.Ok.code) {
+            return new FileLabel(result.getParamAsJson("fileLabel"));
+        }
+
+        return null;
+    }
+
+    /**
+     *
+     * @param dispatcherHttpAddress
+     * @param fileCode
+     * @return
+     */
+    public String getMediaSource(String dispatcherHttpAddress, String fileCode) {
+        AuthToken authToken = TokenTools.getAuthToken(this.connector, this.receiver, this.contactId);
+        if (null == authToken) {
+            return null;
+        }
+
+        StringBuilder buf = new StringBuilder(dispatcherHttpAddress);
+        buf.append("/file/source/");
+        buf.append("?t=");
+        buf.append(authToken.getCode());
+        buf.append("&fc=");
+        buf.append(fileCode);
+
+        BufferedReader reader = null;
+
+        try {
+            URL url = new URL(buf.toString());
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            connection.setRequestProperty("Charset", "UTF-8");
+            connection.setRequestProperty("Content-Type", "application/json");
+            connection.setDoOutput(false);
+            connection.setDoInput(true);
+            connection.setUseCaches(true);
+            connection.setRequestMethod("GET");
+            connection.setConnectTimeout(5000);
+            // 连接
+            connection.connect();
+            int code = connection.getResponseCode();
+            if (code == HttpURLConnection.HTTP_OK) {
+                buf.delete(0, buf.length());
+
+                reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+                String line = null;
+                while ((line = reader.readLine()) != null) {
+                    buf.append(line);
+                }
+            }
+
+            connection.disconnect();
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            if (null != reader) {
+                try {
+                    reader.close();
+                } catch (IOException e) {
+                }
+            }
+        }
+
+        if (buf.length() > 3) {
+            JSONObject result = new JSONObject(buf.toString());
+            return result.getString("url");
+        }
+
         return null;
     }
 
@@ -176,9 +264,7 @@ public class FileProcessor {
      * @return
      */
     private FileLabel checkAndGet(File file) {
-        Notifier notifier = new Notifier();
-
-        this.receiver.inject(notifier);
+        Notifier notifier = this.receiver.inject();
 
         ActionDialect actionDialect = new ActionDialect(ClientAction.FindFile.name);
         actionDialect.addParam("domain", this.domainName);

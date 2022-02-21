@@ -40,6 +40,7 @@ import cube.client.listener.MessageSendListener;
 import cube.client.tool.MessageIterator;
 import cube.client.tool.MessageReceiveEvent;
 import cube.client.tool.MessageSendEvent;
+import cube.client.tool.TokenTools;
 import cube.client.util.*;
 import cube.common.UniqueKey;
 import cube.common.action.ClientAction;
@@ -302,6 +303,11 @@ public final class CubeClient {
     public FileProcessor getFileProcessor() {
         if (null == this.processor) {
             this.processor = new FileProcessor(this.connector, this.receiver);
+        }
+
+        if (null != this.pretender) {
+            this.processor.setContactId(this.pretender.getId());
+            this.processor.setDomainName(this.pretender.getDomain().getName());
         }
 
         return this.processor;
@@ -635,22 +641,7 @@ public final class CubeClient {
      * @return
      */
     public AuthToken getAuthToken(Long contactId) {
-        if (!this.connector.isConnected()) {
-            return null;
-        }
-
-        Notifier notifier = this.receiver.inject();
-        ActionDialect actionDialect = new ActionDialect(ClientAction.GetAuthToken.name);
-        actionDialect.addParam("contactId", contactId);
-
-        // 发送请求并等待结果
-        ActionDialect result = this.connector.send(notifier, actionDialect);
-        if (result.getParamAsInt("code") != AuthStateCode.Ok.code) {
-            return null;
-        }
-
-        AuthToken token = new AuthToken(result.getParamAsJson("token"));
-        return token;
+        return TokenTools.getAuthToken(this.connector, this.receiver, contactId);
     }
 
     /**

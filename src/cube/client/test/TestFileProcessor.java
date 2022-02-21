@@ -30,6 +30,8 @@ import cube.client.CubeClient;
 import cube.client.file.FileProcessResult;
 import cube.client.file.FileProcessor;
 import cube.client.file.FileOperation;
+import cube.common.entity.Contact;
+import cube.common.entity.FileLabel;
 
 import java.io.File;
 
@@ -37,6 +39,29 @@ import java.io.File;
  * 测试文件处理器。
  */
 public class TestFileProcessor {
+
+    public static void testFileLabel(FileProcessor fileProcessor) {
+        System.out.println("*** START ***");
+
+        File file = new File("data/video.mp4");
+        FileLabel fileLabel = fileProcessor.getFileLabel(file);
+        if (null != fileLabel) {
+            System.out.println("Find file: " + file.getName() + " - " + fileLabel.getFileCode());
+
+            String url = fileProcessor.getMediaSource("http://127.0.0.1:7010", fileLabel.getFileCode());
+            if (null != url) {
+                System.out.println("URL : " + url);
+            }
+            else {
+                System.out.println("No media source: " + file.getName());
+            }
+        }
+        else {
+            System.out.println("Not find file: " + file.getName());
+        }
+
+        System.out.println("*** END ***");
+    }
 
     public static void testORC(FileProcessor fileProcessor) {
         System.out.println("*** START OCR ***");
@@ -68,12 +93,12 @@ public class TestFileProcessor {
             return;
         }
 
+        Contact contact = new Contact(10000, "shixincube.com");
+        client.pretend(contact);
+
         FileProcessor fileProcessor = client.getFileProcessor();
 
-        fileProcessor.setContactId(10000L);
-        fileProcessor.setDomainName("shixincube.com");
-
-        testSnapshot(fileProcessor);
+        testFileLabel(fileProcessor);
 
         client.destroy();
     }
