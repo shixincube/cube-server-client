@@ -49,6 +49,7 @@ import cube.common.entity.*;
 import cube.common.state.AuthStateCode;
 import cube.common.state.FileStorageStateCode;
 import cube.common.state.MessagingStateCode;
+import cube.report.LogLine;
 import cube.util.FileType;
 import cube.util.FileUtils;
 import org.json.JSONArray;
@@ -280,6 +281,15 @@ public final class CubeClient {
      */
     public Contact getPretender() {
         return this.pretender;
+    }
+
+    /**
+     * 获取服务器日志。
+     *
+     * @return
+     */
+    public List<LogLine> getServerLogs() {
+        return null;
     }
 
     /**
@@ -654,9 +664,7 @@ public final class CubeClient {
             return new ArrayList<>();
         }
 
-        Notifier notifier = new Notifier();
-
-        this.receiver.inject(notifier);
+        Notifier notifier = this.receiver.inject();
 
         ActionDialect actionDialect = new ActionDialect(ClientAction.ListOnlineContacts.name);
 
