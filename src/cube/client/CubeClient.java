@@ -289,7 +289,23 @@ public final class CubeClient {
      * @return
      */
     public List<LogLine> getServerLogs() {
-        return null;
+        ActionDialect actionDialect = new ActionDialect(ClientAction.GetLog.name);
+        actionDialect.addParam("limit", 100);
+
+        ActionDialect response = this.connector.send(this.receiver.inject(), actionDialect);
+        if (response.getParamAsInt("code") != AuthStateCode.Ok.code) {
+            Logger.w(this.getClass(), "#getServerLogs - State error : " + response.getParamAsInt("code"));
+            return null;
+        }
+
+        JSONObject data = response.getParamAsJson("data");
+        JSONArray list = data.getJSONArray("logs");
+
+        ArrayList<LogLine> logLines = new ArrayList<>(list.length());
+        for (int i = 0; i < list.length(); ++i) {
+            logLines.add(new LogLine(list.getJSONObject(i)));
+        }
+        return logLines;
     }
 
     /**
