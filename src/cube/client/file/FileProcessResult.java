@@ -29,7 +29,9 @@ package cube.client.file;
 import cube.common.action.FileProcessorAction;
 import cube.common.entity.FileLabel;
 import cube.common.entity.ProcessResultStream;
-import cube.util.file.OCRFile;
+import cube.file.EliminateColorOperation;
+import cube.file.ImageOperation;
+import cube.file.OCRFile;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -43,6 +45,8 @@ public class FileProcessResult {
 
     public final String process;
 
+    private ImageProcessResult imageResult;
+
     private OCRProcessResult ocrResult;
 
     private ProcessResultStream resultStream;
@@ -50,7 +54,10 @@ public class FileProcessResult {
     public FileProcessResult(JSONObject json) {
         this.process = json.getString("process");
 
-        if (FileProcessorAction.OCR.name.equals(this.process)) {
+        if (FileProcessorAction.Image.name.equals(this.process)) {
+            this.imageResult = new ImageProcessResult(json);
+        }
+        else if (FileProcessorAction.OCR.name.equals(this.process)) {
             this.ocrResult = new OCRProcessResult(json);
         }
         else if (FileProcessorAction.Snapshot.name.equals(this.process)) {
@@ -70,9 +77,46 @@ public class FileProcessResult {
         return this.resultStream;
     }
 
+    public ImageProcessResult getImageResult() {
+        return this.imageResult;
+    }
+
     public OCRProcessResult getOCRResult() {
         return this.ocrResult;
     }
+
+    /**
+     *
+     */
+    public class ImageProcessResult {
+
+        public final boolean successful;
+
+        private FileLabel inputFileLabel;
+
+        private ImageOperation operation;
+
+        public ImageProcessResult(JSONObject json) {
+            this.successful = json.getBoolean("success");
+
+            this.inputFileLabel = new FileLabel(json.getJSONObject("input"));
+
+            String operation = json.getJSONObject("operation").getString("operation");
+            if (EliminateColorOperation.Operation.equals(operation)) {
+                this.operation = new EliminateColorOperation(json.getJSONObject("operation"));
+            }
+        }
+
+        public ImageOperation getOperation() {
+            return this.operation;
+        }
+
+        public FileLabel getInputFileLabel() {
+            return this.inputFileLabel;
+        }
+    }
+
+
 
     /**
      *

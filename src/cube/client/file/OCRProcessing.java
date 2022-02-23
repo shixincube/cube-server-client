@@ -39,7 +39,7 @@ public class OCRProcessing extends FileProcessing {
     }
 
     @Override
-    public JSONObject getParams() {
+    public JSONObject getParameter() {
         return null;
     }
 }

@@ -43,7 +43,7 @@ public class ImageProcessing extends FileProcessing {
     }
 
     @Override
-    public JSONObject getParams() {
+    public JSONObject getParameter() {
         return this.operation.toJSON();
     }
 }

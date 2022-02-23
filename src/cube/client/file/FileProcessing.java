@@ -39,5 +39,5 @@ public abstract class FileProcessing {
         this.process = operation;
     }
 
-    public abstract JSONObject getParams();
+    public abstract JSONObject getParameter();
 }

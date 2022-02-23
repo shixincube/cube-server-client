@@ -27,9 +27,14 @@
 package cube.client.test;
 
 import cube.client.CubeClient;
+import cube.client.file.FileProcessResult;
 import cube.client.file.FileProcessor;
+import cube.client.file.ImageProcessing;
 import cube.common.entity.Contact;
 import cube.file.EliminateColorOperation;
+import cube.vision.Color;
+
+import java.io.File;
 
 /**
  * 图像操作测试。
@@ -37,7 +42,23 @@ import cube.file.EliminateColorOperation;
 public class TestImageProcessor {
 
     public static void testEliminateColor(FileProcessor fileProcessor) {
-        EliminateColorOperation operation = new EliminateColorOperation();
+        System.out.println("*** START testEliminateColor ***");
+
+        EliminateColorOperation operation = new EliminateColorOperation(new Color("#FFFFFF"), new Color("#000000"));
+        ImageProcessing processing = new ImageProcessing(operation);
+
+        FileProcessResult result = fileProcessor.call(processing, new File("data/sc.jpg"));
+        FileProcessResult.ImageProcessResult imageProcessResult = result.getImageResult();
+
+        if (imageProcessResult.successful) {
+            System.out.println("Successful");
+            System.out.println("File: " + imageProcessResult.getInputFileLabel().getFileName());
+        }
+        else {
+            System.out.println("Failed");
+        }
+
+        System.out.println("*** END testEliminateColor ***");
     }
 
     public static void main(String[] args) {

@@ -290,9 +290,9 @@ public class FileProcessor {
         actionDialect.addParam("fileCode", fileLabel.getFileCode());
         actionDialect.addParam("process", fileProcessing.process);
 
-        JSONObject params = fileProcessing.getParams();
-        if (null != params) {
-            actionDialect.addParam("params", params);
+        JSONObject parameter = fileProcessing.getParameter();
+        if (null != parameter) {
+            actionDialect.addParam("parameter", parameter);
         }
 
         ActionDialect result = this.connector.send(notifier, actionDialect);
