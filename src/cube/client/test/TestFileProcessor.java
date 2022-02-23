@@ -27,9 +27,7 @@
 package cube.client.test;
 
 import cube.client.CubeClient;
-import cube.client.file.FileProcessResult;
-import cube.client.file.FileProcessor;
-import cube.client.file.FileOperation;
+import cube.client.file.*;
 import cube.common.entity.Contact;
 import cube.common.entity.FileLabel;
 
@@ -66,7 +64,7 @@ public class TestFileProcessor {
     public static void testORC(FileProcessor fileProcessor) {
         System.out.println("*** START OCR ***");
 
-        FileProcessResult result = fileProcessor.call(FileOperation.OCR, new File("data/screenshot_shixincube.jpg"));
+        FileProcessResult result = fileProcessor.call(new OCRProcessing(), new File("data/screenshot_shixincube.jpg"));
         FileProcessResult.OCRProcessResult ocrResult = result.getOCRResult();
 
         for (String text : ocrResult.getResultText()) {
@@ -79,7 +77,7 @@ public class TestFileProcessor {
     public static void testSnapshot(FileProcessor fileProcessor) {
         System.out.println("*** START Snapshot ***");
 
-        FileProcessResult result = fileProcessor.call(FileOperation.Snapshot, new File("data/video.mp4"));
+        FileProcessResult result = fileProcessor.call(new SnapshotVideoProcessing(), new File("data/video.mp4"));
 
         System.out.println("*** END ***");
     }

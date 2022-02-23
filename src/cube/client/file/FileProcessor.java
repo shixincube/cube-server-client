@@ -272,11 +272,11 @@ public class FileProcessor {
     /**
      * 对指定文件进行操作。
      *
-     * @param process
+     * @param fileProcessing
      * @param file
      * @return
      */
-    public FileProcessResult call(FileOperation process, File file) {
+    public FileProcessResult call(FileProcessing fileProcessing, File file) {
         FileLabel fileLabel = this.checkAndGet(file);
         if (null == fileLabel) {
             Logger.i(FileProcessor.class, "#call - Can NOT get file : " + file.getName());
@@ -288,7 +288,12 @@ public class FileProcessor {
         ActionDialect actionDialect = new ActionDialect(ClientAction.ProcessFile.name);
         actionDialect.addParam("domain", this.domainName);
         actionDialect.addParam("fileCode", fileLabel.getFileCode());
-        actionDialect.addParam("process", process.process);
+        actionDialect.addParam("process", fileProcessing.process);
+
+        JSONObject params = fileProcessing.getParams();
+        if (null != params) {
+            actionDialect.addParam("params", params);
+        }
 
         ActionDialect result = this.connector.send(notifier, actionDialect);
         if (null == result) {
@@ -298,7 +303,7 @@ public class FileProcessor {
 
         int code = result.getParamAsInt("code");
         if (code != FileProcessorStateCode.Ok.code) {
-            Logger.w(FileProcessor.class, "#call - " + process.process + " - error : " + code);
+            Logger.w(FileProcessor.class, "#call - " + fileProcessing.process + " - error : " + code);
             return null;
         }
 

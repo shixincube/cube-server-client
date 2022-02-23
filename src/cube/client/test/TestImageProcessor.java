@@ -24,30 +24,38 @@
  * SOFTWARE.
  */
 
-package cube.client.file;
+package cube.client.test;
 
-import cube.common.action.FileProcessorAction;
+import cube.client.CubeClient;
+import cube.client.file.FileProcessor;
+import cube.common.entity.Contact;
+import cube.file.EliminateColorOperation;
 
 /**
- * 图片操作。
+ * 图像操作测试。
  */
-public enum FileOperation {
+public class TestImageProcessor {
 
-    /**
-     * 字符识别。
-     */
-    OCR(FileProcessorAction.OCR.name),
+    public static void testEliminateColor(FileProcessor fileProcessor) {
+        EliminateColorOperation operation = new EliminateColorOperation();
+    }
 
-    /**
-     * 视频快照。
-     */
-    Snapshot(FileProcessorAction.Snapshot.name)
+    public static void main(String[] args) {
 
-    ;
+        CubeClient client = new CubeClient("127.0.0.1", "admin", "shixincube.com");
 
-    public final String process;
+        if (!client.waitReady()) {
+            client.destroy();
+            return;
+        }
 
-    FileOperation(String process) {
-        this.process = process;
+        Contact contact = new Contact(10000, "shixincube.com");
+        client.pretend(contact);
+
+        FileProcessor fileProcessor = client.getFileProcessor();
+
+        testEliminateColor(fileProcessor);
+
+        client.destroy();
     }
 }
