@@ -30,6 +30,11 @@ import cube.client.CubeClient;
 import cube.client.file.*;
 import cube.common.entity.Contact;
 import cube.common.entity.FileLabel;
+import cube.file.EliminateColorOperation;
+import cube.file.FileOperationWorkflow;
+import cube.file.OperationWork;
+import cube.file.ReverseColorOperation;
+import cube.vision.Color;
 
 import java.io.File;
 
@@ -77,7 +82,24 @@ public class TestFileProcessor {
     public static void testSnapshot(FileProcessor fileProcessor) {
         System.out.println("*** START Snapshot ***");
 
-        FileProcessResult result = fileProcessor.call(new SnapshotVideoProcessing(), new File("data/video.mp4"));
+        FileProcessResult result = fileProcessor.call(new SnapshotProcessing(), new File("data/video.mp4"));
+
+        System.out.println("*** END ***");
+    }
+
+    public static void testWorkFlow(FileProcessor fileProcessor) {
+        System.out.println("*** START testWorkFlow ***");
+
+        FileOperationWorkflow workflow = new FileOperationWorkflow();
+
+        EliminateColorOperation ecOperation = new EliminateColorOperation(new Color("#FFFFFF"), new Color("#000000"));
+        workflow.append(new OperationWork(ecOperation));
+
+        ReverseColorOperation rcOperation = new ReverseColorOperation();
+        workflow.append(new OperationWork(rcOperation));
+
+        // 发起
+        fileProcessor.call(workflow, new File("data/sc.jpg"));
 
         System.out.println("*** END ***");
     }
@@ -96,7 +118,7 @@ public class TestFileProcessor {
 
         FileProcessor fileProcessor = client.getFileProcessor();
 
-        testFileLabel(fileProcessor);
+        testWorkFlow(fileProcessor);
 
         client.destroy();
     }

@@ -35,6 +35,7 @@ import cube.file.OCRFile;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -50,6 +51,8 @@ public class FileProcessResult {
     private OCRProcessResult ocrResult;
 
     private ProcessResultStream resultStream;
+
+    private File resultFile;
 
     public FileProcessResult(JSONObject json) {
         this.process = json.getString("process");
@@ -77,6 +80,14 @@ public class FileProcessResult {
         return this.resultStream;
     }
 
+    public void setResultFile(File file) {
+        this.resultFile = file;
+    }
+
+    public File getResultFile() {
+        return this.resultFile;
+    }
+
     public ImageProcessResult getImageResult() {
         return this.imageResult;
     }
@@ -86,7 +97,7 @@ public class FileProcessResult {
     }
 
     /**
-     *
+     * 图像处理结果。
      */
     public class ImageProcessResult {
 
@@ -119,7 +130,7 @@ public class FileProcessResult {
 
 
     /**
-     *
+     * OCR 处理结果。
      */
     public class OCRProcessResult {
 

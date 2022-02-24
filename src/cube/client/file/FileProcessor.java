@@ -41,6 +41,7 @@ import cube.common.entity.FileLabel;
 import cube.common.entity.ProcessResultStream;
 import cube.common.state.FileProcessorStateCode;
 import cube.common.state.FileStorageStateCode;
+import cube.file.FileOperationWorkflow;
 import cube.util.FileType;
 import cube.util.FileUtils;
 import org.json.JSONObject;
@@ -319,6 +320,9 @@ public class FileProcessor {
                     synchronized (resultStream) {
                         resultStream.notify();
                     }
+
+                    // 设置结果文件
+                    processResult.setResultFile(streamFile);
                 }
             });
 
@@ -335,6 +339,25 @@ public class FileProcessor {
         }
 
         return processResult;
+    }
+
+    /**
+     *
+     *
+     * @param workflow
+     * @param file
+     * @return
+     */
+    public FileProcessResult call(FileOperationWorkflow workflow, File file) {
+        FileLabel fileLabel = this.checkAndGet(file);
+        if (null == fileLabel) {
+            Logger.i(FileProcessor.class, "#call - Can NOT get file : " + file.getName());
+            return null;
+        }
+
+
+
+        return null;
     }
 
     /**

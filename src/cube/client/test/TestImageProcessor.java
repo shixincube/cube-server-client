@@ -53,6 +53,7 @@ public class TestImageProcessor {
         if (imageProcessResult.successful) {
             System.out.println("Successful");
             System.out.println("File: " + imageProcessResult.getInputFileLabel().getFileName());
+            System.out.println("Result file: " + result.getResultFile().getAbsolutePath());
         }
         else {
             System.out.println("Failed");

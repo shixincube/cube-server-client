@@ -32,9 +32,9 @@ import org.json.JSONObject;
 /**
  * 视频快照。
  */
-public class SnapshotVideoProcessing extends FileProcessing {
+public class SnapshotProcessing extends FileProcessing {
 
-    public SnapshotVideoProcessing() {
+    public SnapshotProcessing() {
         super(FileProcessorAction.Snapshot.name);
     }
 
