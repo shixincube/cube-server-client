@@ -170,6 +170,9 @@ public class Receiver implements TalkListener {
                 if (ClientAction.NotifyEvent.name.equals(action)) {
                     this.processNotifyEvent(actionDialect);
                 }
+                else if (ClientAction.Login.name.equals(action)) {
+                    this.client.setSessionId(actionDialect.getParamAsLong("sessionId"));
+                }
                 else {
                     Logger.w(this.getClass(), "Unknown action: " + action);
                 }
@@ -312,7 +315,7 @@ public class Receiver implements TalkListener {
 
     @Override
     public void onContacted(Speakable speakable) {
-        ActionDialect actionDialect = new ActionDialect(ClientAction.LOGIN.name);
+        ActionDialect actionDialect = new ActionDialect(ClientAction.Login.name);
         actionDialect.addParam("id", this.client.getId().longValue());
         actionDialect.addParam("name", this.client.getName());
         actionDialect.addParam("password", this.client.getPassword());

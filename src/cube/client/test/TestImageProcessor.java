@@ -27,11 +27,11 @@
 package cube.client.test;
 
 import cube.client.CubeClient;
-import cube.client.file.FileProcessResult;
 import cube.client.file.FileProcessor;
 import cube.client.file.ImageProcessing;
 import cube.common.entity.Contact;
 import cube.file.EliminateColorOperation;
+import cube.file.FileProcessResult;
 import cube.vision.Color;
 
 import java.io.File;

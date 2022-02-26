@@ -80,6 +80,8 @@ public final class CubeClient {
 
     private Long id;
 
+    private long sessionId;
+
     private Connector connector;
 
     private Receiver receiver;
@@ -177,6 +179,10 @@ public final class CubeClient {
      */
     public String getPassword() {
         return this.password;
+    }
+
+    protected void setSessionId(long sessionId) {
+        this.sessionId = sessionId;
     }
 
     /**

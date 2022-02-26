@@ -30,10 +30,7 @@ import cube.client.CubeClient;
 import cube.client.file.*;
 import cube.common.entity.Contact;
 import cube.common.entity.FileLabel;
-import cube.file.EliminateColorOperation;
-import cube.file.FileOperationWorkflow;
-import cube.file.OperationWork;
-import cube.file.ReverseColorOperation;
+import cube.file.*;
 import cube.vision.Color;
 
 import java.io.File;

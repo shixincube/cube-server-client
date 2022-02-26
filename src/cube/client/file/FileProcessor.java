@@ -42,6 +42,7 @@ import cube.common.entity.ProcessResultStream;
 import cube.common.state.FileProcessorStateCode;
 import cube.common.state.FileStorageStateCode;
 import cube.file.FileOperationWorkflow;
+import cube.file.FileProcessResult;
 import cube.util.FileType;
 import cube.util.FileUtils;
 import org.json.JSONObject;
@@ -354,6 +355,13 @@ public class FileProcessor {
             Logger.i(FileProcessor.class, "#call - Can NOT get file : " + file.getName());
             return null;
         }
+
+        workflow.setDomain(this.domainName);
+        workflow.setSourceFileCode(fileLabel.getFileCode());
+
+        ActionDialect actionDialect = new ActionDialect(ClientAction.SubmitWorkflow.name);
+        actionDialect.addParam("workflow", workflow.toJSON());
+        ActionDialect response = this.connector.send(this.receiver.inject(), actionDialect);
 
 
 
