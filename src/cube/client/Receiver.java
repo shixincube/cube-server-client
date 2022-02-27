@@ -319,6 +319,7 @@ public class Receiver implements TalkListener {
         actionDialect.addParam("id", this.client.getId().longValue());
         actionDialect.addParam("name", this.client.getName());
         actionDialect.addParam("password", this.client.getPassword());
+        actionDialect.addParam("version", CubeClient.VERSION);
         speakable.speak(CubeClient.NAME, actionDialect);
     }
 
