@@ -80,7 +80,7 @@ public class TestFileProcessor {
     public static void testSnapshot(FileProcessor fileProcessor) {
         System.out.println("*** START Snapshot ***");
 
-        FileProcessResult result = fileProcessor.call(new SnapshotProcessing(), new File("data/video.mp4"));
+        FileProcessResult result = fileProcessor.call(new VideoProcessing(), new File("data/video.mp4"));
 
         System.out.println("*** END ***");
     }

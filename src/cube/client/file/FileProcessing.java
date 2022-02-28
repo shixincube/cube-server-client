@@ -35,8 +35,8 @@ public abstract class FileProcessing {
 
     public final String process;
 
-    public FileProcessing(String operation) {
-        this.process = operation;
+    public FileProcessing(String process) {
+        this.process = process;
     }
 
     public abstract JSONObject getParameter();

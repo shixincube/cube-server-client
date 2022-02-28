@@ -27,19 +27,23 @@
 package cube.client.file;
 
 import cube.common.action.FileProcessorAction;
+import cube.file.VideoOperation;
 import org.json.JSONObject;
 
 /**
  * 视频快照。
  */
-public class SnapshotProcessing extends FileProcessing {
+public class VideoProcessing extends FileProcessing {
 
-    public SnapshotProcessing() {
-        super(FileProcessorAction.Snapshot.name);
+    private VideoOperation operation;
+
+    public VideoProcessing(VideoOperation operation) {
+        super(FileProcessorAction.Video.name);
+        this.operation = operation;
     }
 
     @Override
     public JSONObject getParameter() {
-        return null;
+        return this.operation.toJSON();
     }
 }
