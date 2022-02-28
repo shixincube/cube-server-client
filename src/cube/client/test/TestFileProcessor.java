@@ -27,7 +27,9 @@
 package cube.client.test;
 
 import cube.client.CubeClient;
-import cube.client.file.*;
+import cube.client.file.FileProcessor;
+import cube.client.file.OCRProcessing;
+import cube.client.file.VideoProcessing;
 import cube.client.listener.WorkflowListener;
 import cube.common.entity.Contact;
 import cube.common.entity.FileLabel;
@@ -80,7 +82,8 @@ public class TestFileProcessor {
     public static void testSnapshot(FileProcessor fileProcessor) {
         System.out.println("*** START Snapshot ***");
 
-        FileProcessResult result = fileProcessor.call(new VideoProcessing(), new File("data/video.mp4"));
+        SnapshotOperation operation = new SnapshotOperation();
+        FileProcessResult result = fileProcessor.call(new VideoProcessing(operation), new File("data/video.mp4"));
 
         System.out.println("*** END ***");
     }
@@ -153,7 +156,7 @@ public class TestFileProcessor {
 
         FileProcessor fileProcessor = client.getFileProcessor();
 
-        testWorkFlow(fileProcessor);
+        testSnapshot(fileProcessor);
 
         client.destroy();
     }
