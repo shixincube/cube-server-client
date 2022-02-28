@@ -36,11 +36,13 @@ import cell.core.talk.dialect.DialectFactory;
 import cell.util.log.Logger;
 import cube.client.listener.MessageReceiveListener;
 import cube.client.listener.MessageSendListener;
+import cube.client.listener.WorkflowListener;
 import cube.common.action.ClientAction;
 import cube.common.entity.Contact;
 import cube.common.entity.Device;
 import cube.common.entity.Group;
 import cube.common.entity.Message;
+import cube.file.event.FileWorkflowEvent;
 import org.json.JSONObject;
 
 import java.io.File;
@@ -228,6 +230,38 @@ public class Receiver implements TalkListener {
                 if (null != listener) {
                     listener.onSent(new Message(data.getJSONObject("message")));
                 }
+            }
+        }
+        else if (Events.StartWorkflow.name.equals(event)) {
+            WorkflowListener listener = this.client.getFileProcessor().getWorkflowListener();
+            if (null != listener) {
+                JSONObject data = actionDialect.getParamAsJson("data");
+                FileWorkflowEvent workflowEvent = new FileWorkflowEvent(data);
+                listener.onWorkflowStarted(workflowEvent.getWorkflow());
+            }
+        }
+        else if (Events.StopWorkflow.name.equals(event)) {
+            WorkflowListener listener = this.client.getFileProcessor().getWorkflowListener();
+            if (null != listener) {
+                JSONObject data = actionDialect.getParamAsJson("data");
+                FileWorkflowEvent workflowEvent = new FileWorkflowEvent(data);
+                listener.onWorkflowStopped(workflowEvent.getWorkflow());
+            }
+        }
+        else if (Events.StartWorkInWorkflow.name.equals(event)) {
+            WorkflowListener listener = this.client.getFileProcessor().getWorkflowListener();
+            if (null != listener) {
+                JSONObject data = actionDialect.getParamAsJson("data");
+                FileWorkflowEvent workflowEvent = new FileWorkflowEvent(data);
+                listener.onWorkStarted(workflowEvent.getWorkflow(), workflowEvent.getWork());
+            }
+        }
+        else if (Events.StopWorkInWorkflow.name.equals(event)) {
+            WorkflowListener listener = this.client.getFileProcessor().getWorkflowListener();
+            if (null != listener) {
+                JSONObject data = actionDialect.getParamAsJson("data");
+                FileWorkflowEvent workflowEvent = new FileWorkflowEvent(data);
+                listener.onWorkStopped(workflowEvent.getWorkflow(), workflowEvent.getWork());
             }
         }
     }

@@ -34,6 +34,7 @@ import cube.client.Notifier;
 import cube.client.Receiver;
 import cube.client.StreamListener;
 import cube.client.listener.FileUploadListener;
+import cube.client.listener.WorkflowListener;
 import cube.client.tool.TokenTools;
 import cube.client.util.*;
 import cube.common.action.ClientAction;
@@ -41,13 +42,16 @@ import cube.common.entity.FileLabel;
 import cube.common.entity.ProcessResultStream;
 import cube.common.state.FileProcessorStateCode;
 import cube.common.state.FileStorageStateCode;
-import cube.file.FileOperationWorkflow;
 import cube.file.FileProcessResult;
+import cube.file.OperationWorkflow;
 import cube.util.FileType;
 import cube.util.FileUtils;
 import org.json.JSONObject;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -67,6 +71,8 @@ public class FileProcessor {
 
     private String domainName;
 
+    protected WorkflowListener workflowListener;
+
     public FileProcessor(Connector connector, Receiver receiver) {
         this.connector = connector;
         this.receiver = receiver;
@@ -79,6 +85,26 @@ public class FileProcessor {
 
     public void setDomainName(String domainName) {
         this.domainName = domainName;
+    }
+
+    /**
+     * 注册工作流监听器。
+     *
+     * @param workflowListener
+     */
+    public void register(WorkflowListener workflowListener) {
+        this.workflowListener = workflowListener;
+    }
+
+    /**
+     * 注销工作流监听器。
+     */
+    public void deregister() {
+        this.workflowListener = null;
+    }
+
+    public WorkflowListener getWorkflowListener() {
+        return this.workflowListener;
     }
 
     /**
@@ -349,7 +375,7 @@ public class FileProcessor {
      * @param file
      * @return
      */
-    public FileProcessResult call(FileOperationWorkflow workflow, File file) {
+    public FileProcessResult call(OperationWorkflow workflow, File file) {
         FileLabel fileLabel = this.checkAndGet(file);
         if (null == fileLabel) {
             Logger.i(FileProcessor.class, "#call - Can NOT get file : " + file.getName());
@@ -363,9 +389,12 @@ public class FileProcessor {
         actionDialect.addParam("workflow", workflow.toJSON());
         ActionDialect response = this.connector.send(this.receiver.inject(), actionDialect);
 
+        if (response.getParamAsInt("code") != FileProcessorStateCode.Ok.code) {
+            return null;
+        }
 
-
-        return null;
+        FileProcessResult result = new FileProcessResult(response.getParamAsJson("result"));
+        return result;
     }
 
     /**

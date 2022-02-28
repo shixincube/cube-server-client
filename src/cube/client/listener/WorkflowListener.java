@@ -24,36 +24,21 @@
  * SOFTWARE.
  */
 
-package cube.client;
+package cube.client.listener;
+
+import cube.file.OperationWork;
+import cube.file.OperationWorkflow;
 
 /**
- * 事件。
+ * 工作流监听器。
  */
-public enum Events {
+public interface WorkflowListener {
 
-    SignIn("SignIn"),
+    void onWorkflowStarted(OperationWorkflow workflow);
 
-    SignOut("SignOut"),
+    void onWorkflowStopped(OperationWorkflow workflow);
 
-    DeviceTimeout("DeviceTimeout"),
+    void onWorkStarted(OperationWorkflow workflow, OperationWork work);
 
-    ReceiveMessage("ReceiveMessage"),
-
-    SendMessage("SendMessage"),
-
-    StartWorkflow("StartWorkflow"),
-
-    StopWorkflow("StopWorkflow"),
-
-    StartWorkInWorkflow("StartWorkInWorkflow"),
-
-    StopWorkInWorkflow("StopWorkInWorkflow")
-
-    ;
-
-    public final String name;
-
-    Events(String name) {
-        this.name = name;
-    }
+    void onWorkStopped(OperationWorkflow workflow, OperationWork work);
 }

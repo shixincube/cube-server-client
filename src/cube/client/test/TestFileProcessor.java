@@ -28,6 +28,7 @@ package cube.client.test;
 
 import cube.client.CubeClient;
 import cube.client.file.*;
+import cube.client.listener.WorkflowListener;
 import cube.common.entity.Contact;
 import cube.common.entity.FileLabel;
 import cube.file.*;
@@ -87,7 +88,35 @@ public class TestFileProcessor {
     public static void testWorkFlow(FileProcessor fileProcessor) {
         System.out.println("*** START testWorkFlow ***");
 
-        FileOperationWorkflow workflow = new FileOperationWorkflow();
+        Object mutex = new Object();
+
+        fileProcessor.register(new WorkflowListener() {
+            @Override
+            public void onWorkflowStarted(OperationWorkflow workflow) {
+                System.out.println("#onWorkflowStarted");
+            }
+
+            @Override
+            public void onWorkflowStopped(OperationWorkflow workflow) {
+                System.out.println("#onWorkflowStopped");
+
+                synchronized (mutex) {
+                    mutex.notify();
+                }
+            }
+
+            @Override
+            public void onWorkStarted(OperationWorkflow workflow, OperationWork work) {
+                System.out.println("#onWorkStarted");
+            }
+
+            @Override
+            public void onWorkStopped(OperationWorkflow workflow, OperationWork work) {
+                System.out.println("#onWorkStopped");
+            }
+        });
+
+        OperationWorkflow workflow = new OperationWorkflow();
 
         EliminateColorOperation ecOperation = new EliminateColorOperation(new Color("#FFFFFF"), new Color("#000000"));
         workflow.append(new OperationWork(ecOperation));
@@ -96,7 +125,16 @@ public class TestFileProcessor {
         workflow.append(new OperationWork(rcOperation));
 
         // 发起
-        fileProcessor.call(workflow, new File("data/sc.jpg"));
+        FileProcessResult result = fileProcessor.call(workflow, new File("data/sc.jpg"));
+        System.out.println("#testWorkFlow - result : " + result.getSubmitWorkflowResult().successful);
+
+        synchronized (mutex) {
+            try {
+                mutex.wait(5 * 60 * 1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
 
         System.out.println("*** END ***");
     }
