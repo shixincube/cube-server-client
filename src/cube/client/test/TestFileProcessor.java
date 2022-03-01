@@ -37,6 +37,7 @@ import cube.file.*;
 import cube.vision.Color;
 
 import java.io.File;
+import java.util.List;
 
 /**
  * 测试文件处理器。
@@ -84,6 +85,14 @@ public class TestFileProcessor {
 
         SnapshotOperation operation = new SnapshotOperation();
         FileProcessResult result = fileProcessor.call(new VideoProcessing(operation), new File("data/video.mp4"));
+        System.out.println("Result : " + result.getVideoResult().getOperation().getOperation());
+
+        if (result.getVideoResult().successful) {
+            List<String> logs = result.getLogs();
+            for (String line : logs) {
+                System.out.println("[L] " + line);
+            }
+        }
 
         System.out.println("*** END ***");
     }

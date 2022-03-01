@@ -404,8 +404,6 @@ public class FileProcessor {
      * @return
      */
     private FileLabel checkAndGet(File file) {
-        Notifier notifier = this.receiver.inject();
-
         ActionDialect actionDialect = new ActionDialect(ClientAction.FindFile.name);
         actionDialect.addParam("domain", this.domainName);
         actionDialect.addParam("contactId", this.contactId.longValue());
@@ -413,7 +411,7 @@ public class FileProcessor {
         actionDialect.addParam("fileSize", file.length());
         actionDialect.addParam("lastModified", file.lastModified());
 
-        ActionDialect result = this.connector.send(notifier, actionDialect);
+        ActionDialect result = this.connector.send(this.receiver.inject(), actionDialect);
 
         MutableFileLabel mutableFileLabel = new MutableFileLabel();
 
@@ -429,7 +427,8 @@ public class FileProcessor {
                         @Override
                         public void onUploading(FileUploader.UploadMeta meta, long processedSize) {
                             Logger.d(FileProcessor.class, "#checkAndGet - onUploading : " +
-                                    processedSize + "/" + meta.file.length());
+                                    FileUtils.scaleFileSize(processedSize) + "/" +
+                                    FileUtils.scaleFileSize(meta.file.length()));
                         }
 
                         @Override
@@ -485,7 +484,7 @@ public class FileProcessor {
 
             synchronized (mutableFileLabel) {
                 try {
-                    mutableFileLabel.wait(5 * 60 * 1000);
+                    mutableFileLabel.wait(10 * 60 * 1000);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
