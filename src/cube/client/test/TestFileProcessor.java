@@ -35,6 +35,7 @@ import cube.common.entity.Contact;
 import cube.common.entity.FileLabel;
 import cube.file.*;
 import cube.vision.Color;
+import cube.vision.Size;
 
 import java.io.File;
 import java.util.List;
@@ -130,15 +131,72 @@ public class TestFileProcessor {
 
         OperationWorkflow workflow = new OperationWorkflow();
 
-        EliminateColorOperation ecOperation = new EliminateColorOperation(new Color("#FFFFFF"), new Color("#000000"));
-        workflow.append(new OperationWork(ecOperation));
+        SnapshotOperation ssOperation = new SnapshotOperation();
+        workflow.append(new OperationWork(ssOperation));
+
+//        EliminateColorOperation ecOperation = new EliminateColorOperation(new Color("#FFFFFF"), new Color("#000000"));
+//        workflow.append(new OperationWork(ecOperation));
 
         ReverseColorOperation rcOperation = new ReverseColorOperation();
         workflow.append(new OperationWork(rcOperation));
 
         // 发起
-        FileProcessResult result = fileProcessor.call(workflow, new File("data/sc.jpg"));
+//        FileProcessResult result = fileProcessor.call(workflow, new File("data/sc.jpg"));
+        FileProcessResult result = fileProcessor.call(workflow, new File("data/video.mp4"));
         System.out.println("#testWorkFlow - result : " + result.getSubmitWorkflowResult().successful);
+
+        synchronized (mutex) {
+            try {
+                mutex.wait(5 * 60 * 1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+        System.out.println("*** END ***");
+    }
+
+    public static void testSteganographyWithWorkFlow(FileProcessor fileProcessor) {
+        System.out.println("*** START testSteganographyWithWorkFlow ***");
+
+        Object mutex = new Object();
+
+        fileProcessor.register(new WorkflowListener() {
+            @Override
+            public void onWorkflowStarted(OperationWorkflow workflow) {
+                System.out.println("#onWorkflowStarted");
+            }
+
+            @Override
+            public void onWorkflowStopped(OperationWorkflow workflow) {
+                System.out.println("#onWorkflowStopped : " + workflow.getResultFilename());
+
+                synchronized (mutex) {
+                    mutex.notify();
+                }
+            }
+
+            @Override
+            public void onWorkStarted(OperationWorkflow workflow, OperationWork work) {
+                System.out.println("#onWorkStarted");
+            }
+
+            @Override
+            public void onWorkStopped(OperationWorkflow workflow, OperationWork work) {
+                System.out.println("#onWorkStopped");
+            }
+        });
+
+        OperationWorkflow workflow = new OperationWorkflow();
+
+        SteganographyOperation operation = new SteganographyOperation("来自魔方\n隐写数据",
+                new Size(100, 100));
+
+        workflow.append(new OperationWork(operation));
+
+        // 发起
+        FileProcessResult result = fileProcessor.call(workflow, new File("data/zhong.png"));
+        System.out.println("#testSteganographyWithWorkFlow - result : " + result.getSubmitWorkflowResult().successful);
 
         synchronized (mutex) {
             try {
@@ -165,7 +223,7 @@ public class TestFileProcessor {
 
         FileProcessor fileProcessor = client.getFileProcessor();
 
-        testSnapshot(fileProcessor);
+        testSteganographyWithWorkFlow(fileProcessor);
 
         client.destroy();
     }
