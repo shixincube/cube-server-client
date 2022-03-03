@@ -161,15 +161,24 @@ public class TestFileProcessor {
 
         Object mutex = new Object();
 
+        StringBuilder resultFilename = new StringBuilder();
+
         fileProcessor.register(new WorkflowListener() {
             @Override
             public void onWorkflowStarted(OperationWorkflow workflow) {
-                System.out.println("#onWorkflowStarted");
+                if (((SteganographyOperation) workflow.getFirstWork().getFileOperation()).isRecover()) {
+                    System.out.println("#onWorkflowStarted - Recover");
+                }
+                else {
+                    System.out.println("#onWorkflowStarted");
+                }
             }
 
             @Override
             public void onWorkflowStopped(OperationWorkflow workflow) {
+                resultFilename.delete(0, resultFilename.length());
                 System.out.println("#onWorkflowStopped : " + workflow.getResultFilename());
+                resultFilename.append(workflow.getResultFilename());
 
                 synchronized (mutex) {
                     mutex.notify();
@@ -188,19 +197,44 @@ public class TestFileProcessor {
         });
 
         OperationWorkflow workflow = new OperationWorkflow();
-
         SteganographyOperation operation = new SteganographyOperation("来自魔方\n隐写数据",
                 new Size(100, 100));
-
         workflow.append(new OperationWork(operation));
 
-        // 发起
+        // 执行工作流
         FileProcessResult result = fileProcessor.call(workflow, new File("data/zhong.png"));
         System.out.println("#testSteganographyWithWorkFlow - result : " + result.getSubmitWorkflowResult().successful);
 
         synchronized (mutex) {
             try {
                 mutex.wait(5 * 60 * 1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+        System.out.println("Recover steganography watermark");
+
+        workflow = new OperationWorkflow();
+        operation = new SteganographyOperation(new Size(100, 100));
+        workflow.append(new OperationWork(operation));
+
+        // 执行工作流
+        result = fileProcessor.call(workflow, new File(fileProcessor.getFilePath(), resultFilename.toString()));
+        System.out.println("#testSteganographyWithWorkFlow (recover) - result : " + result.getSubmitWorkflowResult().successful);
+
+        synchronized (mutex) {
+            try {
+                mutex.wait(5 * 60 * 1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+        File resultFile = new File(fileProcessor.getFilePath(), resultFilename.toString());
+        if (!resultFile.exists()) {
+            try {
+                Thread.sleep(2 * 1000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }

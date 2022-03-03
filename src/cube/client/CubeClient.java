@@ -331,7 +331,7 @@ public final class CubeClient {
      */
     public FileProcessor getFileProcessor() {
         if (null == this.processor) {
-            this.processor = new FileProcessor(this.connector, this.receiver);
+            this.processor = new FileProcessor(this.filePath, this.connector, this.receiver);
         }
 
         if (null != this.pretender) {

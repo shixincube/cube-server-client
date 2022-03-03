@@ -61,6 +61,8 @@ import java.net.URL;
  */
 public class FileProcessor {
 
+    private File filePath;
+
     private Connector connector;
 
     private Receiver receiver;
@@ -73,7 +75,8 @@ public class FileProcessor {
 
     protected WorkflowListener workflowListener;
 
-    public FileProcessor(Connector connector, Receiver receiver) {
+    public FileProcessor(File filePath, Connector connector, Receiver receiver) {
+        this.filePath = filePath;
         this.connector = connector;
         this.receiver = receiver;
         this.uploader = new FileUploader(connector);
@@ -85,6 +88,10 @@ public class FileProcessor {
 
     public void setDomainName(String domainName) {
         this.domainName = domainName;
+    }
+
+    public File getFilePath() {
+        return this.filePath;
     }
 
     /**
