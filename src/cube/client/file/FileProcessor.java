@@ -121,14 +121,12 @@ public class FileProcessor {
      * @return
      */
     public FileLabel getFileLabel(String fileCode) {
-        Notifier notifier = this.receiver.inject();
-
         ActionDialect actionDialect = new ActionDialect(ClientAction.GetFile.name);
         actionDialect.addParam("domain", this.domainName);
         actionDialect.addParam("fileCode", fileCode);
 
         // 阻塞线程，并等待返回结果
-        ActionDialect result = this.connector.send(notifier, actionDialect);
+        ActionDialect result = this.connector.send(this.receiver.inject(), actionDialect);
 
         int code = result.getParamAsInt("code");
         if (code != FileStorageStateCode.Ok.code) {
@@ -140,9 +138,13 @@ public class FileProcessor {
         return new FileLabel(data);
     }
 
+    /**
+     * 获取指定文件的文件码。
+     *
+     * @param file
+     * @return
+     */
     public FileLabel getFileLabel(File file) {
-        Notifier notifier = this.receiver.inject();
-
         ActionDialect actionDialect = new ActionDialect(ClientAction.FindFile.name);
         actionDialect.addParam("domain", this.domainName);
         actionDialect.addParam("contactId", this.contactId.longValue());
@@ -150,7 +152,26 @@ public class FileProcessor {
         actionDialect.addParam("fileSize", file.length());
         actionDialect.addParam("lastModified", file.lastModified());
 
-        ActionDialect result = this.connector.send(notifier, actionDialect);
+        ActionDialect result = this.connector.send(this.receiver.inject(), actionDialect);
+        if (result.getParamAsInt("code") == FileStorageStateCode.Ok.code) {
+            return new FileLabel(result.getParamAsJson("fileLabel"));
+        }
+
+        return null;
+    }
+
+    /**
+     * 删除文件，该操作将从服务器上删除指定文件数据，不可以逆。
+     *
+     * @param fileLabel
+     * @return
+     */
+    public FileLabel deleteFile(FileLabel fileLabel) {
+        ActionDialect actionDialect = new ActionDialect(ClientAction.DeleteFile.name);
+        actionDialect.addParam("domain", this.domainName);
+        actionDialect.addParam("fileCode", fileLabel.getFileCode());
+
+        ActionDialect result = this.connector.send(this.receiver.inject(), actionDialect);
         if (result.getParamAsInt("code") == FileStorageStateCode.Ok.code) {
             return new FileLabel(result.getParamAsJson("fileLabel"));
         }

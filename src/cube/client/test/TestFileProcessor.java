@@ -156,8 +156,8 @@ public class TestFileProcessor {
         System.out.println("*** END ***");
     }
 
-    public static void testSteganographyWithWorkFlow(FileProcessor fileProcessor) {
-        System.out.println("*** START testSteganographyWithWorkFlow ***");
+    public static void testSteganography(FileProcessor fileProcessor) {
+        System.out.println("*** START testSteganography ***");
 
         Object mutex = new Object();
 
@@ -198,12 +198,12 @@ public class TestFileProcessor {
 
         OperationWorkflow workflow = new OperationWorkflow();
         SteganographyOperation operation = new SteganographyOperation("来自魔方\n隐写数据",
-                new Size(100, 100));
+                new Size(120, 100));
         workflow.append(new OperationWork(operation));
 
         // 执行工作流
         FileProcessResult result = fileProcessor.call(workflow, new File("data/zhong.png"));
-        System.out.println("#testSteganographyWithWorkFlow - result : " + result.getSubmitWorkflowResult().successful);
+        System.out.println("#testSteganography - result : " + result.getSubmitWorkflowResult().successful);
 
         synchronized (mutex) {
             try {
@@ -216,12 +216,12 @@ public class TestFileProcessor {
         System.out.println("Recover steganography watermark");
 
         workflow = new OperationWorkflow();
-        operation = new SteganographyOperation(new Size(100, 100));
+        operation = new SteganographyOperation(new Size(120, 100));
         workflow.append(new OperationWork(operation));
 
         // 执行工作流
         result = fileProcessor.call(workflow, new File(fileProcessor.getFilePath(), resultFilename.toString()));
-        System.out.println("#testSteganographyWithWorkFlow (recover) - result : " + result.getSubmitWorkflowResult().successful);
+        System.out.println("#testSteganography (recover) - result : " + result.getSubmitWorkflowResult().successful);
 
         synchronized (mutex) {
             try {
@@ -243,6 +243,81 @@ public class TestFileProcessor {
         System.out.println("*** END ***");
     }
 
+    public static void testReadSteganographyWatermark(FileProcessor fileProcessor) {
+        System.out.println("*** START testReadSteganographyWatermark ***");
+
+        File sourceFile = new File("data/zhong_stegano.png");
+
+        Object mutex = new Object();
+
+        StringBuilder resultFilename = new StringBuilder();
+
+        fileProcessor.register(new WorkflowListener() {
+            @Override
+            public void onWorkflowStarted(OperationWorkflow workflow) {
+                System.out.println("#onWorkflowStarted");
+            }
+
+            @Override
+            public void onWorkflowStopped(OperationWorkflow workflow) {
+                System.out.println("#onWorkflowStopped : " + workflow.getResultFilename());
+                resultFilename.append(workflow.getResultFilename());
+
+                synchronized (mutex) {
+                    mutex.notify();
+                }
+            }
+
+            @Override
+            public void onWorkStarted(OperationWorkflow workflow, OperationWork work) {
+                System.out.println("#onWorkStarted");
+            }
+
+            @Override
+            public void onWorkStopped(OperationWorkflow workflow, OperationWork work) {
+                System.out.println("#onWorkStopped");
+            }
+        });
+
+        OperationWorkflow workflow = new OperationWorkflow();
+
+        SteganographyOperation operation = new SteganographyOperation(new Size(120, 100));
+        workflow.append(new OperationWork(operation));
+
+        OCROperation ocrOperation = new OCROperation();
+        workflow.append(new OperationWork(ocrOperation));
+
+        // 执行工作流
+        FileProcessResult result = fileProcessor.call(workflow, sourceFile);
+        System.out.println("#testReadSteganographyWatermark - result : " + result.getSubmitWorkflowResult().successful);
+
+        synchronized (mutex) {
+            try {
+                mutex.wait(5 * 60 * 1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+        File resultFile = new File(fileProcessor.getFilePath(), resultFilename.toString());
+        if (!resultFile.exists()) {
+            try {
+                Thread.sleep(2 * 1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+        System.out.println("--------------------------------------------------------------------------------");
+        OCRFile ocrFile = new OCRFile(resultFile);
+        for (String text : ocrFile.toText()) {
+            System.out.println(text);
+        }
+        System.out.println("--------------------------------------------------------------------------------");
+
+        System.out.println("*** END ***");
+    }
+
     public static void main(String[] args) {
 
         CubeClient client = new CubeClient("127.0.0.1", "admin", "shixincube.com");
@@ -257,7 +332,8 @@ public class TestFileProcessor {
 
         FileProcessor fileProcessor = client.getFileProcessor();
 
-        testSteganographyWithWorkFlow(fileProcessor);
+//        testSteganography(fileProcessor);
+        testReadSteganographyWatermark(fileProcessor);
 
         client.destroy();
     }
