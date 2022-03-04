@@ -38,7 +38,7 @@ public interface WorkflowListener {
 
     void onWorkflowStopped(OperationWorkflow workflow);
 
-    void onWorkStarted(OperationWorkflow workflow, OperationWork work);
+    void onWorkBegun(OperationWorkflow workflow, OperationWork work);
 
-    void onWorkStopped(OperationWorkflow workflow, OperationWork work);
+    void onWorkEnded(OperationWorkflow workflow, OperationWork work);
 }

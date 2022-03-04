@@ -232,7 +232,7 @@ public class Receiver implements TalkListener {
                 }
             }
         }
-        else if (Events.StartWorkflow.name.equals(event)) {
+        else if (Events.WorkflowStarted.name.equals(event)) {
             WorkflowListener listener = this.client.getFileProcessor().getWorkflowListener();
             if (null != listener) {
                 JSONObject data = actionDialect.getParamAsJson("data");
@@ -240,7 +240,7 @@ public class Receiver implements TalkListener {
                 listener.onWorkflowStarted(workflowEvent.getWorkflow());
             }
         }
-        else if (Events.StopWorkflow.name.equals(event)) {
+        else if (Events.WorkflowStopped.name.equals(event)) {
             WorkflowListener listener = this.client.getFileProcessor().getWorkflowListener();
             if (null != listener) {
                 JSONObject data = actionDialect.getParamAsJson("data");
@@ -248,20 +248,20 @@ public class Receiver implements TalkListener {
                 listener.onWorkflowStopped(workflowEvent.getWorkflow());
             }
         }
-        else if (Events.StartWorkInWorkflow.name.equals(event)) {
+        else if (Events.WorkBegun.name.equals(event)) {
             WorkflowListener listener = this.client.getFileProcessor().getWorkflowListener();
             if (null != listener) {
                 JSONObject data = actionDialect.getParamAsJson("data");
                 FileWorkflowEvent workflowEvent = new FileWorkflowEvent(data);
-                listener.onWorkStarted(workflowEvent.getWorkflow(), workflowEvent.getWork());
+                listener.onWorkBegun(workflowEvent.getWorkflow(), workflowEvent.getWork());
             }
         }
-        else if (Events.StopWorkInWorkflow.name.equals(event)) {
+        else if (Events.WorkEnded.name.equals(event)) {
             WorkflowListener listener = this.client.getFileProcessor().getWorkflowListener();
             if (null != listener) {
                 JSONObject data = actionDialect.getParamAsJson("data");
                 FileWorkflowEvent workflowEvent = new FileWorkflowEvent(data);
-                listener.onWorkStopped(workflowEvent.getWorkflow(), workflowEvent.getWork());
+                listener.onWorkEnded(workflowEvent.getWorkflow(), workflowEvent.getWork());
             }
         }
     }

@@ -41,13 +41,13 @@ public enum Events {
 
     SendMessage("SendMessage"),
 
-    StartWorkflow("StartWorkflow"),
+    WorkflowStarted("WorkflowStarted"),
 
-    StopWorkflow("StopWorkflow"),
+    WorkflowStopped("WorkflowStopped"),
 
-    StartWorkInWorkflow("StartWorkInWorkflow"),
+    WorkBegun("WorkBegun"),
 
-    StopWorkInWorkflow("StopWorkInWorkflow")
+    WorkEnded("WorkEnded")
 
     ;
 

@@ -34,7 +34,6 @@ import cube.client.listener.WorkflowListener;
 import cube.common.entity.Contact;
 import cube.common.entity.FileLabel;
 import cube.file.*;
-import cube.vision.Color;
 import cube.vision.Size;
 
 import java.io.File;
@@ -119,13 +118,13 @@ public class TestFileProcessor {
             }
 
             @Override
-            public void onWorkStarted(OperationWorkflow workflow, OperationWork work) {
-                System.out.println("#onWorkStarted");
+            public void onWorkBegun(OperationWorkflow workflow, OperationWork work) {
+                System.out.println("#onWorkBegun");
             }
 
             @Override
-            public void onWorkStopped(OperationWorkflow workflow, OperationWork work) {
-                System.out.println("#onWorkStopped");
+            public void onWorkEnded(OperationWorkflow workflow, OperationWork work) {
+                System.out.println("#onWorkEnded");
             }
         });
 
@@ -186,20 +185,23 @@ public class TestFileProcessor {
             }
 
             @Override
-            public void onWorkStarted(OperationWorkflow workflow, OperationWork work) {
-                System.out.println("#onWorkStarted");
+            public void onWorkBegun(OperationWorkflow workflow, OperationWork work) {
+                System.out.println("#onWorkBegun");
             }
 
             @Override
-            public void onWorkStopped(OperationWorkflow workflow, OperationWork work) {
-                System.out.println("#onWorkStopped");
+            public void onWorkEnded(OperationWorkflow workflow, OperationWork work) {
+                System.out.println("#onWorkEnded");
             }
         });
 
         OperationWorkflow workflow = new OperationWorkflow();
-        SteganographyOperation operation = new SteganographyOperation("来自魔方\n隐写数据",
-                new Size(120, 100));
+        SteganographyOperation operation = new SteganographyOperation("来自魔方\n隐写数据");
         workflow.append(new OperationWork(operation));
+
+        Size markSize = operation.getWatermarkSize();
+
+        System.out.println("Watermark size: " + markSize.toString());
 
         // 执行工作流
         FileProcessResult result = fileProcessor.call(workflow, new File("data/zhong.png"));
@@ -216,7 +218,7 @@ public class TestFileProcessor {
         System.out.println("Recover steganography watermark");
 
         workflow = new OperationWorkflow();
-        operation = new SteganographyOperation(new Size(120, 100));
+        operation = new SteganographyOperation(markSize);
         workflow.append(new OperationWork(operation));
 
         // 执行工作流
@@ -269,19 +271,19 @@ public class TestFileProcessor {
             }
 
             @Override
-            public void onWorkStarted(OperationWorkflow workflow, OperationWork work) {
-                System.out.println("#onWorkStarted");
+            public void onWorkBegun(OperationWorkflow workflow, OperationWork work) {
+                System.out.println("#onWorkBegun");
             }
 
             @Override
-            public void onWorkStopped(OperationWorkflow workflow, OperationWork work) {
-                System.out.println("#onWorkStopped");
+            public void onWorkEnded(OperationWorkflow workflow, OperationWork work) {
+                System.out.println("#onWorkEnded");
             }
         });
 
         OperationWorkflow workflow = new OperationWorkflow();
 
-        SteganographyOperation operation = new SteganographyOperation(new Size(120, 100));
+        SteganographyOperation operation = new SteganographyOperation(new Size(150, 106));
         workflow.append(new OperationWork(operation));
 
         OCROperation ocrOperation = new OCROperation();
