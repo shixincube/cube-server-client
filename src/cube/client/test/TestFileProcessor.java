@@ -34,6 +34,9 @@ import cube.client.listener.WorkflowListener;
 import cube.common.entity.Contact;
 import cube.common.entity.FileLabel;
 import cube.file.*;
+import cube.file.operation.OCROperation;
+import cube.file.operation.ReverseColorOperation;
+import cube.file.operation.SteganographyOperation;
 import cube.vision.Size;
 
 import java.io.File;
@@ -70,7 +73,7 @@ public class TestFileProcessor {
     public static void testORC(FileProcessor fileProcessor) {
         System.out.println("*** START OCR ***");
 
-        FileProcessResult result = fileProcessor.call(new OCRProcessing(), new File("data/screenshot_shixincube.jpg"));
+        FileProcessResult result = fileProcessor.call(new OCRProcessing(), new File("data/screenshot_20220307.png"));
         FileProcessResult.OCRProcessResult ocrResult = result.getOCRResult();
 
         for (String text : ocrResult.getResultText()) {
@@ -335,7 +338,7 @@ public class TestFileProcessor {
         FileProcessor fileProcessor = client.getFileProcessor();
 
 //        testSteganography(fileProcessor);
-        testReadSteganographyWatermark(fileProcessor);
+//        testReadSteganographyWatermark(fileProcessor);
 
         client.destroy();
     }

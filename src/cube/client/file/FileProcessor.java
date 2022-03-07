@@ -39,7 +39,7 @@ import cube.client.tool.TokenTools;
 import cube.client.util.*;
 import cube.common.action.ClientAction;
 import cube.common.entity.FileLabel;
-import cube.common.entity.ProcessResultStream;
+import cube.common.entity.ProcessResult;
 import cube.common.state.FileProcessorStateCode;
 import cube.common.state.FileStorageStateCode;
 import cube.file.FileProcessResult;
@@ -366,8 +366,8 @@ public class FileProcessor {
         JSONObject data = result.getParamAsJson("result");
         FileProcessResult processResult = new FileProcessResult(data);
 
-        if (processResult.hasResultStream()) {
-            final ProcessResultStream resultStream = processResult.getResultStream();
+        if (processResult.hasResult()) {
+            final ProcessResult resultStream = processResult.getResult();
             // 添加监听器
             this.receiver.setStreamListener(resultStream.streamName, new StreamListener() {
                 @Override
