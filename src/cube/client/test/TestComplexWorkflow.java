@@ -35,7 +35,10 @@ import cube.file.OperationWork;
 import cube.file.OperationWorkflow;
 import cube.file.operation.CropOperation;
 import cube.file.operation.OCROperation;
+import cube.file.operation.ReplaceColorOperation;
+import cube.util.FileUtils;
 import cube.vision.BoundingBox;
+import cube.vision.Color;
 
 import java.io.File;
 
@@ -59,15 +62,17 @@ public class TestComplexWorkflow {
                 System.out.println("Result file: " + workflow.getResultFilename());
 
                 File file = new File("data", workflow.getResultFilename());
-                OCRFile ocrFile = new OCRFile(file);
+                if (FileUtils.extractFileExtension(file.getName()).equalsIgnoreCase("ocr")) {
+                    OCRFile ocrFile = new OCRFile(file);
 
-                parseOCRData(ocrFile);
+//                    parseOCRData(ocrFile);
 
-//                System.out.println("--------------------------------");
-//                for (String line : ocrFile.toText()) {
-//                    System.out.println(line);
-//                }
-//                System.out.println("--------------------------------");
+                    System.out.println("--------------------------------");
+                    for (String line : ocrFile.toText()) {
+                        System.out.println(line);
+                    }
+                    System.out.println("--------------------------------");
+                }
 
                 synchronized (mutex) {
                     mutex.notify();
@@ -87,8 +92,16 @@ public class TestComplexWorkflow {
 
         OperationWorkflow workflow = new OperationWorkflow();
 
-        CropOperation cropOperation = new CropOperation(224, 126, 512, 1496);
+        CropOperation cropOperation = new CropOperation(224, 126, 414, 1496);
         workflow.append(new OperationWork(cropOperation));
+
+        ReplaceColorOperation replace1 = new ReplaceColorOperation(new Color(180,180,180),
+                new Color(233,233,233), 10);
+        workflow.append(new OperationWork(replace1));
+
+        ReplaceColorOperation replace2 = new ReplaceColorOperation(new Color(154,154,154),
+                new Color(233,233,233), 10);
+        workflow.append(new OperationWork(replace2));
 
         OCROperation ocrOperation = new OCROperation();
         workflow.append(new OperationWork(ocrOperation));
