@@ -33,9 +33,7 @@ import cube.common.entity.Contact;
 import cube.file.OCRFile;
 import cube.file.OperationWork;
 import cube.file.OperationWorkflow;
-import cube.file.operation.CropOperation;
-import cube.file.operation.OCROperation;
-import cube.file.operation.ReplaceColorOperation;
+import cube.file.operation.*;
 import cube.util.FileUtils;
 import cube.vision.BoundingBox;
 import cube.vision.Color;
@@ -45,7 +43,7 @@ import java.io.File;
 public class TestComplexWorkflow {
 
     public static void test(FileProcessor fileProcessor) {
-        System.out.println("*** START testCrop ***");
+        System.out.println("*** START test ***");
 
         Object mutex = new Object();
 
@@ -92,21 +90,30 @@ public class TestComplexWorkflow {
 
         OperationWorkflow workflow = new OperationWorkflow();
 
-        CropOperation cropOperation = new CropOperation(224, 126, 414, 1496);
-        workflow.append(new OperationWork(cropOperation));
+//        CropOperation cropOperation = new CropOperation(224, 126, 414, 1496);
+//        workflow.append(new OperationWork(cropOperation));
 
-        ReplaceColorOperation replace1 = new ReplaceColorOperation(new Color(180,180,180),
-                new Color(233,233,233), 10);
-        workflow.append(new OperationWork(replace1));
+//        ReplaceColorOperation replace1 = new ReplaceColorOperation(new Color(180,180,180),
+//                new Color(233,233,233), 10);
+//        workflow.append(new OperationWork(replace1));
 
-        ReplaceColorOperation replace2 = new ReplaceColorOperation(new Color(154,154,154),
-                new Color(233,233,233), 10);
-        workflow.append(new OperationWork(replace2));
+//        ReplaceColorOperation replace2 = new ReplaceColorOperation(new Color(154,154,154),
+//                new Color(233,233,233), 10);
+//        workflow.append(new OperationWork(replace2));
+
+//        BrightnessOperation brightnessOperation = new BrightnessOperation(5, 20);
+//        workflow.append(new OperationWork(brightnessOperation));
+
+        SharpeningOperation sharpeningOperation = new SharpeningOperation(3.0);
+        workflow.append(new OperationWork(sharpeningOperation));
+
+        GrayscaleOperation grayscaleOperation = new GrayscaleOperation();
+        workflow.append(new OperationWork(grayscaleOperation));
 
         OCROperation ocrOperation = new OCROperation();
         workflow.append(new OperationWork(ocrOperation));
 
-        fileProcessor.call(workflow, new File("data/screenshot_20220307.png"));
+        fileProcessor.call(workflow, new File("data/wechat.png"));
 
         synchronized (mutex) {
             try {
@@ -116,7 +123,7 @@ public class TestComplexWorkflow {
             }
         }
 
-        System.out.println("*** END testCrop ***");
+        System.out.println("*** END test ***");
     }
 
     public static void parseOCRData(OCRFile file) {
