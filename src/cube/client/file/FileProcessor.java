@@ -525,7 +525,7 @@ public class FileProcessor {
         return mutableFileLabel.value;
     }
 
-    private FileLabel putFileLabel(String fileCode, File file, String md5Code, String sha1Code) {
+    public FileLabel putFileLabel(String fileCode, File file, String md5Code, String sha1Code) {
         // 判断文件类型
         FileType fileType = FileUtils.extractFileExtensionType(file.getName());
 
@@ -535,15 +535,11 @@ public class FileProcessor {
         fileLabel.setMD5Code(md5Code);
         fileLabel.setSHA1Code(sha1Code);
 
-        Notifier notifier = new Notifier();
-
-        this.receiver.inject(notifier);
-
         ActionDialect actionDialect = new ActionDialect(ClientAction.PutFile.name);
         actionDialect.addParam("fileLabel", fileLabel.toJSON());
 
         // 阻塞线程，并等待返回结果
-        ActionDialect result = this.connector.send(notifier, actionDialect);
+        ActionDialect result = this.connector.send(this.receiver.inject(), actionDialect);
 
         int code = result.getParamAsInt("code");
         if (code != FileStorageStateCode.Ok.code) {

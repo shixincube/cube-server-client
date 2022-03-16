@@ -34,6 +34,7 @@ import cell.core.talk.TalkError;
 import cell.core.talk.dialect.ActionDialect;
 import cell.core.talk.dialect.DialectFactory;
 import cell.util.log.Logger;
+import cube.client.hub.HubController;
 import cube.client.listener.MessageReceiveListener;
 import cube.client.listener.MessageSendListener;
 import cube.client.listener.WorkflowListener;
@@ -178,6 +179,16 @@ public class Receiver implements TalkListener {
                 else {
                     Logger.w(this.getClass(), "Unknown action: " + action);
                 }
+            }
+        }
+        else if (HubController.NAME.equals(cellet)) {
+            ActionDialect actionDialect = DialectFactory.getInstance().createActionDialect(primitive);
+
+            if (actionDialect.containsParam(Notifier.ParamName)) {
+                this.processNotifier(actionDialect);
+            }
+            else {
+                Logger.w(this.getClass(), "Unknown action [" + HubController.NAME + "]: " + actionDialect.getName());
             }
         }
     }

@@ -33,8 +33,11 @@ import cell.util.log.Logger;
 import cube.auth.AuthToken;
 import cube.client.file.FileProcessor;
 import cube.client.file.FileUploader;
-import cube.client.hub.Controller;
-import cube.client.listener.*;
+import cube.client.hub.HubController;
+import cube.client.listener.ContactListener;
+import cube.client.listener.FileUploadListener;
+import cube.client.listener.MessageReceiveListener;
+import cube.client.listener.MessageSendListener;
 import cube.client.tool.MessageIterator;
 import cube.client.tool.MessageReceiveEvent;
 import cube.client.tool.MessageSendEvent;
@@ -72,9 +75,7 @@ public final class Client {
 
     public final static String NAME = "Client";
 
-    private String name;
-
-    private String password;
+    private ClientDescription description;
 
     private Long id;
 
@@ -117,13 +118,14 @@ public final class Client {
      */
     public Client(String address, int port, String name, String password) {
         this.id = Utils.generateSerialNumber();
-        this.name = name;
 
         try {
             MessageDigest md5 = MessageDigest.getInstance("MD5");
             md5.update(password.getBytes(Charset.forName("UTF-8")));
             byte[] hashMD5 = md5.digest();
-            this.password = FileUtils.bytesToHexString(hashMD5).toLowerCase();
+            String passwordMD5 = FileUtils.bytesToHexString(hashMD5).toLowerCase();
+
+            this.description = new ClientDescription(name, passwordMD5);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -167,7 +169,7 @@ public final class Client {
      * @return 返回客户端登录名。
      */
     public String getName() {
-        return this.name;
+        return this.description.getName();
     }
 
     /**
@@ -176,7 +178,16 @@ public final class Client {
      * @return 返回登录密码的 HASH 码。
      */
     public String getPassword() {
-        return this.password;
+        return this.description.getPassword();
+    }
+
+    /**
+     * 获取客户端描述信息。
+     *
+     * @return 返回客户端描述信息。
+     */
+    public ClientDescription getDescription() {
+        return this.description;
     }
 
     protected void setSessionId(long sessionId) {
@@ -278,7 +289,7 @@ public final class Client {
         this.pretender = pretender;
 
         // 准备 HUB 控制器
-        Controller.getInstance().prepare(this, pretender);
+        HubController.getInstance().prepare(this, this.connector, this.receiver);
     }
 
     /**

@@ -24,44 +24,47 @@
  * SOFTWARE.
  */
 
-package cube.client.hub;
+package cube.client.test;
 
 import cube.client.Client;
-import cube.common.entity.*;
-import cube.hub.Event;
+import cube.client.hub.HubController;
+import cube.common.entity.Contact;
+import cube.hub.MetaMessage;
+import cube.hub.event.NewMessageEvent;
 import org.json.JSONObject;
 
-import java.io.File;
+public class TestHubController {
 
-/**
- * 控制器。
- */
-public class Controller {
+    public static void testNewMessageEvent(Client client) {
+        System.out.println("*** START testNewMessageEvent ***");
 
-    private final static Controller instance = new Controller();
+        long id = 98765;
+        String sender = "来自火星";
+        String ground = "阳关灿烂的日子";
+        long timestamp = System.currentTimeMillis();
+        JSONObject meta = new JSONObject();
 
-    private Client client;
+        MetaMessage metaMessage = new MetaMessage(id, sender, ground, timestamp, meta);
+        NewMessageEvent event = new NewMessageEvent(metaMessage);
+        boolean result = HubController.getInstance().sendEvent(event);
+        System.out.println("Result : " + result);
 
-    private Contact target;
-
-    private Controller() {
+        System.out.println("*** END ***");
     }
 
-    public final static Controller getInstance() {
-        return Controller.instance;
+    public static void main(String[] args) {
+        Client client = new Client("127.0.0.1", "admin", "shixincube.com");
+
+        if (!client.waitReady()) {
+            client.destroy();
+            return;
+        }
+
+        Contact contact = new Contact(10000, "shixincube.com");
+        client.prepare(contact);
+
+        testNewMessageEvent(client);
+
+        client.destroy();
     }
-
-    public void prepare(Client client, Contact pretender) {
-        this.client = client;
-        this.target = new Contact(1124, pretender.getDomain().getName());
-    }
-
-    public void sendEvent(Event event) {
-        JSONObject payload = new JSONObject();
-        payload.put("type", "HubEvent");
-        payload.put("data", event.toJSON());
-
-        File file = event.getFile();
-    }
-
 }
