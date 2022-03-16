@@ -27,20 +27,18 @@
 package cube.client.test;
 
 
-import cube.client.CubeClient;
+import cube.client.Client;
 import cube.common.entity.Contact;
 import cube.common.entity.ContactZone;
 import cube.common.entity.ContactZoneParticipant;
 import cube.common.entity.ContactZoneParticipantState;
-
-import java.util.List;
 
 /**
  * 测试分区。
  */
 public class TestContactZone {
 
-    public static void testAddParticipant(CubeClient client) {
+    public static void testAddParticipant(Client client) {
         System.out.println("[TestContactZone] testAddParticipant");
 
         Contact contact = new Contact(11444455L, "shixincube.com", "Cube");
@@ -55,7 +53,7 @@ public class TestContactZone {
         }
     }
 
-    public static void testModifyParticipant(CubeClient client) {
+    public static void testModifyParticipant(Client client) {
         Contact contact = new Contact(50001004L, "shixincube.com", "Cube");
         Contact participant = new Contact(11444455L, "shixincube.com", "Participant");
 
@@ -73,7 +71,7 @@ public class TestContactZone {
 
     public static void main(String[] args) {
 
-        CubeClient client = new CubeClient("127.0.0.1", "admin", "shixincube.com");
+        Client client = new Client("127.0.0.1", "admin", "shixincube.com");
 
         Helper.sleepInSeconds(3);
 

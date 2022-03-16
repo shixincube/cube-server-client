@@ -27,10 +27,8 @@
 package cube.client.test;
 
 
-import cube.client.CubeClient;
-import cube.client.listener.ContactListener;
+import cube.client.Client;
 import cube.common.entity.Contact;
-import cube.common.entity.Device;
 
 import java.util.List;
 
@@ -42,7 +40,7 @@ public class TestContact {
 
     public static void main(String[] args) {
 
-        CubeClient client = new CubeClient("127.0.0.1", "admin", "shixincube.com");
+        Client client = new Client("127.0.0.1", "admin", "shixincube.com");
 
         Helper.sleepInSeconds(3);
 

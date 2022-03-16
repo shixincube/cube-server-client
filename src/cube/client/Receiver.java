@@ -61,7 +61,7 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public class Receiver implements TalkListener {
 
-    private final CubeClient client;
+    private final Client client;
 
     private ConcurrentMap<Long, Notifier> notifiers;
 
@@ -71,7 +71,7 @@ public class Receiver implements TalkListener {
 
     private Map<String, StreamListener> streamListenerMap;
 
-    public Receiver(CubeClient client) {
+    public Receiver(Client client) {
         this.client = client;
         this.notifiers = new ConcurrentHashMap<>();
         this.receivingStreamMap = new ConcurrentHashMap<>();
@@ -160,7 +160,7 @@ public class Receiver implements TalkListener {
 
     @Override
     public void onListened(Speakable speakable, String cellet, Primitive primitive) {
-        if (CubeClient.NAME.equals(cellet)) {
+        if (Client.NAME.equals(cellet)) {
             ActionDialect actionDialect = DialectFactory.getInstance().createActionDialect(primitive);
 
             if (actionDialect.containsParam(Notifier.ParamName)) {
@@ -353,8 +353,8 @@ public class Receiver implements TalkListener {
         actionDialect.addParam("id", this.client.getId().longValue());
         actionDialect.addParam("name", this.client.getName());
         actionDialect.addParam("password", this.client.getPassword());
-        actionDialect.addParam("version", CubeClient.VERSION);
-        speakable.speak(CubeClient.NAME, actionDialect);
+        actionDialect.addParam("version", Client.VERSION);
+        speakable.speak(Client.NAME, actionDialect);
     }
 
     @Override

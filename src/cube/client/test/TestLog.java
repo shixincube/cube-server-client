@@ -26,7 +26,7 @@
 
 package cube.client.test;
 
-import cube.client.CubeClient;
+import cube.client.Client;
 import cube.common.entity.Contact;
 import cube.report.LogLine;
 
@@ -36,7 +36,7 @@ public class TestLog {
 
     public static void main(String[] args) {
 
-        CubeClient client = new CubeClient("127.0.0.1", "admin", "shixincube.com");
+        Client client = new Client("127.0.0.1", "admin", "shixincube.com");
 
         if (!client.waitReady()) {
             client.destroy();
@@ -44,7 +44,7 @@ public class TestLog {
         }
 
         Contact contact = new Contact(10000, "shixincube.com");
-        client.pretend(contact);
+        client.prepare(contact);
 
         List<LogLine> logs = client.getServerLogs();
         for (LogLine line : logs) {

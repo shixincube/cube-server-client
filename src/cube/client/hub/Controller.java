@@ -24,42 +24,44 @@
  * SOFTWARE.
  */
 
-package cube.client.listener;
+package cube.client.hub;
 
 import cube.client.Client;
-import cube.common.entity.Contact;
-import cube.common.entity.Device;
+import cube.common.entity.*;
+import cube.hub.Event;
+import org.json.JSONObject;
+
+import java.io.File;
 
 /**
- * 联系人模块监听器。
+ * 控制器。
  */
-public interface ContactListener {
+public class Controller {
 
-    /**
-     * 当有联系人签入系统时回调该方法。
-     *
-     * @param client 客户端实例。
-     * @param contact 签入的联系人。
-     * @param device 签入的设备。
-     */
-    void onSignIn(Client client, Contact contact, Device device);
+    private final static Controller instance = new Controller();
 
-    /**
-     * 当有联系人签出系统时回调该方法。
-     *
-     * @param client 客户端实例。
-     * @param contact 签出的联系人。
-     * @param device 签出的设备。
-     */
-    void onSignOut(Client client, Contact contact, Device device);
+    private Client client;
 
-    /**
-     * 当有联系人的设备超时时回调该方法。
-     *
-     * @param client 客户端实例。
-     * @param contact 联系人。
-     * @param device 超时的设备。
-     */
-    void onDeviceTimeout(Client client, Contact contact, Device device);
+    private Contact target;
+
+    private Controller() {
+    }
+
+    public final static Controller getInstance() {
+        return Controller.instance;
+    }
+
+    public void prepare(Client client, Contact pretender) {
+        this.client = client;
+        this.target = new Contact(1124, pretender.getDomain().getName());
+    }
+
+    public void sendEvent(Event event) {
+        JSONObject payload = new JSONObject();
+        payload.put("type", "HubEvent");
+        payload.put("data", event.toJSON());
+
+        File file = event.getFile();
+    }
 
 }

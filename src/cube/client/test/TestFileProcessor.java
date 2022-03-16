@@ -26,7 +26,7 @@
 
 package cube.client.test;
 
-import cube.client.CubeClient;
+import cube.client.Client;
 import cube.client.file.FileProcessor;
 import cube.client.file.OCRProcessing;
 import cube.client.file.VideoProcessing;
@@ -325,7 +325,7 @@ public class TestFileProcessor {
 
     public static void main(String[] args) {
 
-        CubeClient client = new CubeClient("127.0.0.1", "admin", "shixincube.com");
+        Client client = new Client("127.0.0.1", "admin", "shixincube.com");
 
         if (!client.waitReady()) {
             client.destroy();
@@ -333,7 +333,7 @@ public class TestFileProcessor {
         }
 
         Contact contact = new Contact(10000, "shixincube.com");
-        client.pretend(contact);
+        client.prepare(contact);
 
         FileProcessor fileProcessor = client.getFileProcessor();
 

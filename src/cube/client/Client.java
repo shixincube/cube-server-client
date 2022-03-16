@@ -33,6 +33,7 @@ import cell.util.log.Logger;
 import cube.auth.AuthToken;
 import cube.client.file.FileProcessor;
 import cube.client.file.FileUploader;
+import cube.client.hub.Controller;
 import cube.client.listener.*;
 import cube.client.tool.MessageIterator;
 import cube.client.tool.MessageReceiveEvent;
@@ -65,7 +66,7 @@ import java.util.concurrent.ConcurrentMap;
 /**
  * 服务器客户端程序。
  */
-public final class CubeClient {
+public final class Client {
 
     public final static String VERSION = "1.0.0";
 
@@ -104,7 +105,7 @@ public final class CubeClient {
      *
      * @param address 服务器地址。
      */
-    public CubeClient(String address, String name, String password) {
+    public Client(String address, String name, String password) {
         this(address, 6000, name, password);
     }
 
@@ -114,7 +115,7 @@ public final class CubeClient {
      * @param address 服务器地址。
      * @param port 服务器端口。
      */
-    public CubeClient(String address, int port, String name, String password) {
+    public Client(String address, int port, String name, String password) {
         this.id = Utils.generateSerialNumber();
         this.name = name;
 
@@ -210,7 +211,7 @@ public final class CubeClient {
         (new Thread() {
             @Override
             public void run() {
-                CubeClient.this.destroy();
+                Client.this.destroy();
             }
         }).start();
     }
@@ -269,12 +270,15 @@ public final class CubeClient {
     }
 
     /**
-     * 设置伪装。
+     * 准备数据。
      *
      * @param pretender
      */
-    public void pretend(Contact pretender) {
+    public void prepare(Contact pretender) {
         this.pretender = pretender;
+
+        // 准备 HUB 控制器
+        Controller.getInstance().prepare(this, pretender);
     }
 
     /**
@@ -915,6 +919,71 @@ public final class CubeClient {
     }
 
     /**
+     * 推送消息给指定的联系人。
+     *
+     * @param receiver
+     * @param payload
+     * @return
+     */
+    public boolean pushMessage(Contact receiver, JSONObject payload) {
+        if (null == this.pretender) {
+            Logger.e(this.getClass(), "#pushMessage - No pretender data");
+            return false;
+        }
+
+        return this.pushMessageWithPretender(receiver, this.pretender, payload);
+    }
+
+    /**
+     * 推送消息给指定的联系人。
+     *
+     * @param receiver
+     * @param payload
+     * @param file
+     * @return
+     */
+    public boolean pushMessage(Contact receiver, JSONObject payload, File file) {
+        if (null == this.pretender) {
+            Logger.e(this.getClass(), "#pushMessage - No pretender data");
+            return false;
+        }
+
+        FileLabel fileLabel = null;
+        if (null != file) {
+            // 将文件发送给服务器
+            fileLabel = this.putFileWithPretender(this.pretender, file);
+            if (null == fileLabel) {
+                Logger.d(Client.class, "#pushMessage - push file: \"" + file.getName() + "\" failed");
+                return false;
+            }
+        }
+
+        // 创建消息
+        long timestamp = System.currentTimeMillis();
+        Device device = new Device("Client", "Cube Server Client " + VERSION);
+
+        Message message = null;
+
+        if (null != fileLabel) {
+            FileAttachment fileAttachment = new FileAttachment(fileLabel);
+            fileAttachment.setCompressed(true);
+
+            message = new Message(receiver.getDomain().getName(), Utils.generateSerialNumber(),
+                    this.pretender.getId(), receiver.getId(), 0L, 0L, timestamp, 0L, MessageState.Sending.getCode(), 0,
+                    device.toCompactJSON(), payload, fileAttachment.toJSON());
+        }
+        else {
+            message = new Message(receiver.getDomain().getName(), Utils.generateSerialNumber(),
+                    this.pretender.getId(), receiver.getId(), 0L, 0L, timestamp, 0L, MessageState.Sending.getCode(), 0,
+                    device.toCompactJSON(), payload, null);
+        }
+
+        // 推送消息
+        boolean result = this.pushMessage(message, this.pretender, device);
+        return result;
+    }
+
+    /**
      * 使用伪装身份推送消息。
      *
      * @param receiver 指定消息接收者。
@@ -957,13 +1026,13 @@ public final class CubeClient {
      * @return 如果消息被服务器处理返回 {@code true} 。
      */
     public boolean pushFileMessageWithPretender(Contact receiver, Contact pretender, File file) {
-        Logger.d(CubeClient.class, "#pushFileMessageWithPretender - push file: \"" + file.getName() + "\" to \""
+        Logger.d(Client.class, "#pushFileMessageWithPretender - push file: \"" + file.getName() + "\" to \""
                 + receiver.getId() + "\" from \"" + pretender.getId() + "\"");
 
         // 将文件发送给服务器
         FileLabel fileLabel = this.putFileWithPretender(pretender, file);
         if (null == fileLabel) {
-            Logger.d(CubeClient.class, "#pushFileMessageWithPretender - push file: \"" + file.getName() + "\" failed");
+            Logger.d(Client.class, "#pushFileMessageWithPretender - push file: \"" + file.getName() + "\" failed");
             return false;
         }
 
@@ -994,13 +1063,13 @@ public final class CubeClient {
      * @return
      */
     public boolean pushImageMessageWithPretender(Contact receiver, Contact pretender, File file) {
-        Logger.d(CubeClient.class, "#pushImageMessageWithPretender - push file: \"" + file.getName() + "\" to \""
+        Logger.d(Client.class, "#pushImageMessageWithPretender - push file: \"" + file.getName() + "\" to \""
                 + receiver.getId() + "\" from \"" + pretender.getId() + "\"");
 
         // 将文件发送给服务器
         FileLabel fileLabel = this.putFileWithPretender(pretender, file);
         if (null == fileLabel) {
-            Logger.d(CubeClient.class, "#pushImageMessageWithPretender - push file: \"" + file.getName() + "\" failed");
+            Logger.d(Client.class, "#pushImageMessageWithPretender - push file: \"" + file.getName() + "\" failed");
             return false;
         }
 
@@ -1024,70 +1093,6 @@ public final class CubeClient {
     }
 
     /**
-     * 推送消息给指定的联系人。
-     *
-     * @param receiver
-     * @param data
-     * @return
-     */
-    public boolean pushMessage(Contact receiver, JSONObject data) {
-        return this.pushMessage(receiver, data, null);
-    }
-
-    /**
-     * 推送消息给指定的联系人。
-     *
-     * @param receiver
-     * @param data
-     * @param file
-     * @return
-     */
-    public boolean pushMessage(Contact receiver, JSONObject data, File file) {
-        if (null == this.pretender) {
-            Logger.e(this.getClass(), "#pushMessage - No pretender data");
-            return false;
-        }
-
-        FileLabel fileLabel = null;
-        if (null != file) {
-            // 将文件发送给服务器
-            fileLabel = this.putFileWithPretender(this.pretender, file);
-            if (null == fileLabel) {
-                Logger.d(CubeClient.class, "#pushMessage - push file: \"" + file.getName() + "\" failed");
-                return false;
-            }
-        }
-
-        // 创建消息
-        long timestamp = System.currentTimeMillis();
-        Device device = new Device("Client", "Cube Server Client " + VERSION);
-
-        JSONObject payload = new JSONObject();
-        payload.put("type", "custom");
-        payload.put("data", data);
-
-        Message message = null;
-
-        if (null != fileLabel) {
-            FileAttachment fileAttachment = new FileAttachment(fileLabel);
-            fileAttachment.setCompressed(true);
-
-            message = new Message(receiver.getDomain().getName(), Utils.generateSerialNumber(),
-                    this.pretender.getId(), receiver.getId(), 0L, 0L, timestamp, 0L, MessageState.Sending.getCode(), 0,
-                    device.toCompactJSON(), payload, fileAttachment.toJSON());
-        }
-        else {
-            message = new Message(receiver.getDomain().getName(), Utils.generateSerialNumber(),
-                    this.pretender.getId(), receiver.getId(), 0L, 0L, timestamp, 0L, MessageState.Sending.getCode(), 0,
-                    device.toCompactJSON(), payload, null);
-        }
-
-        // 推送消息
-        boolean result = this.pushMessage(message, this.pretender, device);
-        return result;
-    }
-
-    /**
      * 使用伪装身份发送文件。
      *
      * @param pretender 指定伪装的联系人。
@@ -1104,19 +1109,19 @@ public final class CubeClient {
                 getFileUploader().upload(pretender.getId(), pretender.getDomain().getName(), file, new FileUploadListener() {
                     @Override
                     public void onUploading(FileUploader.UploadMeta meta, long processedSize) {
-                        Logger.d(CubeClient.class, "#putFileWithPretender - onUploading : " +
+                        Logger.d(Client.class, "#putFileWithPretender - onUploading : " +
                                 processedSize + "/" + meta.file.length());
                     }
 
                     @Override
                     public void onCompleted(FileUploader.UploadMeta meta) {
-                        Logger.i(CubeClient.class, "#putFileWithPretender - onCompleted : " + meta.fileCode);
+                        Logger.i(Client.class, "#putFileWithPretender - onCompleted : " + meta.fileCode);
                         promise.resolve(meta);
                     }
 
                     @Override
                     public void onFailed(FileUploader.UploadMeta meta, Throwable throwable) {
-                        Logger.w(CubeClient.class, "#putFileWithPretender - onFailed : " + file.getName(), throwable);
+                        Logger.w(Client.class, "#putFileWithPretender - onFailed : " + file.getName(), throwable);
                         promise.reject(meta);
                     }
                 });
@@ -1208,7 +1213,7 @@ public final class CubeClient {
 
         int code = result.getParamAsInt("code");
         if (code != FileStorageStateCode.Ok.code) {
-            Logger.w(CubeClient.class, "#queryFileLabel - error : " + code);
+            Logger.w(Client.class, "#queryFileLabel - error : " + code);
             return null;
         }
 
@@ -1248,7 +1253,7 @@ public final class CubeClient {
 
         int code = result.getParamAsInt("code");
         if (code != FileStorageStateCode.Ok.code) {
-            Logger.w(CubeClient.class, "#putFileLabel - error : " + code);
+            Logger.w(Client.class, "#putFileLabel - error : " + code);
             return null;
         }
 

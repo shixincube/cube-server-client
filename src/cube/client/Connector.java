@@ -92,25 +92,25 @@ public class Connector {
     }
 
     public void setListener(TalkListener listener) {
-        this.nucleus.getTalkService().setListener(CubeClient.NAME, listener);
+        this.nucleus.getTalkService().setListener(Client.NAME, listener);
     }
 
     public void send(ActionDialect actionDialect) {
-        this.nucleus.getTalkService().speak(CubeClient.NAME, actionDialect);
+        this.nucleus.getTalkService().speak(Client.NAME, actionDialect);
     }
 
     public ActionDialect send(Notifier notifier, ActionDialect actionDialect) {
         // 增加数据字段
         actionDialect.addParam(Notifier.ParamName, notifier.toJSON());
 
-        this.nucleus.getTalkService().speak(CubeClient.NAME, actionDialect);
+        this.nucleus.getTalkService().speak(Client.NAME, actionDialect);
 
         // 阻塞等待结果
         return notifier.waiting();
     }
 
     public PrimitiveOutputStream sendStream(String streamName) {
-        return this.nucleus.getTalkService().speakStream(CubeClient.NAME, streamName);
+        return this.nucleus.getTalkService().speakStream(Client.NAME, streamName);
     }
 
     public void destroy() {

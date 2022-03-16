@@ -28,11 +28,8 @@ package cube.client.test;
 
 
 import cube.auth.AuthToken;
-import cube.client.CubeClient;
+import cube.client.Client;
 import cube.client.tool.TokenTools;
-import cube.common.entity.Contact;
-
-import java.util.List;
 
 /**
  * 测试操作令牌。
@@ -42,7 +39,7 @@ public class TestAuthToken {
 
     public static void main(String[] args) {
 
-        CubeClient client = new CubeClient("127.0.0.1", "admin", "shixincube.com");
+        Client client = new Client("127.0.0.1", "admin", "shixincube.com");
 
         if (!client.waitReady()) {
             return;

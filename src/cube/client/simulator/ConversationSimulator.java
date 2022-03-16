@@ -29,7 +29,7 @@ package cube.client.simulator;
 import cell.util.Utils;
 import cell.util.log.LogLevel;
 import cell.util.log.LogManager;
-import cube.client.CubeClient;
+import cube.client.Client;
 import cube.client.listener.MessageReceiveListener;
 import cube.client.listener.MessageSendListener;
 import cube.client.tool.MessageIterator;
@@ -57,7 +57,7 @@ public class ConversationSimulator implements MessageReceiveListener, MessageSen
 
     private String printPrefix = "#";
 
-    private CubeClient client;
+    private Client client;
 
     private String exitCommand;
 
@@ -69,11 +69,11 @@ public class ConversationSimulator implements MessageReceiveListener, MessageSen
 
     private List<Message> messageList;
 
-    public ConversationSimulator(CubeClient client) {
+    public ConversationSimulator(Client client) {
         this(client, null, null);
     }
 
-    public ConversationSimulator(CubeClient client, Contact self, Contact partner) {
+    public ConversationSimulator(Client client, Contact self, Contact partner) {
         LogManager.getInstance().setLevel(LogLevel.INFO);
         this.client = client;
         this.messageList = new ArrayList<>();

@@ -27,7 +27,7 @@
 package cube.client.test;
 
 
-import cube.client.CubeClient;
+import cube.client.Client;
 import cube.client.listener.ContactListener;
 import cube.common.entity.Contact;
 import cube.common.entity.Device;
@@ -41,14 +41,14 @@ public class TestListener {
     public static void main(String[] args) {
         Object mutex = new Object();
 
-        CubeClient client = new CubeClient("127.0.0.1", "admin", "shixincube.com");
+        Client client = new Client("127.0.0.1", "admin", "shixincube.com");
 
         Helper.sleepInSeconds(3);
 
         // 注册监听器
         client.registerListener(new ContactListener() {
             @Override
-            public void onSignIn(CubeClient client, Contact contact, Device device) {
+            public void onSignIn(Client client, Contact contact, Device device) {
                 System.out.println("[TestListener] onSignIn : " + contact.getId() + " - " + device.getName());
 
                 synchronized (mutex) {
@@ -57,11 +57,11 @@ public class TestListener {
             }
 
             @Override
-            public void onSignOut(CubeClient client, Contact contact, Device device) {
+            public void onSignOut(Client client, Contact contact, Device device) {
             }
 
             @Override
-            public void onDeviceTimeout(CubeClient client, Contact contact, Device device) {
+            public void onDeviceTimeout(Client client, Contact contact, Device device) {
             }
         });
 

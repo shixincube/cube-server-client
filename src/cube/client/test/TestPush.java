@@ -27,21 +27,20 @@
 package cube.client.test;
 
 
-import cube.client.CubeClient;
+import cube.client.Client;
 import cube.common.entity.Contact;
 import cube.common.entity.Device;
 import org.json.JSONObject;
 
 import java.io.File;
 import java.util.Date;
-import java.util.List;
 
 /**
  * 测试推送消息。
  */
 public class TestPush {
 
-    public static void testPushMessage(CubeClient client) {
+    public static void testPushMessage(Client client) {
         System.out.println("[TestPush] Push message");
 
         Contact receiver = new Contact(11444455L, "shixincube.com", "Cube");
@@ -58,7 +57,7 @@ public class TestPush {
         System.out.println("[TestPush] Push message result: " + result);
     }
 
-    public static void testPushFileMessage(CubeClient client) {
+    public static void testPushFileMessage(Client client) {
         System.out.println("[TestPush] Push file message");
 
         File targetFile = new File("data/cube-framework.png");
@@ -71,7 +70,7 @@ public class TestPush {
         System.out.println("[TestPush] Push file message result: " + result);
     }
 
-    public static void testPushImageMessage(CubeClient client) {
+    public static void testPushImageMessage(Client client) {
         System.out.println("[TestPush] Push image message");
 
         File targetFile = new File("data/cube-framework.png");
@@ -87,7 +86,7 @@ public class TestPush {
 
     public static void main(String[] args) {
 
-        CubeClient client = new CubeClient("127.0.0.1", "admin", "shixincube.com");
+        Client client = new Client("127.0.0.1", "admin", "shixincube.com");
 
         Helper.sleepInSeconds(3);
 
