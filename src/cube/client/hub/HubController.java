@@ -37,6 +37,7 @@ import cube.hub.HubAction;
 import cube.hub.HubStateCode;
 import cube.hub.SignalBuilder;
 import cube.hub.event.Event;
+import cube.hub.signal.PassBySignal;
 import cube.hub.signal.ReadySignal;
 import cube.hub.signal.Signal;
 import org.json.JSONObject;
@@ -123,6 +124,10 @@ public class HubController {
     }
 
     public boolean sendSignal(Signal signal) {
+        if (PassBySignal.NAME.equals(signal.getName())) {
+            signal.setDescription(this.client.getDescription());
+        }
+
         ActionDialect actionDialect = new ActionDialect(HubAction.TransmitSignal.name);
         actionDialect.addParam("signal", signal.toJSON());
 
