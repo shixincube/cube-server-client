@@ -333,7 +333,7 @@ public class FileProcessor {
      * @return
      */
     public FileProcessResult call(FileProcessing fileProcessing, File file) {
-        FileLabel fileLabel = this.checkAndGet(file);
+        FileLabel fileLabel = this.checkWithUploadStrategy(file);
         if (null == fileLabel) {
             Logger.i(FileProcessor.class, "#call - Can NOT get file : " + file.getName());
             return null;
@@ -404,7 +404,7 @@ public class FileProcessor {
      * @return
      */
     public FileProcessResult call(OperationWorkflow workflow, File file) {
-        FileLabel fileLabel = this.checkAndGet(file);
+        FileLabel fileLabel = this.checkWithUploadStrategy(file);
         if (null == fileLabel) {
             Logger.i(FileProcessor.class, "#call - Can NOT get file : " + file.getName());
             return null;
@@ -426,12 +426,12 @@ public class FileProcessor {
     }
 
     /**
-     * 检查并获取文件。
+     * 检查文件，如果文件在服务器上不存在则上传。
      *
      * @param file
      * @return
      */
-    private FileLabel checkAndGet(File file) {
+    public FileLabel checkWithUploadStrategy(File file) {
         ActionDialect actionDialect = new ActionDialect(ClientAction.FindFile.name);
         actionDialect.addParam("domain", this.domainName);
         actionDialect.addParam("contactId", this.contactId.longValue());
@@ -445,7 +445,7 @@ public class FileProcessor {
 
         int code = result.getParamAsInt("code");
         if (code != FileStorageStateCode.Ok.code) {
-            Logger.i(FileProcessor.class, "#checkAndGet - Not find file : " + file.getName());
+            Logger.i(FileProcessor.class, "#checkWithUploadStrategy - Not find file : " + file.getName());
 
             Promise.create(new PromiseHandler<FileUploader.UploadMeta>() {
                 @Override
@@ -454,20 +454,20 @@ public class FileProcessor {
                     uploader.upload(contactId, domainName, file, new FileUploadListener() {
                         @Override
                         public void onUploading(FileUploader.UploadMeta meta, long processedSize) {
-                            Logger.d(FileProcessor.class, "#checkAndGet - onUploading : " +
+                            Logger.d(FileProcessor.class, "#checkWithUploadStrategy - onUploading : " +
                                     FileUtils.scaleFileSize(processedSize) + "/" +
                                     FileUtils.scaleFileSize(meta.file.length()));
                         }
 
                         @Override
                         public void onCompleted(FileUploader.UploadMeta meta) {
-                            Logger.i(FileProcessor.class, "#checkAndGet - onCompleted : " + meta.fileCode);
+                            Logger.i(FileProcessor.class, "#checkWithUploadStrategy - onCompleted : " + meta.fileCode);
                             promise.resolve(meta);
                         }
 
                         @Override
                         public void onFailed(FileUploader.UploadMeta meta, Throwable throwable) {
-                            Logger.w(FileProcessor.class, "#checkAndGet - onFailed : " + file.getName(), throwable);
+                            Logger.w(FileProcessor.class, "#checkWithUploadStrategy - onFailed : " + file.getName(), throwable);
                             promise.reject(meta);
                         }
                     });
@@ -525,7 +525,7 @@ public class FileProcessor {
         return mutableFileLabel.value;
     }
 
-    public FileLabel putFileLabel(String fileCode, File file, String md5Code, String sha1Code) {
+    private FileLabel putFileLabel(String fileCode, File file, String md5Code, String sha1Code) {
         // 判断文件类型
         FileType fileType = FileUtils.extractFileExtensionType(file.getName());
 

@@ -188,7 +188,10 @@ public class Receiver implements TalkListener {
                 this.processNotifier(actionDialect);
             }
             else {
-                Logger.w(this.getClass(), "Unknown action [" + HubController.NAME + "]: " + actionDialect.getName());
+                // 处理接收到的动作
+                if (!HubController.getInstance().processAction(actionDialect, speakable)) {
+                    Logger.w(this.getClass(), "Unknown action [" + HubController.NAME + "]: " + actionDialect.getName());
+                }
             }
         }
     }

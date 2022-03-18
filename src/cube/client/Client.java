@@ -287,9 +287,22 @@ public final class Client {
      */
     public void prepare(Contact pretender) {
         this.pretender = pretender;
+        this.description.setPretender(pretender);
+    }
 
-        // 准备 HUB 控制器
-        HubController.getInstance().prepare(this, this.connector, this.receiver);
+    /**
+     * 准备数据。
+     *
+     * @param pretender
+     * @param hubEnabled 是否启用 HUB 功能。
+     */
+    public void prepare(Contact pretender, boolean hubEnabled) {
+        this.prepare(pretender);
+
+        if (hubEnabled) {
+            // 准备 HUB 控制器
+            HubController.getInstance().prepare(this, this.connector, this.receiver);
+        }
     }
 
     /**

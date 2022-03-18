@@ -26,26 +26,43 @@
 
 package cube.client.test;
 
+import cell.util.Utils;
 import cube.client.Client;
 import cube.client.hub.HubController;
 import cube.common.entity.Contact;
-import cube.hub.MetaMessage;
-import cube.hub.event.NewMessageEvent;
+import cube.common.entity.Group;
+import cube.common.entity.Message;
+import cube.hub.event.SubmitMessagesEvent;
 import org.json.JSONObject;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class TestHubController {
 
-    public static void testNewMessageEvent(Client client) {
+    public static void testSubmitMessagesEvent(Client client) {
         System.out.println("*** START testNewMessageEvent ***");
 
         long id = 98765;
-        String sender = "来自火星";
-        String ground = "阳关灿烂的日子";
-        long timestamp = System.currentTimeMillis();
-        JSONObject meta = new JSONObject();
 
-        MetaMessage metaMessage = new MetaMessage(id, sender, ground, timestamp, meta);
-        NewMessageEvent event = new NewMessageEvent(metaMessage);
+        JSONObject payload = new JSONObject();
+        payload.put("content", Utils.randomString(32));
+
+        Contact account = new Contact();
+        account.setName("来自火星");
+
+        Contact sender = new Contact();
+        sender.setName("少年");
+
+        Group group = new Group();
+        group.setName("阳关灿烂的日子");
+
+        List<Message> messageList = new ArrayList<>();
+        Message message = new Message(id, sender, group, System.currentTimeMillis(), payload);
+        messageList.add(message);
+
+        SubmitMessagesEvent event = new SubmitMessagesEvent(account, group, messageList);
+
         boolean result = HubController.getInstance().sendEvent(event);
         System.out.println("Result : " + result);
 
@@ -61,9 +78,9 @@ public class TestHubController {
         }
 
         Contact contact = new Contact(10000, "shixincube.com");
-        client.prepare(contact);
+        client.prepare(contact, true);
 
-        testNewMessageEvent(client);
+        testSubmitMessagesEvent(client);
 
         client.destroy();
     }

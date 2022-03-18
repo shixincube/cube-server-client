@@ -26,17 +26,24 @@
 
 package cube.client.hub;
 
+import cell.api.Speakable;
 import cell.core.talk.dialect.ActionDialect;
 import cell.util.log.Logger;
 import cube.client.Client;
 import cube.client.Connector;
 import cube.client.Receiver;
-import cube.hub.Event;
+import cube.common.entity.FileLabel;
 import cube.hub.HubAction;
 import cube.hub.HubStateCode;
+import cube.hub.SignalBuilder;
+import cube.hub.event.Event;
+import cube.hub.signal.ReadySignal;
+import cube.hub.signal.Signal;
 import org.json.JSONObject;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 控制器。
@@ -53,6 +60,8 @@ public class HubController {
 
     private Receiver receiver;
 
+    private List<HubSignalListener> signalListenerList;
+
     private HubController() {
     }
 
@@ -64,21 +73,44 @@ public class HubController {
         this.client = client;
         this.connector = connector;
         this.receiver = receiver;
+
+        // 向服务器报告就绪
+        this.sendSignal(new ReadySignal(client.getDescription()));
+
+        this.signalListenerList = new ArrayList<>();
+    }
+
+    public void addListener(HubSignalListener listener) {
+        if (this.signalListenerList.contains(listener)) {
+            return;
+        }
+
+        this.signalListenerList.add(listener);
+    }
+
+    public void removeListener(HubSignalListener listener) {
+        this.signalListenerList.remove(listener);
     }
 
     public boolean sendEvent(Event event) {
-        JSONObject payload = new JSONObject();
-        payload.put("client", this.client.getDescription().toCompactJSON());
-        payload.put("event", event.toJSON());
+        // 设置客户端描述
+        event.setDescription(this.client.getDescription());
 
         File file = event.getFile();
         if (null != file) {
             // 上传文件
+            FileLabel fileLabel = this.client.getFileProcessor().checkWithUploadStrategy(file);
+            if (null == fileLabel) {
+                Logger.w(this.getClass(), "#sendEvent - Upload file failed : " + file.getName());
+                return false;
+            }
 
+            // 设置文件标签
+            event.setFileLabel(fileLabel);
         }
 
         ActionDialect actionDialect = new ActionDialect(HubAction.TriggerEvent.name);
-        actionDialect.addParam("data", payload);
+        actionDialect.addParam("event", event.toJSON());
 
         ActionDialect response = this.connector.synSend(this.receiver.inject(), NAME, actionDialect);
         int stateCode = response.getParamAsInt("code");
@@ -87,8 +119,36 @@ public class HubController {
             return false;
         }
 
+        return true;
+    }
+
+    public boolean sendSignal(Signal signal) {
+        ActionDialect actionDialect = new ActionDialect(HubAction.TransmitSignal.name);
+        actionDialect.addParam("signal", signal.toJSON());
+
+        ActionDialect response = this.connector.synSend(this.receiver.inject(), NAME, actionDialect);
+        int stateCode = response.getParamAsInt("code");
+        if (HubStateCode.Ok.code != stateCode) {
+            Logger.e(this.getClass(), "#sendSignal - state code: " + stateCode);
+            return false;
+        }
 
         return true;
     }
 
+    public boolean processAction(ActionDialect actionDialect, Speakable speakable) {
+        String action = actionDialect.getName();
+        if (HubAction.TransmitSignal.name.equals(action)) {
+            JSONObject data = actionDialect.getParamAsJson("signal");
+
+            Signal signal = SignalBuilder.build(data);
+            for (HubSignalListener listener : this.signalListenerList) {
+                listener.onSignal(signal);
+            }
+
+            return true;
+        }
+
+        return false;
+    }
 }
