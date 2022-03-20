@@ -34,6 +34,7 @@ import cube.common.entity.Group;
 import cube.common.entity.Message;
 import cube.hub.event.SubmitMessagesEvent;
 import cube.hub.signal.PassBySignal;
+import cube.hub.signal.ReportSignal;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
@@ -74,6 +75,10 @@ public class TestHubController {
         System.out.println("*** START testPassBySignal ***");
 
         PassBySignal passBySignal = new PassBySignal(true);
+        passBySignal.addSignal(new ReportSignal());
+
+        boolean result = HubController.getInstance().sendSignal(passBySignal);
+        System.out.println("Result : " + result);
 
         System.out.println("*** END ***");
     }
