@@ -26,29 +26,51 @@
 
 package cube.client.test;
 
+import cell.util.Utils;
 import cube.client.Client;
 import cube.client.hub.HubController;
 import cube.client.hub.HubSignalListener;
 import cube.common.entity.Contact;
+import cube.hub.event.LoginQRCodeEvent;
+import cube.hub.event.ReportEvent;
+import cube.hub.signal.LoginQRCodeSignal;
+import cube.hub.signal.ReportSignal;
 import cube.hub.signal.Signal;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
 public class SimpleHubClient implements HubSignalListener {
 
-    private Object mutex;
+    private static boolean sSpinning = true;
 
-    protected SimpleHubClient(Object mutex) {
-        this.mutex = mutex;
+    private Contact contact;
+
+    protected SimpleHubClient(Contact contact) {
+        this.contact = contact;
     }
 
     @Override
     public void onSignal(Signal signal) {
-        System.out.println("SimpleHubClient #onSignal - " + signal.getName());
+        String signalName = signal.getName();
 
-        synchronized (this.mutex) {
-            this.mutex.notify();
+        System.out.println("SimpleHubClient #onSignal - " + signalName);
+
+        if (ReportSignal.NAME.equals(signalName)) {
+            ReportEvent reportEvent = new ReportEvent(8, Utils.randomInt(2, 8), new ArrayList<>());
+            HubController.getInstance().sendEvent(reportEvent);
+        }
+        else if (LoginQRCodeSignal.NAME.equals(signalName)) {
+            try {
+                Thread.sleep(Utils.randomInt(1000, 3000));
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
+            LoginQRCodeEvent event = new LoginQRCodeEvent(signal.getSerialNumber(),
+                    new File("data/qr.jpg"));
+            HubController.getInstance().sendEvent(event);
         }
     }
 
@@ -59,8 +81,6 @@ public class SimpleHubClient implements HubSignalListener {
         List<Client> clientList = new ArrayList<>();
 
         System.out.println("SimpleHubClient - START " + idList.length);
-
-        Object mutex = new Object();
 
         for (int i = 0; i < idList.length; ++i) {
             final long id = idList[i];
@@ -74,9 +94,10 @@ public class SimpleHubClient implements HubSignalListener {
                     }
 
                     Contact contact = new Contact(id, "shixincube.com");
-                    client.prepare(contact, true);
 
-                    HubController.getInstance().addListener(new SimpleHubClient(mutex));
+                    HubController.getInstance().addListener(new SimpleHubClient(contact));
+
+                    client.prepare(contact, true);
 
                     System.out.println("SimpleHubClient - client ready : " + contact.getId());
 
@@ -85,9 +106,9 @@ public class SimpleHubClient implements HubSignalListener {
             }).start();
         }
 
-        synchronized (mutex) {
+        while (sSpinning) {
             try {
-                mutex.wait(3 * 6 * 1000);
+                Thread.sleep(1000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }

@@ -64,6 +64,7 @@ public class HubController {
     private List<HubSignalListener> signalListenerList;
 
     private HubController() {
+        this.signalListenerList = new ArrayList<>();
     }
 
     public final static HubController getInstance() {
@@ -77,8 +78,6 @@ public class HubController {
 
         // 向服务器报告就绪
         this.sendSignal(new ReadySignal(client.getDescription()));
-
-        this.signalListenerList = new ArrayList<>();
     }
 
     public void addListener(HubSignalListener listener) {

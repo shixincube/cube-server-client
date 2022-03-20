@@ -26,7 +26,11 @@
 
 package cube.client.test;
 
+import org.json.JSONObject;
+
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -41,6 +45,9 @@ public class TestHub {
     private void http(String urlString) {
         System.out.println("HTTP : " + urlString);
 
+        JSONObject json = null;
+
+        BufferedReader reader = null;
         try {
             URL url = new URL(urlString + "?c=" + this.code);
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
@@ -55,7 +62,17 @@ public class TestHub {
             connection.connect();
             int code = connection.getResponseCode();
             if (code == HttpURLConnection.HTTP_OK) {
-                System.out.println("OK : ");
+                System.out.println("OK");
+
+                StringBuilder buf = new StringBuilder();
+
+                reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+                String line = null;
+                while ((line = reader.readLine()) != null) {
+                    buf.append(line);
+                }
+
+                json = new JSONObject(buf.toString());
             }
             else {
                 System.out.println("State : " + code);
@@ -67,6 +84,16 @@ public class TestHub {
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
+            if (null != reader) {
+                try {
+                    reader.close();
+                } catch (IOException e) {
+                }
+            }
+        }
+
+        if (null != json) {
+            System.out.println("Result : " + json.toString());
         }
     }
 
