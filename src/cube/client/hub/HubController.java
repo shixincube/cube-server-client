@@ -67,7 +67,7 @@ public class HubController {
         this.signalListenerList = new ArrayList<>();
     }
 
-    public final static HubController getInstance() {
+    public static HubController getInstance() {
         return HubController.instance;
     }
 
@@ -113,6 +113,10 @@ public class HubController {
         actionDialect.addParam("event", event.toJSON());
 
         ActionDialect response = this.connector.synSend(this.receiver.inject(), NAME, actionDialect);
+        if (null == response) {
+            Logger.e(this.getClass(), "#sendEvent - timeout: " + actionDialect.getName());
+            return false;
+        }
         int stateCode = response.getParamAsInt("code");
         if (HubStateCode.Ok.code != stateCode) {
             Logger.e(this.getClass(), "#sendEvent - state code: " + stateCode);

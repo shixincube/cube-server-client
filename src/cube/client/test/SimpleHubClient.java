@@ -69,6 +69,7 @@ public class SimpleHubClient implements HubSignalListener {
             }
 
             LoginQRCodeEvent event = new LoginQRCodeEvent(signal.getSerialNumber(),
+                    signal.getCode(),
                     new File("data/qr.jpg"));
             HubController.getInstance().sendEvent(event);
         }

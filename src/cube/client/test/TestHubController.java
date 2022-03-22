@@ -32,6 +32,7 @@ import cube.client.hub.HubController;
 import cube.common.entity.Contact;
 import cube.common.entity.Group;
 import cube.common.entity.Message;
+import cube.hub.event.ReportEvent;
 import cube.hub.event.SubmitMessagesEvent;
 import cube.hub.signal.PassBySignal;
 import cube.hub.signal.ReportSignal;
@@ -83,6 +84,14 @@ public class TestHubController {
         System.out.println("*** END ***");
     }
 
+    public static void testReportEvent(Client client) {
+        System.out.println("*** START testReportEvent ***");
+
+
+
+        System.out.println("*** END ***");
+    }
+
     public static void main(String[] args) {
         Client client = new Client("127.0.0.1", "admin", "shixincube.com");
 
@@ -95,7 +104,8 @@ public class TestHubController {
         client.prepare(contact, true);
 
 //        testSubmitMessagesEvent(client);
-        testPassBySignal(client);
+//        testPassBySignal(client);
+        testReportEvent(client);
 
         client.destroy();
     }
