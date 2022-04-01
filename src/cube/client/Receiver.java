@@ -97,6 +97,10 @@ public class Receiver implements TalkListener {
             }
         }
 
+        for (Notifier notifier : this.notifiers.values()) {
+            notifier.over(null);
+        }
+
         this.executor.shutdown();
     }
 
