@@ -126,7 +126,7 @@ public class HubController {
         return true;
     }
 
-    public boolean sendSignal(Signal signal) {
+    public Signal sendSignal(Signal signal) {
         if (PassBySignal.NAME.equals(signal.getName())) {
             signal.setDescription(this.client.getDescription());
         }
@@ -138,10 +138,11 @@ public class HubController {
         int stateCode = response.getParamAsInt("code");
         if (HubStateCode.Ok.code != stateCode) {
             Logger.e(this.getClass(), "#sendSignal - state code: " + stateCode);
-            return false;
+            return null;
         }
 
-        return true;
+        JSONObject data = response.getParamAsJson("data");
+        return SignalBuilder.build(data);
     }
 
     public boolean processAction(ActionDialect actionDialect, Speakable speakable) {
