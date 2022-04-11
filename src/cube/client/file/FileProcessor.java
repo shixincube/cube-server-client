@@ -440,6 +440,10 @@ public class FileProcessor {
         actionDialect.addParam("lastModified", file.lastModified());
 
         ActionDialect result = this.connector.send(this.receiver.inject(), actionDialect);
+        if (null == result || !result.containsParam("code")) {
+            Logger.e(this.getClass(), "#checkWithUploadStrategy - State error");
+            return null;
+        }
 
         MutableFileLabel mutableFileLabel = new MutableFileLabel();
 
@@ -540,6 +544,9 @@ public class FileProcessor {
 
         // 阻塞线程，并等待返回结果
         ActionDialect result = this.connector.send(this.receiver.inject(), actionDialect);
+        if (null == result) {
+            return null;
+        }
 
         int code = result.getParamAsInt("code");
         if (code != FileStorageStateCode.Ok.code) {
