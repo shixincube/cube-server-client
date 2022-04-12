@@ -534,7 +534,8 @@ public class FileProcessor {
         FileType fileType = FileUtils.extractFileExtensionType(file.getName());
 
         FileLabel fileLabel = new FileLabel(this.domainName, fileCode,
-                this.contactId, file.getName(), file.length(), file.lastModified(), System.currentTimeMillis(), 0);
+                this.contactId, file.getName(), file.length(), file.lastModified(), System.currentTimeMillis(),
+                0);
         fileLabel.setFileType(fileType);
         fileLabel.setMD5Code(md5Code);
         fileLabel.setSHA1Code(sha1Code);
