@@ -144,6 +144,14 @@ public class Receiver implements TalkListener {
     }
 
     /**
+     *
+     * @param streamName
+     */
+    public void removeStreamListener(String streamName) {
+        this.streamListenerMap.remove(streamName);
+    }
+
+    /**
      * 注入新的通知器。
      *
      * @param notifier

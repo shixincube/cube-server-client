@@ -71,7 +71,7 @@ import java.util.concurrent.ConcurrentMap;
  */
 public final class Client {
 
-    public final static String VERSION = "1.0.0";
+    public final static String VERSION = "1.0.1";
 
     public final static String NAME = "Client";
 
@@ -92,6 +92,8 @@ public final class Client {
     private HubController hubController;
 
     private Timer timer;
+
+    private boolean interrupted;
 
     private Contact pretender;
 
@@ -154,6 +156,8 @@ public final class Client {
 
         this.timer = new Timer();
         this.timer.schedule(new Daemon(), 5000, 10000);
+
+        this.interrupted = false;
     }
 
     /**
@@ -221,6 +225,14 @@ public final class Client {
      * 中断客户端。
      */
     public void interrupt() {
+        synchronized (this) {
+            if (this.interrupted) {
+                return;
+            }
+
+            this.interrupted = true;
+        }
+
         (new Thread() {
             @Override
             public void run() {

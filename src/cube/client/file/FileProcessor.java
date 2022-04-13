@@ -55,6 +55,8 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 
 /**
  * 文件处理器。
@@ -158,6 +160,55 @@ public class FileProcessor {
         }
 
         return null;
+    }
+
+    /**
+     * 下载指定文件码的文件。
+     *
+     * @param fileCode
+     * @return
+     */
+    public FileLabel downloadFile(String fileCode) {
+        ActionDialect actionDialect = new ActionDialect(ClientAction.GetFile.name);
+        actionDialect.addParam("domain", this.domainName);
+        actionDialect.addParam("fileCode", fileCode);
+        actionDialect.addParam("transmitting", true);
+
+        // 阻塞线程，并等待返回结果
+        ActionDialect result = this.connector.send(this.receiver.inject(), actionDialect);
+
+        int code = result.getParamAsInt("code");
+        if (code != FileStorageStateCode.Ok.code) {
+            Logger.w(FileProcessor.class, "#downloadFile - error : " + code);
+            return null;
+        }
+
+        JSONObject data = result.getParamAsJson("fileLabel");
+        FileLabel fileLabel = new FileLabel(data);
+
+        this.receiver.setStreamListener(fileLabel.getFileName(), new StreamListener() {
+            @Override
+            public void onCompleted(String streamName, File streamFile) {
+                synchronized (fileLabel) {
+                    fileLabel.notify();
+                }
+            }
+        });
+
+        synchronized (fileLabel) {
+            try {
+                fileLabel.wait(5 * 60 * 1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+        this.receiver.removeStreamListener(fileLabel.getFileName());
+
+        // 设置本地文件实例
+        fileLabel.setFile(new File(this.filePath, fileLabel.getFileName()));
+
+        return fileLabel;
     }
 
     /**
