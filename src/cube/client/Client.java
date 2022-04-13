@@ -222,7 +222,7 @@ public final class Client {
         (new Thread() {
             @Override
             public void run() {
-                Client.this.destroy();
+                Logger.w(Client.class, "Connection has disconnected");
             }
         }).start();
     }
