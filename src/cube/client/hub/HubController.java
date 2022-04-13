@@ -51,8 +51,6 @@ import java.util.List;
  */
 public class HubController {
 
-    private final static HubController instance = new HubController();
-
     public final static String NAME = "Hub";
 
     private Client client;
@@ -63,16 +61,12 @@ public class HubController {
 
     private List<HubSignalListener> signalListenerList;
 
-    private HubController() {
+    public HubController(Client client) {
+        this.client = client;
         this.signalListenerList = new ArrayList<>();
     }
 
-    public static HubController getInstance() {
-        return HubController.instance;
-    }
-
-    public void prepare(Client client, Connector connector, Receiver receiver) {
-        this.client = client;
+    public void prepare(Connector connector, Receiver receiver) {
         this.connector = connector;
         this.receiver = receiver;
 
@@ -152,7 +146,7 @@ public class HubController {
 
             Signal signal = SignalBuilder.build(data);
             for (HubSignalListener listener : this.signalListenerList) {
-                listener.onSignal(signal);
+                listener.onSignal(this, signal);
             }
 
             return true;

@@ -89,6 +89,8 @@ public final class Client {
 
     private FileProcessor processor;
 
+    private HubController hubController;
+
     private Timer timer;
 
     private Contact pretender;
@@ -301,7 +303,10 @@ public final class Client {
 
         if (hubEnabled) {
             // 准备 HUB 控制器
-            HubController.getInstance().prepare(this, this.connector, this.receiver);
+            if (null == this.hubController) {
+                this.hubController = new HubController(this);
+            }
+            this.hubController.prepare(this.connector, this.receiver);
         }
     }
 
@@ -368,6 +373,19 @@ public final class Client {
         }
 
         return this.processor;
+    }
+
+    /**
+     * 获取 Hub 控制器。
+     *
+     * @return
+     */
+    public HubController getHubController() {
+        if (null == this.hubController) {
+            this.hubController = new HubController(this);
+        }
+
+        return this.hubController;
     }
 
     /**

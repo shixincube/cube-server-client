@@ -31,8 +31,10 @@ import cube.client.Client;
 import cube.client.hub.HubController;
 import cube.client.hub.HubSignalListener;
 import cube.common.entity.Contact;
+import cube.common.entity.FileLabel;
 import cube.hub.event.LoginQRCodeEvent;
 import cube.hub.event.ReportEvent;
+import cube.hub.event.ScreenshotEvent;
 import cube.hub.signal.LoginQRCodeSignal;
 import cube.hub.signal.ReportSignal;
 import cube.hub.signal.Signal;
@@ -51,15 +53,37 @@ public class SimpleHubClient implements HubSignalListener {
         this.contact = contact;
     }
 
+    protected void simulateScreenshot(Client client) {
+        try {
+            Thread.sleep(2000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        File file = new File("data/wechat.png");
+        FileLabel fileLabel = client.getFileProcessor().checkWithUploadStrategy(file);
+
+        ScreenshotEvent event = new ScreenshotEvent(fileLabel);
+        client.getHubController().sendEvent(event);
+
+        try {
+            Thread.sleep(2000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        sSpinning = false;
+    }
+
     @Override
-    public void onSignal(Signal signal) {
+    public void onSignal(HubController hubController, Signal signal) {
         String signalName = signal.getName();
 
         System.out.println("SimpleHubClient #onSignal - " + signalName);
 
         if (ReportSignal.NAME.equals(signalName)) {
-            ReportEvent reportEvent = new ReportEvent(8, Utils.randomInt(2, 8), new ArrayList<>());
-            HubController.getInstance().sendEvent(reportEvent);
+            ReportEvent reportEvent = new ReportEvent(8, 8, new ArrayList<>());
+            hubController.sendEvent(reportEvent);
         }
         else if (LoginQRCodeSignal.NAME.equals(signalName)) {
             try {
@@ -71,7 +95,7 @@ public class SimpleHubClient implements HubSignalListener {
             LoginQRCodeEvent event = new LoginQRCodeEvent(signal.getSerialNumber(),
                     signal.getCode(),
                     new File("data/qr.jpg"));
-            HubController.getInstance().sendEvent(event);
+            hubController.sendEvent(event);
         }
     }
 
@@ -96,11 +120,15 @@ public class SimpleHubClient implements HubSignalListener {
 
                     Contact contact = new Contact(id, "shixincube.com");
 
-                    HubController.getInstance().addListener(new SimpleHubClient(contact));
+                    SimpleHubClient hubClient = new SimpleHubClient(contact);
+                    client.getHubController().addListener(hubClient);
 
                     client.prepare(contact, true);
 
                     System.out.println("SimpleHubClient - client ready : " + contact.getId());
+
+                    // 模拟行为
+                    hubClient.simulateScreenshot(client);
 
                     clientList.add(client);
                 }

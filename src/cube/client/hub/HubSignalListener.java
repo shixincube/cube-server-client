@@ -38,5 +38,5 @@ public interface HubSignalListener {
      *
      * @param signal
      */
-    void onSignal(Signal signal);
+    void onSignal(HubController hubController, Signal signal);
 }

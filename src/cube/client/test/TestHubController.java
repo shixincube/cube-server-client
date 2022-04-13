@@ -30,12 +30,14 @@ import cell.util.Utils;
 import cube.client.Client;
 import cube.client.hub.HubController;
 import cube.common.entity.Contact;
+import cube.common.entity.ConversationType;
 import cube.common.entity.Group;
 import cube.common.entity.Message;
-import cube.hub.event.ReportEvent;
 import cube.hub.event.SubmitMessagesEvent;
 import cube.hub.signal.PassBySignal;
-import cube.hub.signal.ReportSignal;
+import cube.hub.signal.SendMessageSignal;
+import cube.hub.signal.Signal;
+import cube.hub.signal.SilenceSignal;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
@@ -66,7 +68,7 @@ public class TestHubController {
 
         SubmitMessagesEvent event = new SubmitMessagesEvent(account, group, messageList);
 
-        boolean result = HubController.getInstance().sendEvent(event);
+        boolean result = client.getHubController().sendEvent(event);
         System.out.println("Result : " + result);
 
         System.out.println("*** END ***");
@@ -76,24 +78,42 @@ public class TestHubController {
         System.out.println("*** START testPassBySignal ***");
 
         PassBySignal passBySignal = new PassBySignal(true);
-        passBySignal.addSignal(new ReportSignal());
 
-        boolean result = HubController.getInstance().sendSignal(passBySignal);
-        System.out.println("Result : " + result);
+        // 静默 3 分钟
+        passBySignal.addSignal(new SilenceSignal(10 * 60 * 1000L));
+        passBySignal.addDestination(10009L);
+
+        Signal result = client.getHubController().sendSignal(passBySignal);
+        System.out.println("Result : " + (null != result));
 
         System.out.println("*** END ***");
     }
 
-    public static void testReportEvent(Client client) {
-        System.out.println("*** START testReportEvent ***");
+    public static void testSendMessageSignal(Client client) {
+        System.out.println("*** START testPassBySignal ***");
 
+        PassBySignal passBySignal = new PassBySignal(true);
 
+        // 发送消息
+        //Contact account = DataHelper.makeContact("歌的旋律释怀心的情绪", "leif668800");
+        //Contact partner = DataHelper.makeContact("立福", "chu190_6");
+
+        SendMessageSignal signal = new SendMessageSignal("bGhjaFWGKsStbiDKmjhOWIOXZjQFOcmh",
+                ConversationType.Contact,
+                "chu190_6");
+        signal.setText("来自透传测试 - " + Utils.randomString(4));
+
+        passBySignal.addSignal(signal);
+        passBySignal.addDestination(10009L);
+
+        Signal result = client.getHubController().sendSignal(passBySignal);
+        System.out.println("Result : " + (null != result));
 
         System.out.println("*** END ***");
     }
 
     public static void main(String[] args) {
-        Client client = new Client("127.0.0.1", "admin", "shixincube.com");
+        Client client = new Client("", "admin", "shixincube.com");
 
         if (!client.waitReady()) {
             client.destroy();
@@ -104,8 +124,8 @@ public class TestHubController {
         client.prepare(contact, true);
 
 //        testSubmitMessagesEvent(client);
-//        testPassBySignal(client);
-        testReportEvent(client);
+        testPassBySignal(client);
+//        testSendMessageSignal(client);
 
         client.destroy();
     }
