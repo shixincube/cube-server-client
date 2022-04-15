@@ -256,7 +256,7 @@ public final class Client {
      * @return 如果就绪返回 {@code true} 。
      */
     public boolean isReady() {
-        return this.connector.isConnected();
+        return (null != this.connector && this.connector.isConnected());
     }
 
     /**
