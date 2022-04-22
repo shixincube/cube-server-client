@@ -375,12 +375,16 @@ public class Receiver implements TalkListener {
 
     @Override
     public void onContacted(Speakable speakable) {
+        this.client.connected();
+
         ActionDialect actionDialect = new ActionDialect(ClientAction.Login.name);
         actionDialect.addParam("id", this.client.getId().longValue());
         actionDialect.addParam("name", this.client.getName());
         actionDialect.addParam("password", this.client.getPassword());
         actionDialect.addParam("version", Client.VERSION);
         speakable.speak(Client.NAME, actionDialect);
+
+        Logger.i(this.getClass(), "#onContacted - Login : " + this.client.getName());
     }
 
     @Override

@@ -233,12 +233,15 @@ public final class Client {
             this.interrupted = true;
         }
 
-        (new Thread() {
-            @Override
-            public void run() {
-                Logger.w(Client.class, "Connection has disconnected");
-            }
-        }).start();
+        Logger.w(Client.class, "Connection has disconnected");
+    }
+
+    public void connected() {
+        synchronized (this) {
+            this.interrupted = false;
+        }
+
+        Logger.i(Client.class, "Connection has reconnected");
     }
 
     /**
