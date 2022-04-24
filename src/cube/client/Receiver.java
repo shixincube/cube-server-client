@@ -55,6 +55,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -63,6 +64,8 @@ import java.util.concurrent.atomic.AtomicLong;
 public class Receiver implements TalkListener {
 
     private final Client client;
+
+    private final AtomicBoolean logined = new AtomicBoolean(false);
 
     private ConcurrentMap<Long, Notifier> notifiers;
 
@@ -377,19 +380,24 @@ public class Receiver implements TalkListener {
     public void onContacted(Speakable speakable) {
         this.client.connected();
 
-        ActionDialect actionDialect = new ActionDialect(ClientAction.Login.name);
-        actionDialect.addParam("id", this.client.getId().longValue());
-        actionDialect.addParam("name", this.client.getName());
-        actionDialect.addParam("password", this.client.getPassword());
-        actionDialect.addParam("version", Client.VERSION);
-        speakable.speak(Client.NAME, actionDialect);
+        if (!this.logined.get()) {
+            this.logined.set(true);
 
-        Logger.i(this.getClass(), "#onContacted - Login : " + this.client.getName());
+            ActionDialect actionDialect = new ActionDialect(ClientAction.Login.name);
+            actionDialect.addParam("id", this.client.getId().longValue());
+            actionDialect.addParam("name", this.client.getName());
+            actionDialect.addParam("password", this.client.getPassword());
+            actionDialect.addParam("version", Client.VERSION);
+            speakable.speak(Client.NAME, actionDialect);
+
+            Logger.i(this.getClass(), "#onContacted - Login : " + this.client.getName());
+        }
     }
 
     @Override
     public void onQuitted(Speakable speakable) {
         this.client.interrupt();
+        this.logined.set(false);
     }
 
     @Override

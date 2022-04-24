@@ -238,10 +238,12 @@ public final class Client {
 
     public void connected() {
         synchronized (this) {
+            if (this.interrupted) {
+                Logger.i(Client.class, "Connection has reconnected");
+            }
+
             this.interrupted = false;
         }
-
-        Logger.i(Client.class, "Connection has reconnected");
     }
 
     /**
