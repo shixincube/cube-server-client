@@ -667,6 +667,31 @@ public final class Client {
     }
 
     /**
+     * 获取指定域数据。
+     *
+     * @param domainName 域名称。
+     * @param appKey 域 App Key 。
+     * @return 返回授权域实例。
+     */
+    public AuthDomain getDomain(String domainName, String appKey) {
+        if (!this.connector.isConnected()) {
+            return null;
+        }
+
+        ActionDialect actionDialect = new ActionDialect(ClientAction.GetDomain.name);
+        actionDialect.addParam("domain", domainName);
+        actionDialect.addParam("appKey", appKey);
+
+        ActionDialect result = this.connector.send(this.receiver.inject(), actionDialect);
+        JSONObject domainJson = result.getParamAsJson("authDomain");
+        if (null == domainJson) {
+            return null;
+        }
+
+        return new AuthDomain(domainJson);
+    }
+
+    /**
      * 创建域应用。
      *
      * @param domainName 指定域名称。
