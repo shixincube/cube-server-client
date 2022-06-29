@@ -700,12 +700,13 @@ public final class Client {
      * @param mainEndpoint 指定主服务器连接点。
      * @param httpEndpoint 指定 HTTP 连接点。
      * @param httpsEndpoint 指定 HTTPS 连接点。
-     * @return 返回是否执行了该操作。
+     * @param ferry 指定是否是摆渡域。
+     * @return 返回授权域数据。
      */
-    public boolean createDomainApp(String domainName, String appKey, String appId, Endpoint mainEndpoint,
-                                Endpoint httpEndpoint, Endpoint httpsEndpoint) {
+    public AuthDomain createDomainApp(String domainName, String appKey, String appId, Endpoint mainEndpoint,
+                                Endpoint httpEndpoint, Endpoint httpsEndpoint, boolean ferry) {
         if (!this.connector.isConnected()) {
-            return false;
+            return null;
         }
 
         ActionDialect actionDialect = new ActionDialect(ClientAction.CreateDomainApp.name);
@@ -715,10 +716,46 @@ public final class Client {
         actionDialect.addParam("mainEndpoint", mainEndpoint.toJSON());
         actionDialect.addParam("httpEndpoint", httpEndpoint.toJSON());
         actionDialect.addParam("httpsEndpoint", httpsEndpoint.toJSON());
+        actionDialect.addParam("ferry", ferry);
 
-        this.connector.send(actionDialect);
+        ActionDialect result = this.connector.send(this.receiver.inject(), actionDialect);
+        JSONObject authDomainJSON = result.getParamAsJson("authDomain");
+        AuthDomain authDomain = new AuthDomain(authDomainJSON);
 
-        return true;
+        return authDomain;
+    }
+
+    /**
+     * 更新域接入点信息。
+     *
+     * @param domainName 指定域名称。
+     * @param mainEndpoint 指定主服务器连接点。
+     * @param httpEndpoint 指定 HTTP 连接点。
+     * @param httpsEndpoint 指定 HTTPS 连接点。
+     * @return 返回授权域数据。
+     */
+    public AuthDomain updateDomainInfo(String domainName, Endpoint mainEndpoint,
+                                 Endpoint httpEndpoint, Endpoint httpsEndpoint) {
+        if (!this.connector.isConnected()) {
+            return null;
+        }
+
+        ActionDialect actionDialect = new ActionDialect(ClientAction.UpdateDomain.name);
+        actionDialect.addParam("domainName", domainName);
+        actionDialect.addParam("mainEndpoint", mainEndpoint.toJSON());
+        actionDialect.addParam("httpEndpoint", httpEndpoint.toJSON());
+        actionDialect.addParam("httpsEndpoint", httpsEndpoint.toJSON());
+
+        AuthDomain authDomain = null;
+
+        ActionDialect result = this.connector.send(this.receiver.inject(), actionDialect);
+
+        if (null != result && result.containsParam("authDomain")) {
+            JSONObject authDomainJSON = result.getParamAsJson("authDomain");
+            authDomain = new AuthDomain(authDomainJSON);
+        }
+
+        return authDomain;
     }
 
     /**
