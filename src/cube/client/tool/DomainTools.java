@@ -112,7 +112,6 @@ public class DomainTools {
     }
 
     public static void main(String[] args) {
-        // 
         String address = "127.0.0.1";
         DomainTools tool = new DomainTools(address);
 
@@ -122,8 +121,8 @@ public class DomainTools {
         Endpoint httpsEndpoint = new Endpoint(host, 7017);
 
 //        tool.newDomain("first-prototype-box", Utils.randomString(16),
-//                Utils.randomNumberString(8), mainEndpoint, httpEndpoint, httpsEndpoint, true);
+//                Long.toString(System.currentTimeMillis()), mainEndpoint, httpEndpoint, httpsEndpoint, true);
 
-        tool.updateDomain("first-prototype-box", mainEndpoint, httpEndpoint, httpsEndpoint);
+//        tool.updateDomain("first-prototype-box", mainEndpoint, httpEndpoint, httpsEndpoint);
     }
 }

@@ -57,6 +57,9 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.List;
+import java.util.Queue;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * 文件处理器。
@@ -418,33 +421,50 @@ public class FileProcessor {
         FileProcessResult processResult = new FileProcessResult(data);
 
         if (processResult.hasResult()) {
-            final ProcessResult resultStream = processResult.getResult();
-            // 添加监听器
-            this.receiver.setStreamListener(resultStream.streamName, new StreamListener() {
-                @Override
-                public void onCompleted(String streamName, File streamFile) {
-                    synchronized (resultStream) {
-                        resultStream.notify();
-                    }
-
-                    // 设置结果文件
-                    processResult.setResultFile(streamFile);
-                }
-            });
-
-            synchronized (resultStream) {
-                try {
-                    resultStream.wait(10 * 1000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-
-            // 移除监听器
-            this.receiver.setStreamListener(resultStream.streamName, null);
+            waitingForStream(processResult);
         }
 
         return processResult;
+    }
+
+    private void waitingForStream(FileProcessResult fileProcessResult) {
+        List<ProcessResult> resultList = fileProcessResult.getResultList();
+        AtomicInteger count = new AtomicInteger(resultList.size());
+
+        (new Thread() {
+            @Override
+            public void run() {
+                for (ProcessResult result : resultList) {
+                    // 添加监听器
+                    receiver.setStreamListener(result.streamName, new StreamListener() {
+                        @Override
+                        public void onCompleted(String streamName, File streamFile) {
+                            // 设置结果文件
+                            fileProcessResult.addLocalFile(streamFile);
+
+                            if (count.decrementAndGet() == 0) {
+                                synchronized (resultList) {
+                                    resultList.notify();
+                                }
+                            }
+                        }
+                    });
+                }
+            }
+        }).start();
+
+        synchronized (resultList) {
+            try {
+                resultList.wait(15 * 1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+        for (ProcessResult result : resultList) {
+            // 移除监听器
+            receiver.setStreamListener(result.streamName, null);
+        }
     }
 
     /**
