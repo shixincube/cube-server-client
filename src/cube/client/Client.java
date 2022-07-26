@@ -669,6 +669,29 @@ public final class Client {
     /**
      * 获取指定域数据。
      *
+     * @param domainName
+     * @return
+     */
+    public AuthDomain getDomain(String domainName) {
+        if (!this.connector.isConnected()) {
+            return null;
+        }
+
+        ActionDialect actionDialect = new ActionDialect(ClientAction.GetDomain.name);
+        actionDialect.addParam("domain", domainName);
+
+        ActionDialect result = this.connector.send(this.receiver.inject(), actionDialect);
+        JSONObject domainJson = result.getParamAsJson("authDomain");
+        if (null == domainJson) {
+            return null;
+        }
+
+        return new AuthDomain(domainJson);
+    }
+
+    /**
+     * 获取指定域数据。
+     *
      * @param domainName 域名称。
      * @param appKey 域 App Key 。
      * @return 返回授权域实例。
@@ -796,6 +819,20 @@ public final class Client {
      */
     public AuthToken getAuthToken(Long contactId) {
         return TokenTools.getAuthToken(this.connector, this.receiver, contactId);
+    }
+
+    /**
+     * 注入访问令牌。
+     *
+     * @param authToken
+     * @return
+     */
+    public AuthToken injectAuthToken(AuthToken authToken) {
+        if (authToken.getContactId() == 0) {
+            return null;
+        }
+
+        return TokenTools.injectAuthToken(this.connector, this.receiver, authToken);
     }
 
     /**

@@ -29,7 +29,6 @@ package cube.client.tool;
 import cell.core.talk.dialect.ActionDialect;
 import cube.auth.AuthToken;
 import cube.client.Connector;
-import cube.client.Notifier;
 import cube.client.Receiver;
 import cube.common.action.ClientAction;
 import cube.common.state.AuthStateCode;
@@ -112,17 +111,41 @@ public final class TokenTools {
             return null;
         }
 
-        Notifier notifier = receiver.inject();
         ActionDialect actionDialect = new ActionDialect(ClientAction.GetAuthToken.name);
         actionDialect.addParam("contactId", contactId);
 
         // 发送请求并等待结果
-        ActionDialect result = connector.send(notifier, actionDialect);
+        ActionDialect result = connector.send(receiver.inject(), actionDialect);
         if (result.getParamAsInt("code") != AuthStateCode.Ok.code) {
             return null;
         }
 
         token = new AuthToken(result.getParamAsJson("token"));
         return token;
+    }
+
+    /**
+     * 注入指定访问令牌。
+     *
+     * @param connector
+     * @param receiver
+     * @param authToken
+     * @return
+     */
+    public static AuthToken injectAuthToken(Connector connector, Receiver receiver, AuthToken authToken) {
+        if (!connector.isConnected()) {
+            return null;
+        }
+
+        ActionDialect actionDialect = new ActionDialect(ClientAction.InjectAuthToken.name);
+        actionDialect.addParam("token", authToken.toJSON());
+
+        // 发送请求并等待结果
+        ActionDialect result = connector.send(receiver.inject(), actionDialect);
+        if (result.getParamAsInt("code") != AuthStateCode.Ok.code) {
+            return null;
+        }
+
+        return new AuthToken(result.getParamAsJson("token"));
     }
 }

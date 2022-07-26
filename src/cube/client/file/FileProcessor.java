@@ -39,13 +39,19 @@ import cube.client.tool.TokenTools;
 import cube.client.util.*;
 import cube.common.action.ClientAction;
 import cube.common.entity.FileLabel;
-import cube.common.entity.ProcessResult;
+import cube.common.entity.FileResult;
+import cube.common.entity.SharingTag;
+import cube.common.entity.VisitTrace;
+import cube.common.notice.ListSharingTags;
+import cube.common.notice.ListSharingTraces;
+import cube.common.notice.NoticeData;
 import cube.common.state.FileProcessorStateCode;
 import cube.common.state.FileStorageStateCode;
 import cube.file.FileProcessResult;
 import cube.file.OperationWorkflow;
 import cube.util.FileType;
 import cube.util.FileUtils;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
@@ -55,10 +61,8 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Queue;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -163,6 +167,68 @@ public class FileProcessor {
         }
 
         return null;
+    }
+
+    /**
+     * 批量获取分享标签。
+     *
+     * @param contactId
+     * @param domainName
+     * @param beginIndex
+     * @param endIndex
+     * @param valid
+     * @return
+     */
+    public List<SharingTag> listSharingTags(long contactId, String domainName,
+                                            int beginIndex, int endIndex, boolean valid) {
+        List<SharingTag> list = new ArrayList<>();
+
+        ActionDialect actionDialect = new ActionDialect(ClientAction.ListSharingTags.name);
+        actionDialect.addParam(NoticeData.PARAMETER, new ListSharingTags(contactId, domainName,
+                beginIndex, endIndex, valid));
+
+        ActionDialect result = this.connector.send(this.receiver.inject(), actionDialect);
+        if (result.getParamAsInt("code") == FileStorageStateCode.Ok.code) {
+            JSONObject data = result.getParamAsJson("data");
+            JSONArray array = data.getJSONArray("list");
+            for (int i = 0; i < array.length(); ++i) {
+                SharingTag tag = new SharingTag(array.getJSONObject(i));
+                list.add(tag);
+            }
+        }
+
+        return list;
+    }
+
+    /**
+     * 批量获取文件访问痕迹。
+     *
+     * @param contactId
+     * @param domainName
+     * @param sharingCode
+     * @param beginIndex
+     * @param endIndex
+     * @return
+     */
+    public List<VisitTrace> listSharingTrace(long contactId, String domainName, String sharingCode,
+                                             int beginIndex, int endIndex) {
+        List<VisitTrace> list = new ArrayList<>();
+
+        ActionDialect actionDialect = new ActionDialect(ClientAction.ListSharingTraces.name);
+        actionDialect.addParam(NoticeData.PARAMETER, new ListSharingTraces(contactId, domainName, sharingCode,
+                beginIndex, endIndex));
+
+        ActionDialect result = this.connector.send(this.receiver.inject(), actionDialect);
+        if (result.getParamAsInt("code") == FileStorageStateCode.Ok.code) {
+            JSONObject data = result.getParamAsJson("data");
+            JSONArray array = data.getJSONArray("list");
+            for (int i = 0; i < array.length(); ++i) {
+                VisitTrace trace = new VisitTrace(array.getJSONObject(i));
+                list.add(trace);
+            }
+        }
+
+        return list;
     }
 
     /**
@@ -428,13 +494,13 @@ public class FileProcessor {
     }
 
     private void waitingForStream(FileProcessResult fileProcessResult) {
-        List<ProcessResult> resultList = fileProcessResult.getResultList();
+        List<FileResult> resultList = fileProcessResult.getResultList();
         AtomicInteger count = new AtomicInteger(resultList.size());
 
         (new Thread() {
             @Override
             public void run() {
-                for (ProcessResult result : resultList) {
+                for (FileResult result : resultList) {
                     // 添加监听器
                     receiver.setStreamListener(result.streamName, new StreamListener() {
                         @Override
@@ -461,7 +527,7 @@ public class FileProcessor {
             }
         }
 
-        for (ProcessResult result : resultList) {
+        for (FileResult result : resultList) {
             // 移除监听器
             receiver.setStreamListener(result.streamName, null);
         }
