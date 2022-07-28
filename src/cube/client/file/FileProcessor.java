@@ -42,6 +42,7 @@ import cube.common.entity.FileLabel;
 import cube.common.entity.FileResult;
 import cube.common.entity.SharingTag;
 import cube.common.entity.VisitTrace;
+import cube.common.notice.GetSharingTag;
 import cube.common.notice.ListSharingTags;
 import cube.common.notice.ListSharingTraces;
 import cube.common.notice.NoticeData;
@@ -183,18 +184,59 @@ public class FileProcessor {
                                             int beginIndex, int endIndex, boolean valid) {
         List<SharingTag> list = new ArrayList<>();
 
-        ActionDialect actionDialect = new ActionDialect(ClientAction.ListSharingTags.name);
-        actionDialect.addParam(NoticeData.PARAMETER, new ListSharingTags(contactId, domainName,
-                beginIndex, endIndex, valid));
-
-        ActionDialect result = this.connector.send(this.receiver.inject(), actionDialect);
-        if (result.getParamAsInt("code") == FileStorageStateCode.Ok.code) {
-            JSONObject data = result.getParamAsJson("data");
-            JSONArray array = data.getJSONArray("list");
-            for (int i = 0; i < array.length(); ++i) {
-                SharingTag tag = new SharingTag(array.getJSONObject(i));
-                list.add(tag);
+        final int step = 10;
+        List<Integer> indexes = new ArrayList<>();
+        int delta = endIndex - beginIndex;
+        if (delta > 9) {
+            int num = (int) Math.floor((float)(delta + 1) / (float)step);
+            int mod = (delta + 1) % step;
+            int index = beginIndex;
+            for (int i = 0; i < num; ++i) {
+                index += step - 1;
+                indexes.add(index);
+                index += 1;
             }
+
+            if (mod != 0) {
+                index += mod - 1;
+                indexes.add(index);
+            }
+        }
+        else {
+            indexes.add(endIndex);
+        }
+
+        int begin = beginIndex;
+        int end = 0;
+        for (Integer index : indexes) {
+            end = index;
+
+            ActionDialect actionDialect = new ActionDialect(ClientAction.ListSharingTags.name);
+            actionDialect.addParam(NoticeData.PARAMETER, new ListSharingTags(contactId, domainName,
+                    begin, end, valid));
+
+            ActionDialect result = this.connector.send(this.receiver.inject(), actionDialect);
+            if (null == result) {
+                Logger.w(this.getClass(), "#listSharingTags - Network error");
+                break;
+            }
+
+            if (result.getParamAsInt("code") == FileStorageStateCode.Ok.code) {
+                JSONObject data = result.getParamAsJson("data");
+                JSONArray array = data.getJSONArray("list");
+                if (array.length() == 0) {
+                    // 没有数据，结束数据获取
+                    continue;
+                }
+
+                for (int i = 0; i < array.length(); ++i) {
+                    SharingTag tag = new SharingTag(array.getJSONObject(i));
+                    list.add(tag);
+                }
+            }
+
+            // 更新索引
+            begin = index + 1;
         }
 
         return list;
@@ -219,6 +261,11 @@ public class FileProcessor {
                 beginIndex, endIndex));
 
         ActionDialect result = this.connector.send(this.receiver.inject(), actionDialect);
+        if (null == result) {
+            Logger.w(this.getClass(), "#listSharingTrace - Network error");
+            return list;
+        }
+
         if (result.getParamAsInt("code") == FileStorageStateCode.Ok.code) {
             JSONObject data = result.getParamAsJson("data");
             JSONArray array = data.getJSONArray("list");
@@ -229,6 +276,24 @@ public class FileProcessor {
         }
 
         return list;
+    }
+
+    public SharingTag getSharingTag(String sharingCode) {
+        ActionDialect actionDialect = new ActionDialect(ClientAction.GetSharingTag.name);
+        actionDialect.addParam(NoticeData.PARAMETER, new GetSharingTag(sharingCode));
+
+        ActionDialect result = this.connector.send(this.receiver.inject(), actionDialect);
+        if (null == result) {
+            Logger.w(this.getClass(), "#listSharingTags - Network error");
+            return null;
+        }
+
+        if (result.getParamAsInt("code") == FileStorageStateCode.Ok.code) {
+            return null;
+        }
+        else {
+            return null;
+        }
     }
 
     /**

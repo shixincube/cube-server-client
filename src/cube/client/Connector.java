@@ -105,7 +105,9 @@ public class Connector {
         // 增加通知字段
         actionDialect.addParam(Notifier.ParamName, notifier.toJSON());
 
-        this.nucleus.getTalkService().speak(Client.NAME, actionDialect);
+        if (!this.nucleus.getTalkService().speak(Client.NAME, actionDialect)) {
+            return null;
+        }
 
         // 阻塞等待结果
         return notifier.waiting();

@@ -34,6 +34,8 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -185,6 +187,39 @@ public final class Helper {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
+        }
+    }
+
+    public static void main(String[] args) {
+        int beginIndex = 10;
+        int endIndex = 19;
+
+        final int step = 10;
+        List<Integer> indexes = new ArrayList<>();
+        int delta = endIndex - beginIndex;
+        if (delta > 9) {
+            int num = (int) Math.floor((float)(delta + 1) / (float)step);
+            int mod = (delta + 1) % step;
+            int index = beginIndex;
+            for (int i = 0; i < num; ++i) {
+                index += step - 1;
+                indexes.add(index);
+                index += 1;
+            }
+
+            if (mod != 0) {
+                index += mod - 1;
+                indexes.add(index);
+            }
+        }
+        else {
+            indexes.add(endIndex);
+        }
+
+        int begin = beginIndex;
+        for (Integer index : indexes) {
+            System.out.println("A: " + begin + " - " + index);
+            begin = index + 1;
         }
     }
 }
