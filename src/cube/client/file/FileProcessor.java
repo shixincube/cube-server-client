@@ -278,18 +278,25 @@ public class FileProcessor {
         return list;
     }
 
+    /**
+     * 获取分享标签。
+     *
+     * @param sharingCode
+     * @return
+     */
     public SharingTag getSharingTag(String sharingCode) {
         ActionDialect actionDialect = new ActionDialect(ClientAction.GetSharingTag.name);
         actionDialect.addParam(NoticeData.PARAMETER, new GetSharingTag(sharingCode));
 
         ActionDialect result = this.connector.send(this.receiver.inject(), actionDialect);
         if (null == result) {
-            Logger.w(this.getClass(), "#listSharingTags - Network error");
+            Logger.w(this.getClass(), "#getSharingTag - Network error");
             return null;
         }
 
         if (result.getParamAsInt("code") == FileStorageStateCode.Ok.code) {
-            return null;
+            JSONObject data = result.getParamAsJson("data");
+            return new SharingTag(data);
         }
         else {
             return null;
