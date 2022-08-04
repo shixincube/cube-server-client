@@ -78,7 +78,7 @@ public class Connector {
      */
     public void disconnect() {
         if (null != this.speakable) {
-            this.nucleus.getTalkService().hangup(this.address, this.port, false);
+            this.nucleus.getTalkService().hangup(this.address, this.port, true);
             this.speakable = null;
         }
     }
