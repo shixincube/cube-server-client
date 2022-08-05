@@ -27,12 +27,10 @@
 package cube.client.file;
 
 import cell.core.talk.dialect.ActionDialect;
+import cell.util.Utils;
 import cell.util.log.Logger;
 import cube.auth.AuthToken;
-import cube.client.Connector;
-import cube.client.Notifier;
-import cube.client.Receiver;
-import cube.client.StreamListener;
+import cube.client.*;
 import cube.client.listener.FileUploadListener;
 import cube.client.listener.WorkflowListener;
 import cube.client.tool.TokenTools;
@@ -42,10 +40,7 @@ import cube.common.entity.FileLabel;
 import cube.common.entity.FileResult;
 import cube.common.entity.SharingTag;
 import cube.common.entity.VisitTrace;
-import cube.common.notice.GetSharingTag;
-import cube.common.notice.ListSharingTags;
-import cube.common.notice.ListSharingTraces;
-import cube.common.notice.NoticeData;
+import cube.common.notice.*;
 import cube.common.state.FileProcessorStateCode;
 import cube.common.state.FileStorageStateCode;
 import cube.file.FileProcessResult;
@@ -354,6 +349,71 @@ public class FileProcessor {
         }
 
         return list;
+    }
+
+    /**
+     * 遍历指定联系人分享的下一级裂变层级。
+     *
+     * @param contactId
+     * @param domainName
+     * @param sharingCode
+     * @return
+     */
+    public List<VisitTrace> traverseVisitTrace(long contactId, String domainName, String sharingCode) {
+        final List<VisitTrace> result = new ArrayList<>();
+
+        final long sn = Utils.generateSerialNumber();
+        ActionListener listener = new ActionListener() {
+            @Override
+            public void onAction(ActionDialect actionDialect) {
+                long responseSN = actionDialect.getParamAsLong("sn");
+                if (responseSN != sn) {
+                    return;
+                }
+
+                int stateCode = actionDialect.getParamAsInt("code");
+                if (stateCode == FileStorageStateCode.Ok.code) {
+                    int total = actionDialect.getParamAsInt("total");
+                    JSONObject data = actionDialect.getParamAsJson("data");
+                    JSONArray list = data.getJSONArray("list");
+                    for (int i = 0; i < list.length(); ++i) {
+                        VisitTrace trace = new VisitTrace(list.getJSONObject(i));
+                        result.add(trace);
+                    }
+
+                    if (result.size() == total) {
+                        synchronized (result) {
+                            result.notify();
+                        }
+                    }
+                }
+                else {
+                    synchronized (result) {
+                        result.notify();
+                    }
+                }
+            }
+        };
+        // 添加监听器
+        this.receiver.addActionListener(ClientAction.TraverseVisitTrace.name, listener);
+
+        ActionDialect actionDialect = new ActionDialect(ClientAction.TraverseVisitTrace.name);
+        actionDialect.addParam("sn", sn);
+        actionDialect.addParam(NoticeData.PARAMETER, new TraverseVisitTrace(domainName, contactId, sharingCode));
+
+        this.connector.send(actionDialect);
+
+        synchronized (result) {
+            try {
+                result.wait(10 * 1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+        this.receiver.removeActionListener(ClientAction.TraverseVisitTrace.name, listener);
+
+        return result;
     }
 
     /**

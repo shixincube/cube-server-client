@@ -50,6 +50,8 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -75,12 +77,15 @@ public class Receiver implements TalkListener {
 
     private Map<String, StreamListener> streamListenerMap;
 
+    private Map<String, List<ActionListener>> actionListenerMap;
+
     public Receiver(Client client) {
         this.client = client;
         this.notifiers = new ConcurrentHashMap<>();
         this.receivingStreamMap = new ConcurrentHashMap<>();
         this.executor = Executors.newCachedThreadPool();
         this.streamListenerMap = new ConcurrentHashMap<>();
+        this.actionListenerMap = new ConcurrentHashMap<>();
     }
 
     /**
@@ -155,6 +160,42 @@ public class Receiver implements TalkListener {
     }
 
     /**
+     * 设置监听器。
+     *
+     * @param actionName
+     * @param listener
+     */
+    public void addActionListener(String actionName, ActionListener listener) {
+        List<ActionListener> list = this.actionListenerMap.get(actionName);
+        if (null == list) {
+            list = new ArrayList<>();
+            this.actionListenerMap.put(actionName, list);
+        }
+
+        synchronized (list) {
+            if (!list.contains(listener)) {
+                list.add(listener);
+            }
+        }
+    }
+
+    /**
+     * 移除监听器。
+     *
+     * @param actionName
+     */
+    public void removeActionListener(String actionName, ActionListener listener) {
+        List<ActionListener> list = this.actionListenerMap.get(actionName);
+        if (null == list) {
+            return;
+        }
+
+        synchronized (list) {
+            list.remove(listener);
+        }
+    }
+
+    /**
      * 注入新的通知器。
      *
      * @param notifier
@@ -192,7 +233,17 @@ public class Receiver implements TalkListener {
                     this.client.setSessionId(actionDialect.getParamAsLong("sessionId"));
                 }
                 else {
-                    Logger.w(this.getClass(), "Unknown action: " + action);
+                    List<ActionListener> list = this.actionListenerMap.get(action);
+                    if (null != list) {
+                        synchronized (list) {
+                            for (ActionListener listener : list) {
+                                listener.onAction(actionDialect);
+                            }
+                        }
+                    }
+                    else {
+                        Logger.w(this.getClass(), "Unknown action: " + action);
+                    }
                 }
             }
         }
