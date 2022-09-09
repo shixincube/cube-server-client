@@ -836,6 +836,29 @@ public final class Client {
     }
 
     /**
+     * 注入联系人。
+     *
+     * @param contact
+     * @return
+     */
+    public Contact injectContact(Contact contact) {
+        if (!this.connector.isConnected()) {
+            return null;
+        }
+
+        ActionDialect actionDialect = new ActionDialect(ClientAction.NewContact.name);
+        actionDialect.addParam("contact", contact.toJSON());
+
+        ActionDialect result = this.connector.send(this.receiver.inject(), actionDialect);
+        if (null == result) {
+            return null;
+        }
+
+        JSONObject jsonContact = result.getParamAsJson("contact");
+        return new Contact(jsonContact);
+    }
+
+    /**
      * 获取当前连接服务器上所有在线的联系人。
      *
      * @return 返回当前连接服务器上所有在线的联系人列表。
@@ -845,12 +868,10 @@ public final class Client {
             return new ArrayList<>();
         }
 
-        Notifier notifier = this.receiver.inject();
-
         ActionDialect actionDialect = new ActionDialect(ClientAction.ListOnlineContacts.name);
 
         // 阻塞线程，并等待返回结果
-        ActionDialect result = this.connector.send(notifier, actionDialect);
+        ActionDialect result = this.connector.send(this.receiver.inject(), actionDialect);
 
         JSONObject data = result.getParamAsJson("data");
         JSONArray list = data.getJSONArray("contacts");
