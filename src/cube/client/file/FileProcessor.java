@@ -748,7 +748,7 @@ public class FileProcessor {
 
         synchronized (resultList) {
             try {
-                resultList.wait(15 * 1000);
+                resultList.wait(30 * 1000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
