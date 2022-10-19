@@ -288,14 +288,14 @@ public class Receiver implements TalkListener {
             JSONObject data = actionDialect.getParamAsJson("data");
             if (data.has("contact")) {
                 JSONObject contact = data.getJSONObject("contact");
-                MessageReceiveListener listener = this.client.getMessageReceiveListener(
+                MessageReceiveListener listener = this.client.getMessageService().getMessageReceiveListener(
                         contact.getLong("id"), contact.getString("domain"));
                 if (null != listener) {
                     listener.onReceived(new Message(data.getJSONObject("message")));
                 }
             }
             else if (data.has("group")) {
-                MessageReceiveListener listener = this.client.getMessageReceiveListener(new Group(data.getJSONObject("group")));
+                MessageReceiveListener listener = this.client.getMessageService().getMessageReceiveListener(new Group(data.getJSONObject("group")));
                 if (null != listener) {
                     listener.onReceived(new Message(data.getJSONObject("message")));
                 }
@@ -305,7 +305,7 @@ public class Receiver implements TalkListener {
             JSONObject data = actionDialect.getParamAsJson("data");
             if (data.has("contact")) {
                 JSONObject contact = data.getJSONObject("contact");
-                MessageSendListener listener = this.client.getMessageSendListener(
+                MessageSendListener listener = this.client.getMessageService().getMessageSendListener(
                         contact.getLong("id"), contact.getString("domain"));
                 if (null != listener) {
                     listener.onSent(new Message(data.getJSONObject("message")));

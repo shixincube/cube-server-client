@@ -127,20 +127,20 @@ public class ConversationSimulator implements MessageReceiveListener, MessageSen
             listMessages();
         })).start();
 
-        this.client.registerMessageReceiveListener(this.self, this);
-        this.client.registerMessageSendListener(this.self, this);
+        this.client.getMessageService().registerMessageReceiveListener(this.self, this);
+        this.client.getMessageService().registerMessageSendListener(this.self, this);
     }
 
     private void stop() {
-        this.client.deregisterMessageReceiveListener(this.self);
-        this.client.deregisterMessageSendListener(this.self);
+        this.client.getMessageService().deregisterMessageReceiveListener(this.self);
+        this.client.getMessageService().deregisterMessageSendListener(this.self);
     }
 
     private void listMessages() {
         this.messageList.clear();
 
         long beginning = System.currentTimeMillis() - 30l * 24l * 60l * 60l * 1000l;
-        MessageIterator iterator = this.client.queryMessages(beginning, this.self);
+        MessageIterator iterator = this.client.getMessageService().queryMessages(beginning, this.self);
         while (iterator.hasNext()) {
             Message message = iterator.next();
             if (message.getSource().longValue() > 0) {
@@ -186,7 +186,7 @@ public class ConversationSimulator implements MessageReceiveListener, MessageSen
             }
 
             // 发送消息
-            this.client.pushMessageWithPretender(this.partner, this.self, MessageTools.buildHypertextMessagePayload(text.toString()));
+            this.client.getMessageService().pushMessageWithPretender(this.partner, this.self, MessageTools.buildHypertextMessagePayload(text.toString()));
 
             System.out.println("Send message: \"" + text.toString() + "\"");
         }
@@ -195,7 +195,7 @@ public class ConversationSimulator implements MessageReceiveListener, MessageSen
             List<Message> result = null;
 
             if (data.length <= 1) {
-                result = this.client.markRead(this.self, this.partner, this.messageList);
+                result = this.client.getMessageService().markRead(this.self, this.partner, this.messageList);
             }
             else {
                 // 标记指定 ID 的消息
@@ -206,7 +206,7 @@ public class ConversationSimulator implements MessageReceiveListener, MessageSen
                         list.add(message);
                     }
                 }
-                result = this.client.markRead(this.self, this.partner, list);
+                result = this.client.getMessageService().markRead(this.self, this.partner, list);
             }
 
             if (null != result) {
