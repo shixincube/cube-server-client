@@ -27,43 +27,30 @@
 package cube.client.test;
 
 import cube.client.Client;
-import cube.client.file.FileProcessor;
-import cube.client.file.ImageProcessing;
+import cube.client.file.FileStorage;
 import cube.common.entity.Contact;
-import cube.file.FileProcessResult;
-import cube.file.operation.EliminateColorOperation;
-import cube.vision.Color;
+import cube.common.entity.FileStoragePerformance;
+import cube.report.LogLine;
 
-import java.io.File;
+import java.util.List;
 
-/**
- * 图像操作测试。
- */
-public class TestImageProcessor {
+public class TestFileStorage {
 
-    public static void testEliminateColor(FileProcessor fileProcessor) {
-        System.out.println("*** START testEliminateColor ***");
+    public static void testPerformance(FileStorage storage) {
+        System.out.println("*** START testPerformance ***");
 
-        EliminateColorOperation operation = new EliminateColorOperation(new Color("#FFFFFF"), new Color("#000000"));
-        ImageProcessing processing = new ImageProcessing(operation);
-
-        FileProcessResult result = fileProcessor.call(processing, new File("data/sc.jpg"));
-        FileProcessResult.ImageProcessResult imageProcessResult = result.getImageResult();
-
-        if (imageProcessResult.successful) {
-            System.out.println("Successful");
-            System.out.println("File: " + imageProcessResult.getInputFileLabel().getFileName());
-            System.out.println("Result file: " + result.getResultList().get(0).file.getAbsolutePath());
+        FileStoragePerformance performance = storage.getStoragePerformance("shixincube.com", 50001001);
+        if (null != performance) {
+            System.out.println(performance.toJSON().toString(4));
         }
         else {
-            System.out.println("Failed");
+            System.err.println("No performance");
         }
 
-        System.out.println("*** END testEliminateColor ***");
+        System.out.println("*** END testPerformance ***");
     }
 
     public static void main(String[] args) {
-
         Client client = new Client("127.0.0.1", "admin", "shixincube.com");
 
         if (!client.waitReady()) {
@@ -74,9 +61,7 @@ public class TestImageProcessor {
         Contact contact = new Contact(10000, "shixincube.com");
         client.prepare(contact);
 
-        FileProcessor fileProcessor = client.getFileProcessor();
-
-        testEliminateColor(fileProcessor);
+        testPerformance(client.getFileStorage());
 
         client.destroy();
     }

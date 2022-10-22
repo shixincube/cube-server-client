@@ -80,7 +80,7 @@ public class TestHubController {
         PassBySignal passBySignal = new PassBySignal(true);
 
         // 静默 3 分钟
-        passBySignal.addSignal(new SilenceSignal(10 * 60 * 1000L));
+        passBySignal.addSignal(new SilenceSignal(3 * 60 * 1000L));
         passBySignal.addDestination(10009L);
 
         Signal result = client.getHubController().sendSignal(passBySignal);
@@ -112,8 +112,24 @@ public class TestHubController {
         System.out.println("*** END ***");
     }
 
+    public static void silence(Client client, Long destId) {
+        System.out.println("*** START silence ***");
+
+        PassBySignal passBySignal = new PassBySignal(true);
+
+        // 静默 10 分钟
+        passBySignal.addSignal(new SilenceSignal(10 * 60 * 1000L));
+        passBySignal.addDestination(destId);
+
+        Signal result = client.getHubController().sendSignal(passBySignal);
+        System.out.println("Result : " + (null != result));
+
+        System.out.println("*** END ***");
+    }
+
     public static void main(String[] args) {
-        Client client = new Client("", "admin", "shixincube.com");
+        //111.203.186.243
+        Client client = new Client("api.shixincube.com", "admin", "shixincube.com");
 
         if (!client.waitReady()) {
             client.destroy();
@@ -124,8 +140,11 @@ public class TestHubController {
         client.prepare(contact, true);
 
 //        testSubmitMessagesEvent(client);
-        testPassBySignal(client);
+//        testPassBySignal(client);
 //        testSendMessageSignal(client);
+
+
+        silence(client, 10010L);
 
         client.destroy();
     }

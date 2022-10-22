@@ -27,6 +27,7 @@
 package cube.client.test;
 
 
+import cell.util.Utils;
 import cube.client.Client;
 import cube.common.entity.Contact;
 import cube.common.entity.Device;
@@ -43,17 +44,17 @@ public class TestPush {
     public static void testPushMessage(Client client) {
         System.out.println("[TestPush] Push message");
 
-        Contact receiver = new Contact(11444455L, "shixincube.com", "Cube");
+        Contact receiver = new Contact(66611177L, "demo-ferryhouse-cube", "Cube");
 
-        Contact pretender = new Contact(50001001L, "shixincube.com", "Pretender");
+        Contact pretender = new Contact(88811144L, "demo-ferryhouse-cube", "Pretender");
 
         Device device = new Device("Server", "Server Client");
 
         JSONObject payload = new JSONObject();
         payload.put("type", "hypertext");
-        payload.put("content", "今天周二 11月16日 " + (new Date()).toString());
+        payload.put("content", "周日 10:34 " + Utils.gsDateFormat.format(new Date()));
 
-        boolean result = client.pushMessageWithPretender(receiver, pretender, device, payload);
+        boolean result = client.getMessageService().pushMessageWithPretender(receiver, pretender, device, payload);
         System.out.println("[TestPush] Push message result: " + result);
     }
 
@@ -66,7 +67,7 @@ public class TestPush {
 
         Contact pretender = new Contact(50001001L, "shixincube.com", "Pretender");
 
-        boolean result = client.pushFileMessageWithPretender(receiver, pretender, targetFile);
+        boolean result = client.getMessageService().pushFileMessageWithPretender(receiver, pretender, targetFile);
         System.out.println("[TestPush] Push file message result: " + result);
     }
 
@@ -79,16 +80,21 @@ public class TestPush {
 
         Contact pretender = new Contact(50001001L, "shixincube.com", "Pretender");
 
-        boolean result = client.pushImageMessageWithPretender(receiver, pretender, targetFile);
+        boolean result = client.getMessageService().pushImageMessageWithPretender(receiver, pretender, targetFile);
         System.out.println("[TestPush] Push image message result: " + result);
     }
 
 
     public static void main(String[] args) {
 
-        Client client = new Client("127.0.0.1", "admin", "shixincube.com");
+        Client client = new Client("192.168.0.108", "admin", "shixincube.com");
 
-        Helper.sleepInSeconds(3);
+        if (!client.waitReady()) {
+            System.out.println("Client error");
+            return;
+        }
+
+        Helper.sleepInSeconds(1);
 
         testPushMessage(client);
 

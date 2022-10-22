@@ -35,7 +35,6 @@ import java.util.List;
 public class TestLog {
 
     public static void main(String[] args) {
-
         Client client = new Client("127.0.0.1", "admin", "shixincube.com");
 
         if (!client.waitReady()) {

@@ -51,7 +51,7 @@ public class TestQueryMessage {
 
         int count = 0;
 
-        MessageIterator iterator = client.queryMessages(beginning, contact);
+        MessageIterator iterator = client.getMessageService().queryMessages(beginning, contact);
         while (iterator.hasNext()) {
             ++count;
 

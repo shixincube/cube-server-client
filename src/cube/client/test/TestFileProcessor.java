@@ -29,15 +29,19 @@ package cube.client.test;
 import cube.client.Client;
 import cube.client.file.FileProcessor;
 import cube.client.file.OCRProcessing;
+import cube.client.file.OfficeConvertToProcessing;
 import cube.client.file.VideoProcessing;
 import cube.client.listener.WorkflowListener;
 import cube.common.entity.Contact;
 import cube.common.entity.FileLabel;
-import cube.file.*;
-import cube.file.operation.OCROperation;
-import cube.file.operation.ReverseColorOperation;
-import cube.file.operation.SteganographyOperation;
+import cube.file.FileProcessResult;
+import cube.file.OCRFile;
+import cube.file.OperationWork;
+import cube.file.OperationWorkflow;
+import cube.file.operation.*;
+import cube.util.FileType;
 import cube.vision.Size;
+import org.json.JSONObject;
 
 import java.io.File;
 import java.util.List;
@@ -47,7 +51,7 @@ import java.util.List;
  */
 public class TestFileProcessor {
 
-    public static void testFileLabel(FileProcessor fileProcessor) {
+    public static void testVideoFile(FileProcessor fileProcessor) {
         System.out.println("*** START ***");
 
         File file = new File("data/video.mp4");
@@ -70,7 +74,7 @@ public class TestFileProcessor {
         System.out.println("*** END ***");
     }
 
-    public static void testORC(FileProcessor fileProcessor) {
+    public static void testOCR(FileProcessor fileProcessor) {
         System.out.println("*** START OCR ***");
 
         FileProcessResult result = fileProcessor.call(new OCRProcessing(), new File("data/screenshot_20220307.png"));
@@ -83,12 +87,14 @@ public class TestFileProcessor {
         System.out.println("*** END ***");
     }
 
-    public static void testSnapshot(FileProcessor fileProcessor) {
+    public static void testSnapshotVideo(FileProcessor fileProcessor) {
         System.out.println("*** START Snapshot ***");
 
         SnapshotOperation operation = new SnapshotOperation();
+
         FileProcessResult result = fileProcessor.call(new VideoProcessing(operation), new File("data/video.mp4"));
         System.out.println("Result : " + result.getVideoResult().getOperation().getOperation());
+        System.out.println("Result file : " + result.getLocalFileList().get(0).getName());
 
         if (result.getVideoResult().successful) {
             List<String> logs = result.getLogs();
@@ -96,6 +102,27 @@ public class TestFileProcessor {
                 System.out.println("[L] " + line);
             }
         }
+
+        System.out.println("*** END ***");
+    }
+
+    public static void testExtractAudioVideo(FileProcessor fileProcessor) {
+        System.out.println("*** START Extract Audio ***");
+
+        ExtractAudioOperation operation = new ExtractAudioOperation();
+        operation.outputType = FileType.WAV;
+
+        FileProcessResult result = fileProcessor.call(new VideoProcessing(operation),
+                new File("data/video_douyin_yuebing.mp4"));
+        if (null == result) {
+            System.out.println("*** ERROR ***");
+            return;
+        }
+
+        System.out.println("Result file : " + result.getResultList().get(0).fullPath);
+        System.out.println("Media channels : " + result.getResultList().get(0).mediaAttribute.getStreamAttributes()[0].channels);
+        System.out.println("Media sample rate : " + result.getResultList().get(0).mediaAttribute.getStreamAttributes()[0].sampleRate);
+        System.out.println("Media byte width : " + result.getResultList().get(0).mediaAttribute.getStreamAttributes()[0].bitsPerSample);
 
         System.out.println("*** END ***");
     }
@@ -323,8 +350,119 @@ public class TestFileProcessor {
         System.out.println("*** END ***");
     }
 
-    public static void main(String[] args) {
+    public static void testDownloadFile(FileProcessor fileProcessor) {
+        System.out.println("*** START testDownloadFile ***");
 
+        String fileCode = "xwwwwrLABQBGvNuxuvHFrFBGBuMQMrxwwwwHYBmNkRPMiKOxaPZJJZPaxOKiMPRk";
+        FileLabel fileLabel = fileProcessor.downloadFile(fileCode);
+        if (null != fileLabel) {
+            System.out.println("Download file finished: " + fileLabel.getFile().getAbsolutePath());
+        }
+        else {
+            System.out.println("Download file error");
+        }
+    }
+
+    public static void testOCRWorkflow(FileProcessor fileProcessor) {
+        System.out.println("*** START testOCRWorkflow ***");
+
+        OperationWorkflow workflow = new OperationWorkflow();
+
+        GrayscaleOperation grayscaleOperation = new GrayscaleOperation();
+        workflow.append(new OperationWork(grayscaleOperation));
+
+        /*BrightnessOperation brightnessOperation = new BrightnessOperation(3, 10);
+        workflow.append(new OperationWork(brightnessOperation));
+
+        SharpeningOperation sharpening = new SharpeningOperation(2.0);
+        workflow.append(new OperationWork(sharpening));
+
+        List<ReplaceColorOperation> rcoList = new ArrayList<>();
+        ReplaceColorOperation replace1 = new ReplaceColorOperation(new Color(193, 193, 193),
+                new Color(134, 134, 134));
+        replace1.setFuzzFactor(3);
+        rcoList.add(replace1);
+        workflow.append(new OperationWork(new ReplaceColorOperation(rcoList)));*/
+
+        OCROperation ocrOperation = new OCROperation(OCROperation.LANG_CHINESE, true);
+        workflow.append(new OperationWork(ocrOperation));
+
+        File file = new File("data/date_monday.png");
+        FileProcessResult result = fileProcessor.call(workflow, file);
+
+        try {
+            Thread.sleep(5 * 1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        /*File resultFile = result.getResultFile();
+        OCRFile ocrFile = new OCRFile(resultFile);
+        for (String line : ocrFile.toText()) {
+            System.out.println("[L]: " + line);
+        }*/
+    }
+
+    public static void testSteganoHandler(FileProcessor fileProcessor) {
+        System.out.println("*** START testSteganoHandler ***");
+
+        String url = "http://127.0.0.1:7010/file/steganographic/";
+
+        // 进行编码
+        JSONObject requestData = new JSONObject();
+        requestData.put("content", "今天是周日");
+
+        JSONObject responseData = Helper.httpPost(url, requestData);
+        if (null == responseData) {
+            System.out.println("POST Error");
+            return;
+        }
+
+        JSONObject data = responseData.getJSONObject("data");
+        String mask = data.getString("maskCode");
+        String fileCode = data.getJSONObject("fileLabel").getString("fileCode");
+        System.out.println("FileCode: " + fileCode);
+        System.out.println("Mask: " + mask);
+
+        // 下载文件
+        FileLabel fileLabel = fileProcessor.downloadFile(fileCode);
+        System.out.println("Download file: " + fileLabel.getFileName());
+
+        // 解码还原
+        url += "?fc=" + fileCode + "&mask=" + mask;
+        responseData = Helper.httpGet(url);
+        if (null == responseData) {
+            System.out.println("GET Error");
+            return;
+        }
+
+        data = responseData.getJSONObject("data");
+        String contentFileCode = data.getJSONObject("fileLabel").getString("fileCode");
+        System.out.println("Content file code: " + contentFileCode);
+        // 下载文件
+        fileLabel = fileProcessor.downloadFile(contentFileCode);
+        System.out.println("Download file: " + fileLabel.getFileName());
+    }
+
+    public static void testOfficeConvertTo(FileProcessor fileProcessor) {
+        System.out.println("*** START OfficeConvertTo ***");
+
+        FileProcessResult result = fileProcessor.call(new OfficeConvertToProcessing(OfficeConvertToOperation.OUTPUT_FORMAT_PNG),
+                new File("data/简历模板.docx"));
+
+        if (result.hasResult()) {
+            for (File file : result.getLocalFileList()) {
+                System.out.println("File: " + file.getName());
+            }
+        }
+        else {
+            System.out.println("No result");
+        }
+
+        System.out.println("*** END ***");
+    }
+
+    public static void main(String[] args) {
         Client client = new Client("127.0.0.1", "admin", "shixincube.com");
 
         if (!client.waitReady()) {
@@ -337,8 +475,19 @@ public class TestFileProcessor {
 
         FileProcessor fileProcessor = client.getFileProcessor();
 
+//        testOCRWorkflow(fileProcessor);
+
+//        testDownloadFile(fileProcessor);
+
 //        testSteganography(fileProcessor);
 //        testReadSteganographyWatermark(fileProcessor);
+
+//        testSteganoHandler(fileProcessor);
+
+//        testOfficeConvertTo(fileProcessor);
+
+//        testSnapshotVideo(fileProcessor);
+        testExtractAudioVideo(fileProcessor);
 
         client.destroy();
     }

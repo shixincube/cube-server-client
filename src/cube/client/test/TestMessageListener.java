@@ -49,14 +49,14 @@ public class TestMessageListener {
         Contact contactA = client.getContact("shixincube.com", 50001001L);
         Contact contactB = client.getContact("shixincube.com", 63045555L);
 
-        client.registerMessageReceiveListener(contactA, new MessageReceiveListener() {
+        client.getMessageService().registerMessageReceiveListener(contactA, new MessageReceiveListener() {
             @Override
             public void onReceived(Message message) {
                 System.out.println("[TestMessageListener] onReceived : " + contactA.getId() + " - " + message.getPayload().toString());
             }
         });
 
-        client.registerMessageSendListener(contactB, new MessageSendListener() {
+        client.getMessageService().registerMessageSendListener(contactB, new MessageSendListener() {
             @Override
             public void onSent(Message message) {
                 System.out.println("[TestMessageListener] onSent : " + contactB.getId() + " - " + message.getPayload().toString());

@@ -27,12 +27,12 @@
 package cube.client.test;
 
 import cell.util.Base64;
+import cell.util.Cryptology;
 import cell.util.Utils;
-import cube.common.entity.ContactZone;
-import cube.common.entity.Conversation;
-import cube.common.entity.FileLabel;
+import cube.common.entity.*;
 import cube.hub.EventBuilder;
 import cube.hub.event.*;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.*;
@@ -50,7 +50,7 @@ import java.util.Map;
 public class TestHub {
 
     private String address = "127.0.0.1";
-//    private String address = "";
+//    private String address = "111.203.186.243";
 
     private String code = "bGhjaFWGKsStbiDKmjhOWIOXZjQFOcmh";
 
@@ -67,129 +67,12 @@ public class TestHub {
 
     private JSONObject httpGet(String urlString, Map<String, String> params) {
         String validUrl = urlString + "/" + this.code;
-        if (null != params) {
-            try {
-                validUrl += "?";
-                for (String key : params.keySet()) {
-                    validUrl += key + "=" + URLEncoder.encode(params.get(key), "UTF-8");
-                    validUrl += "&";
-                }
-                validUrl = validUrl.substring(0, validUrl.length() - 1);
-            } catch (UnsupportedEncodingException e) {
-                e.printStackTrace();
-            }
-        }
-
-        System.out.println("HTTP [GET] : " + validUrl);
-
-        JSONObject json = null;
-
-        BufferedReader reader = null;
-        try {
-            URL url = new URL(validUrl);
-            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-            connection.setRequestProperty("Charset", "UTF-8");
-            connection.setRequestProperty("Content-Type", "application/json");
-            connection.setDoOutput(false);
-            connection.setDoInput(true);
-            connection.setUseCaches(true);
-            connection.setRequestMethod("GET");
-            connection.setConnectTimeout(5000);
-            // 连接
-            connection.connect();
-            int code = connection.getResponseCode();
-            if (code == HttpURLConnection.HTTP_OK) {
-                System.out.println("Response OK");
-
-                StringBuilder buf = new StringBuilder();
-
-                reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-                String line = null;
-                while ((line = reader.readLine()) != null) {
-                    buf.append(line);
-                }
-
-                json = new JSONObject(buf.toString());
-            }
-            else {
-                System.out.println("Response : " + code);
-            }
-
-            connection.disconnect();
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            if (null != reader) {
-                try {
-                    reader.close();
-                } catch (IOException e) {
-                }
-            }
-        }
-
-        return json;
+        return Helper.httpGet(validUrl, params);
     }
 
     private JSONObject httpPost(String urlString, JSONObject body) {
         String validUrl = urlString + "/" + this.code;
-
-        System.out.println("HTTP [POST] : " + validUrl);
-
-        JSONObject responseJSON = null;
-
-        BufferedReader reader = null;
-        try {
-            URL url = new URL(validUrl);
-            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-            connection.setRequestProperty("Charset", "UTF-8");
-            connection.setRequestProperty("Content-Type", "application/json");
-            connection.setDoOutput(true);
-            connection.setDoInput(true);
-            connection.setUseCaches(false);
-            connection.setRequestMethod("POST");
-            connection.setConnectTimeout(5000);
-            // 连接
-            connection.connect();
-
-            OutputStream os = connection.getOutputStream();
-            os.write(body.toString().getBytes(StandardCharsets.UTF_8));
-            os.close();
-
-            int code = connection.getResponseCode();
-            if (code == HttpURLConnection.HTTP_OK) {
-                System.out.println("Response OK");
-
-                StringBuilder buf = new StringBuilder();
-
-                reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-                String line = null;
-                while ((line = reader.readLine()) != null) {
-                    buf.append(line);
-                }
-
-                responseJSON = new JSONObject(buf.toString());
-            }
-            else {
-                System.out.println("Response : " + code);
-            }
-
-            connection.disconnect();
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            if (null != reader) {
-                try {
-                    reader.close();
-                } catch (IOException e) {
-                }
-            }
-        }
-
-        return responseJSON;
+        return Helper.httpPost(validUrl, body);
     }
 
     private JSONObject httpPostForm(String urlString, File file) {
@@ -513,6 +396,49 @@ public class TestHub {
         }
     }
 
+    public void testAddFriend() {
+        System.out.println("#testAddFriend");
+
+        JSONObject data = new JSONObject();
+        data.put("keyword", "1504006296");
+
+        String urlString = getAddressString() + "hub/friend/add";
+        JSONObject result = httpPost(urlString, data);
+        if (null == result) {
+            System.out.println("Failed");
+        }
+        else {
+            System.out.println(result.toString());
+        }
+    }
+
+    public void testRollPolling() {
+        System.out.println("#testRollPolling");
+
+        Map<String, String> params = new HashMap<>();
+        params.put("type", Integer.toString(ConversationType.Group.code));
+        try {
+            params.put("name", URLEncoder.encode("测试小群", "UTF-8"));
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+        params.put("num", "3");
+
+        String urlString = getAddressString() + "hub/polling";
+        JSONObject result = httpGet(urlString, params);
+        if (null == result) {
+            System.out.println("Failed");
+        }
+        else {
+            System.out.println("Name: " + result.getString("conversationName"));
+            JSONArray list = result.getJSONArray("messageList");
+            for (int i = 0; i < list.length(); ++i) {
+                Message message = new Message(list.getJSONObject(i));
+                System.out.println("Message: " + message.getSender().getName() + " - " + message.getRemoteTimestamp());
+            }
+        }
+    }
+
     public static void main(String[] args) {
         TestHub test = new TestHub();
 //        test.testOpen();
@@ -524,6 +450,10 @@ public class TestHub {
 //        test.testGetMessages();
 
 //        test.testSendText();
-        test.testPostFileData();
+        //test.testPostFileData();
+
+//        test.testAddFriend();
+
+        test.testRollPolling();
     }
 }

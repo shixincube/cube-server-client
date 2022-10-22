@@ -32,6 +32,7 @@ import cell.util.Utils;
 import cell.util.log.Logger;
 import cube.auth.AuthToken;
 import cube.client.file.FileProcessor;
+import cube.client.file.FileStorage;
 import cube.client.file.FileUploader;
 import cube.client.hub.HubController;
 import cube.client.listener.ContactListener;
@@ -76,6 +77,8 @@ public final class Client {
     private FileUploader uploader;
 
     private FileProcessor processor;
+
+    private FileStorage storage;
 
     private HubController hubController;
 
@@ -177,6 +180,16 @@ public final class Client {
      */
     public ClientDescription getDescription() {
         return this.description;
+    }
+
+    /**
+     * 同步传输。
+     *
+     * @param actionDialect
+     * @return
+     */
+    public ActionDialect syncTransmit(ActionDialect actionDialect) {
+        return this.connector.send(this.receiver.inject(), actionDialect);
     }
 
     protected void setSessionId(long sessionId) {
@@ -366,9 +379,9 @@ public final class Client {
     }
 
     /**
-     * 获取文件处理器。
+     * 获取文件处理器服务接口。
      *
-     * @return 返回文件处理器。
+     * @return 返回文件处理器服务接口。
      */
     public FileProcessor getFileProcessor() {
         if (null == this.processor) {
@@ -381,6 +394,18 @@ public final class Client {
         }
 
         return this.processor;
+    }
+
+    /**
+     * 获取文件存储服务接口。
+     *
+     * @return 返回文件存储服务接口。
+     */
+    public FileStorage getFileStorage() {
+        if (null == this.storage) {
+            this.storage = new FileStorage(this);
+        }
+        return this.storage;
     }
 
     /**
