@@ -30,10 +30,20 @@ public class FileStorage {
         }
     }
 
-//    public void setMaxSpaceSize(String domain, long contactId, long maxSize) {
-//        ActionDialect actionDialect = new ActionDialect(ClientAction.UpdateFilePerf.name);
-//        actionDialect.addParam("domain", domain);
-//        actionDialect.addParam("contactId", contactId);
-//        actionDialect.addParam("maxSpaceSize", maxSize);
-//    }
+    public FileStoragePerformance setStoragePerformance(String domain, long contactId,
+                                                        FileStoragePerformance performance) {
+        ActionDialect actionDialect = new ActionDialect(ClientAction.UpdateFilePerf.name);
+        actionDialect.addParam("domain", domain);
+        actionDialect.addParam("contactId", contactId);
+        actionDialect.addParam("performance", performance.toJSON());
+
+        ActionDialect result = this.client.syncTransmit(actionDialect);
+        if (result.getParamAsInt("code") == FileStorageStateCode.Ok.code) {
+            JSONObject performanceJson = result.getParamAsJson("performance");
+            return new FileStoragePerformance(performanceJson);
+        }
+        else {
+            return null;
+        }
+    }
 }
