@@ -1,3 +1,9 @@
 cube.client
+cube.client.file
+cube.client.hub
 cube.client.listener
+cube.client.message
+cube.client.risk
+cube.client.simulator
 cube.client.tool
+cube.client.util
