@@ -2,7 +2,9 @@ package cube.client.file;
 
 import cell.core.talk.dialect.ActionDialect;
 import cell.util.log.Logger;
+import cube.client.ActionListener;
 import cube.client.Client;
+import cube.client.Notifier;
 import cube.common.action.ClientAction;
 import cube.common.entity.FileStoragePerformance;
 import cube.common.entity.SharingTag;
@@ -19,6 +21,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class FileStorage {
 
@@ -193,6 +196,75 @@ public class FileStorage {
     }
 
     /**
+     * 按照时间检索访问数据。
+     *
+     * @param contactId
+     * @param domainName
+     * @param beginTime
+     * @param endTime
+     * @return
+     */
+    public List<VisitTrace> searchVisitTraces(long contactId, String domainName, long beginTime, long endTime) {
+        List<VisitTrace> list = new ArrayList<>();
+
+        AtomicInteger total = new AtomicInteger(0);
+        Notifier notifier = this.client.getReceiver().inject();
+
+        ActionDialect actionDialect = new ActionDialect(ClientAction.ListSharingTraces.name);
+        actionDialect.addParam(NoticeData.PARAMETER, new ListSharingTraces(contactId, domainName, beginTime, endTime));
+
+        ActionListener actionListener = new ActionListener() {
+            @Override
+            public void onAction(ActionDialect actionDialect) {
+                JSONObject notifierJson = actionDialect.getParamAsJson(Notifier.AsyncParamName);
+                if (notifier.equals(notifierJson)) {
+                    JSONObject data = actionDialect.getParamAsJson("data");
+                    VisitTrace trace = new VisitTrace(data);
+                    list.add(trace);
+
+                    if (total.get() == list.size()) {
+                        synchronized (list) {
+                            list.notify();
+                        }
+                    }
+                }
+            }
+        };
+        this.client.getReceiver().addActionListener(ClientAction.ListSharingTraces.name, actionListener);
+
+        ActionDialect result = this.client.getConnector().send(notifier, actionDialect);
+        if (null == result) {
+            // 移除监听器
+            this.client.getReceiver().removeActionListener(ClientAction.ListSharingTraces.name, actionListener);
+            Logger.w(this.getClass(), "#searchVisitTraces - Network error");
+            return null;
+        }
+
+        if (result.getParamAsInt("code") == FileStorageStateCode.Ok.code) {
+            JSONObject data = result.getParamAsJson("data");
+            total.set(data.getInt("total"));
+        }
+
+        if (total.get() == 0) {
+            // 移除监听器
+            this.client.getReceiver().removeActionListener(ClientAction.ListSharingTraces.name, actionListener);
+            return list;
+        }
+
+        synchronized (list) {
+            try {
+                list.wait(60 * 60 * 1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+        // 移除监听器
+        this.client.getReceiver().removeActionListener(ClientAction.ListSharingTraces.name, actionListener);
+        return list;
+    }
+
+    /**
      * 批量获取文件访问痕迹。
      *
      * @param contactId
@@ -202,7 +274,7 @@ public class FileStorage {
      * @param endIndex
      * @return
      */
-    public List<VisitTrace> listVisitTrace(long contactId, String domainName, String sharingCode,
+    public List<VisitTrace> listVisitTraces(long contactId, String domainName, String sharingCode,
                                            int beginIndex, int endIndex) {
         List<VisitTrace> list = new ArrayList<>();
 
@@ -239,7 +311,7 @@ public class FileStorage {
 
             ActionDialect result = this.client.syncTransmit(actionDialect);
             if (null == result) {
-                Logger.w(this.getClass(), "#listVisitTrace - Network error");
+                Logger.w(this.getClass(), "#listVisitTraces - Network error");
                 break;
             }
 

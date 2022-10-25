@@ -192,6 +192,14 @@ public final class Client {
         return this.connector.send(this.receiver.inject(), actionDialect);
     }
 
+    public Connector getConnector() {
+        return this.connector;
+    }
+
+    public Receiver getReceiver() {
+        return this.receiver;
+    }
+
     protected void setSessionId(long sessionId) {
         this.sessionId = sessionId;
     }

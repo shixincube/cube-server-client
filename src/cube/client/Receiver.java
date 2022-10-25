@@ -65,6 +65,15 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public class Receiver implements TalkListener {
 
+    public interface ReceiverListener {
+        /**
+         * 当接收到数据时回调。
+         *
+         * @param actionDialect
+         */
+        void onReceived(ActionDialect actionDialect);
+    }
+
     private final Client client;
 
     private final AtomicBoolean logined = new AtomicBoolean(false);
@@ -222,6 +231,20 @@ public class Receiver implements TalkListener {
 
             if (actionDialect.containsParam(Notifier.ParamName)) {
                 this.processNotifier(actionDialect);
+            }
+            else if (actionDialect.containsParam(Notifier.AsyncParamName)) {
+                String action = actionDialect.getName();
+                List<ActionListener> list = this.actionListenerMap.get(action);
+                if (null != list) {
+                    synchronized (list) {
+                        for (ActionListener listener : list) {
+                            listener.onAction(actionDialect);
+                        }
+                    }
+                }
+                else {
+                    Logger.i(this.getClass(), "No listener for : " + action);
+                }
             }
             else {
                 String action = actionDialect.getName();

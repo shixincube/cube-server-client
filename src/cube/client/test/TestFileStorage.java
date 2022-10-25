@@ -30,6 +30,7 @@ import cube.client.Client;
 import cube.client.file.FileStorage;
 import cube.common.entity.Contact;
 import cube.common.entity.FileStoragePerformance;
+import cube.common.entity.VisitTrace;
 import cube.report.LogLine;
 
 import java.util.List;
@@ -50,6 +51,21 @@ public class TestFileStorage {
         System.out.println("*** END testPerformance ***");
     }
 
+    public static void testSearchVisitTraces(FileStorage storage) {
+        System.out.println("*** START testSearchVisitTraces ***");
+
+        long now = System.currentTimeMillis();
+        long beginTime = now - 30L * 24 * 60 * 60 * 1000;
+        long endTime = now;
+
+        List<VisitTrace> visitTraceList = storage.searchVisitTraces(50001001, "shixincube.com", beginTime, endTime);
+
+        System.out.println("expended time: " + Math.round(System.currentTimeMillis() - now) / 1000.0f + "s");
+        System.out.println("size: " + visitTraceList.size());
+
+        System.out.println("*** END testSearchVisitTraces ***");
+    }
+
     public static void main(String[] args) {
         Client client = new Client("127.0.0.1", "admin", "shixincube.com");
 
@@ -61,7 +77,9 @@ public class TestFileStorage {
         Contact contact = new Contact(10000, "shixincube.com");
         client.prepare(contact);
 
-        testPerformance(client.getFileStorage());
+//        testPerformance(client.getFileStorage());
+
+        testSearchVisitTraces(client.getFileStorage());
 
         client.destroy();
     }

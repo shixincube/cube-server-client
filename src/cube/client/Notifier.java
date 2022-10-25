@@ -37,7 +37,9 @@ public class Notifier {
 
     public final static String ParamName = "_notifier";
 
-    public final Long sn;
+    public final static String AsyncParamName = "_async_notifier";
+
+    public final long sn;
 
     private ActionDialect response;
 
@@ -53,7 +55,7 @@ public class Notifier {
     public ActionDialect waiting() {
         synchronized (this) {
             try {
-                this.wait(60 * 1000);
+                this.wait(5 * 60 * 1000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -76,13 +78,31 @@ public class Notifier {
     }
 
     /**
+     * 判断 JSON 数据是否与该通知器一致。
+     *
+     * @param json
+     * @return
+     */
+    public boolean equals(JSONObject json) {
+        if (json.has("sn")) {
+            return this.sn == json.getLong("sn");
+        }
+
+        return false;
+    }
+
+    /**
      * 转为 JSON 结构。
      *
      * @return
      */
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
-        json.put("sn", this.sn.longValue());
+        json.put("sn", this.sn);
         return json;
+    }
+
+    public static boolean equals(Notifier notifier, JSONObject json) {
+        return notifier.equals(json);
     }
 }
