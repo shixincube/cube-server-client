@@ -58,7 +58,7 @@ import java.util.TimerTask;
 /**
  * 服务器客户端程序。
  */
-public final class Client {
+public class Client {
 
     public final static String VERSION = "1.0.1";
 
@@ -192,10 +192,18 @@ public final class Client {
         return this.connector.send(this.receiver.inject(), actionDialect);
     }
 
+    /**
+     * @private
+     * @return
+     */
     public Connector getConnector() {
         return this.connector;
     }
 
+    /**
+     * @private
+     * @return
+     */
     public Receiver getReceiver() {
         return this.receiver;
     }
@@ -240,6 +248,9 @@ public final class Client {
         Logger.w(Client.class, "Connection has disconnected");
     }
 
+    /**
+     * 恢复客户端。
+     */
     public void connected() {
         synchronized (this) {
             if (this.interrupted) {
@@ -253,7 +264,7 @@ public final class Client {
     /**
      * 返回文件存储路径。
      *
-     * @return
+     * @return 返回文件存储路径。
      */
     public File getFilePath() {
         return this.filePath;
@@ -271,7 +282,7 @@ public final class Client {
     /**
      * 等待客户端就绪。
      *
-     * @return
+     * @return 返回 {@code false} 表示无法与服务器建立连接。
      */
     public boolean waitReady() {
         Logger.d(this.getClass(), "Waiting client ready");
@@ -306,7 +317,7 @@ public final class Client {
     /**
      * 准备数据。
      *
-     * @param pretender
+     * @param pretender 指定伪装者。
      */
     public void prepare(Contact pretender) {
         this.pretender = pretender;
@@ -316,7 +327,7 @@ public final class Client {
     /**
      * 准备数据。
      *
-     * @param pretender
+     * @param pretender 指定伪装者。
      * @param hubEnabled 是否启用 HUB 功能。
      */
     public void prepare(Contact pretender, boolean hubEnabled) {
@@ -334,7 +345,7 @@ public final class Client {
     /**
      * 获取当前伪装的联系人。
      *
-     * @return
+     * @return 返回当前伪装的联系人。
      */
     public Contact getPretender() {
         return this.pretender;
@@ -343,7 +354,7 @@ public final class Client {
     /**
      * 获取服务器日志。
      *
-     * @return
+     * @return 返回最近产生的服务器日志。
      */
     public List<LogLine> getServerLogs() {
         ActionDialect actionDialect = new ActionDialect(ClientAction.GetLog.name);
@@ -365,6 +376,11 @@ public final class Client {
         return logLines;
     }
 
+    /**
+     * 获取消息服务接口。
+     *
+     * @return 返回消息服务接口。
+     */
     public MessageService getMessageService() {
         if (null == this.messageService) {
             // 创建消息代理
@@ -419,7 +435,7 @@ public final class Client {
     /**
      * 获取 Hub 控制器。
      *
-     * @return
+     * @return 返回 Hub 控制器。
      */
     public HubController getHubController() {
         if (null == this.hubController) {
@@ -498,8 +514,8 @@ public final class Client {
     /**
      * 获取指定域数据。
      *
-     * @param domainName
-     * @return
+     * @param domainName 指定服务域名称。
+     * @return 返回授权域数据实例。
      */
     public AuthDomain getDomain(String domainName) {
         if (!this.connector.isConnected()) {
@@ -643,18 +659,18 @@ public final class Client {
     /**
      * 获取指定联系人的令牌。
      *
-     * @param contactId
-     * @return
+     * @param contactId 指定联系人 ID 。
+     * @return 返回联系人当前使用的访问令牌。
      */
-    public AuthToken getAuthToken(Long contactId) {
+    public AuthToken getAuthToken(long contactId) {
         return TokenTools.getAuthToken(this.connector, this.receiver, contactId);
     }
 
     /**
      * 注入访问令牌。
      *
-     * @param authToken
-     * @return
+     * @param authToken 指定访问令牌。
+     * @return 返回被注入的令牌实例，如果失败返回 {@code null} 值。
      */
     public AuthToken injectAuthToken(AuthToken authToken) {
         if (authToken.getContactId() == 0) {
@@ -667,8 +683,8 @@ public final class Client {
     /**
      * 注入联系人。
      *
-     * @param contact
-     * @return
+     * @param contact 指定联系人。
+     * @return 返回被注入的联系人实例，如果失败返回 {@code null} 值。
      */
     public Contact injectContact(Contact contact) {
         if (!this.connector.isConnected()) {
@@ -860,9 +876,9 @@ public final class Client {
     /**
      * 强制向指定联系人的分区添加参与人。
      *
-     * @param contact
-     * @param zoneName
-     * @param participant
+     * @param contact 指定联系人。
+     * @param zoneName 指定分区名。
+     * @param participant 指定参与人。
      * @return
      */
     public ContactZone addParticipantToZoneByForce(Contact contact, String zoneName, Contact participant) {
@@ -876,10 +892,7 @@ public final class Client {
                 contact.getId(), "Operated by administrator", ContactZoneParticipantState.Normal);
         actionDialect.addParam("participant", zoneParticipant.toJSON());
 
-        Notifier notifier = new Notifier();
-        this.receiver.inject(notifier);
-
-        ActionDialect result = this.connector.send(notifier, actionDialect);
+        ActionDialect result = this.connector.send(this.receiver.inject(), actionDialect);
         if (result.containsParam("contactZone")) {
             return new ContactZone(result.getParamAsJson("contactZone"));
         }
@@ -888,6 +901,14 @@ public final class Client {
         }
     }
 
+    /**
+     * 强制从分区移除指定参与人。
+     *
+     * @param contact 指定联系人。
+     * @param zoneName 指定分区名。
+     * @param participant 指定参与人。
+     * @return
+     */
     public ContactZone removeParticipantFromZoneByForce(Contact contact, String zoneName, Contact participant) {
         // TODO
         return null;
@@ -936,7 +957,6 @@ public final class Client {
 
         @Override
         public void run() {
-
         }
     }
 }

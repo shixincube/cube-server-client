@@ -33,5 +33,8 @@ import cell.core.talk.dialect.ActionDialect;
  */
 public interface ActionListener {
 
+    /**
+     * @param actionDialect
+     */
     void onAction(ActionDialect actionDialect);
 }

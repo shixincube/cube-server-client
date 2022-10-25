@@ -40,7 +40,7 @@ public class TestFileStorage {
     public static void testPerformance(FileStorage storage) {
         System.out.println("*** START testPerformance ***");
 
-        FileStoragePerformance performance = storage.getStoragePerformance("shixincube.com", 50001001);
+        FileStoragePerformance performance = storage.getStoragePerformance(50001001, "shixincube.com");
         if (null != performance) {
             System.out.println(performance.toJSON().toString(4));
         }

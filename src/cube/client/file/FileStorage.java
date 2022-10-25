@@ -23,6 +23,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
+/**
+ * 文件存储服务访问接口。
+ */
 public class FileStorage {
 
     private Client client;
@@ -42,7 +45,14 @@ public class FileStorage {
         this.visitTraceTotalMap = new HashMap<>();
     }
 
-    public FileStoragePerformance getStoragePerformance(String domain, long contactId) {
+    /**
+     * 获取指定联系人的存储性能。
+     *
+     * @param contactId 指定联系人 ID 。
+     * @param domain 指定访问域。
+     * @return 返回文件存储性能数据实例。
+     */
+    public FileStoragePerformance getStoragePerformance(long contactId, String domain) {
         ActionDialect actionDialect = new ActionDialect(ClientAction.GetFilePerf.name);
         actionDialect.addParam("domain", domain);
         actionDialect.addParam("contactId", contactId);
@@ -57,8 +67,16 @@ public class FileStorage {
         }
     }
 
-    public FileStoragePerformance setStoragePerformance(String domain, long contactId,
-                                                        FileStoragePerformance performance) {
+    /**
+     * 更新联系人的存储性能。
+     *
+     * @param contactId 指定联系人 ID 。
+     * @param domain 指定访问域。
+     * @param performance 指定新的性能数据。
+     * @return 返回已更新的性能数据，如果更新失败返回 {@code null} 值。
+     */
+    public FileStoragePerformance updateStoragePerformance(long contactId, String domain,
+                                                           FileStoragePerformance performance) {
         ActionDialect actionDialect = new ActionDialect(ClientAction.UpdateFilePerf.name);
         actionDialect.addParam("domain", domain);
         actionDialect.addParam("contactId", contactId);
@@ -77,12 +95,12 @@ public class FileStorage {
     /**
      * 批量获取分享标签。
      *
-     * @param contactId
-     * @param domainName
-     * @param beginIndex
-     * @param endIndex
-     * @param valid
-     * @return
+     * @param contactId 指定联系人 ID 。
+     * @param domainName 指定访问域。
+     * @param beginIndex 指定起始索引。
+     * @param endIndex 指定结束索引。
+     * @param valid 指定获取的是否是有效的分享标签。
+     * @return 返回分享标签列表。
      */
     public List<SharingTag> listSharingTags(long contactId, String domainName,
                                             int beginIndex, int endIndex, boolean valid) {
@@ -156,8 +174,8 @@ public class FileStorage {
     /**
      * 获取分享标签。
      *
-     * @param sharingCode
-     * @return
+     * @param sharingCode 获取指定访问码的分享标签。
+     * @return 返回分享标签实例。查找失败返回 {@code null} 值。
      */
     public SharingTag getSharingTag(String sharingCode) {
         ActionDialect actionDialect = new ActionDialect(ClientAction.GetSharingTag.name);
@@ -179,32 +197,36 @@ public class FileStorage {
     }
 
     /**
-     * 获取分享标签总数量。
+     * 从本地缓存里获取分享标签总数量。
      *
-     * @param contactId
-     * @param valid
-     * @return
+     * @param contactId 指定联系人 ID 。
+     * @param valid 是否是有效分享标签。
+     * @return 返回数量，如果没有找到已缓存的联系人返回 {@code -1} 值。
      */
-    public int getSharingTagTotal(long contactId, boolean valid) {
+    public int getCachedSharingTagTotal(long contactId, boolean valid) {
         Integer value = valid ? this.validSharingTagTotalMap.get(contactId) :
                 this.invalidSharingTagTotalMap.get(contactId);
         if (null == value) {
-            return 0;
+            return -1;
         }
 
         return value.intValue();
     }
 
     /**
-     * 按照时间检索访问数据。
+     * 按照时间检索访问痕迹数据。
      *
-     * @param contactId
-     * @param domainName
-     * @param beginTime
-     * @param endTime
-     * @return
+     * @param contactId 指定联系人 ID 。
+     * @param domainName 指定访问域名称。
+     * @param beginTime 指定开始时间戳。
+     * @param endTime 指定结束时间戳。
+     * @return 返回搜索到的访问记录列表，如果查找是发生错误返回 {@code null} 值。
      */
     public List<VisitTrace> searchVisitTraces(long contactId, String domainName, long beginTime, long endTime) {
+        if (endTime <= beginTime) {
+            return null;
+        }
+
         List<VisitTrace> list = new ArrayList<>();
 
         AtomicInteger total = new AtomicInteger(0);
@@ -267,12 +289,12 @@ public class FileStorage {
     /**
      * 批量获取文件访问痕迹。
      *
-     * @param contactId
-     * @param domainName
-     * @param sharingCode
-     * @param beginIndex
-     * @param endIndex
-     * @return
+     * @param contactId 指定联系人 ID 。
+     * @param domainName 指定访问域名称。
+     * @param sharingCode 指定分享码。
+     * @param beginIndex 指定起始索引位置。
+     * @param endIndex 指定结束索引位置。
+     * @return 返回数据列表。
      */
     public List<VisitTrace> listVisitTraces(long contactId, String domainName, String sharingCode,
                                            int beginIndex, int endIndex) {
@@ -344,8 +366,8 @@ public class FileStorage {
     /**
      * 获取访问痕迹总数量。
      *
-     * @param sharingCode
-     * @return
+     * @param sharingCode 指定分享标签的分享码。
+     * @return 返回访问痕迹总数量。
      */
     public int getVisitTraceTotal(String sharingCode) {
         synchronized (this.visitTraceTotalMap) {
