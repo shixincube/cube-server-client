@@ -704,6 +704,16 @@ public class Client {
     }
 
     /**
+     * 使用令牌码查找指定的联系人。
+     *
+     * @param tokenCode 指定令牌码。
+     * @return 返回联系人实例。
+     */
+    public Contact queryContactByToken(String tokenCode) {
+        return null;
+    }
+
+    /**
      * 获取当前连接服务器上所有在线的联系人。
      *
      * @return 返回当前连接服务器上所有在线的联系人列表。
