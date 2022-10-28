@@ -704,16 +704,6 @@ public class Client {
     }
 
     /**
-     * 使用令牌码查找指定的联系人。
-     *
-     * @param tokenCode 指定令牌码。
-     * @return 返回联系人实例。
-     */
-    public Contact queryContactByToken(String tokenCode) {
-        return null;
-    }
-
-    /**
      * 获取当前连接服务器上所有在线的联系人。
      *
      * @return 返回当前连接服务器上所有在线的联系人列表。
@@ -822,32 +812,53 @@ public class Client {
     }
 
     /**
+     * 使用令牌码查找指定的联系人。
+     *
+     * @param tokenCode 指定令牌码。
+     * @return 返回联系人实例。如果查询失败返回 {@code null} 值。
+     */
+    public Contact getContactByToken(String tokenCode) {
+        if (!this.connector.isConnected()) {
+            return null;
+        }
+
+        ActionDialect actionDialect = new ActionDialect(ClientAction.GetContact.name);
+        actionDialect.addParam("token", tokenCode);
+
+        ActionDialect result = this.connector.send(this.receiver.inject(), actionDialect);
+        if (!result.containsParam("contact")) {
+            return null;
+        }
+
+        JSONObject data = result.getParamAsJson("contact");
+        Contact contact = new Contact(data);
+        return contact;
+    }
+
+    /**
      * 获取指定 ID 的联系人。
      *
      * @param domain 指定域名称。
      * @param id 指定联系人的 ID 。
      * @return 返回指定的联系人实例。
      */
-    public Contact getContact(String domain, Long id) {
+    public Contact getContact(String domain, long id) {
         if (!this.connector.isConnected()) {
             return null;
         }
 
-        Notifier notifier = new Notifier();
-
-        this.receiver.inject(notifier);
-
         ActionDialect actionDialect = new ActionDialect(ClientAction.GetContact.name);
         actionDialect.addParam("domain", domain);
-        actionDialect.addParam("contactId", id.longValue());
+        actionDialect.addParam("contactId", id);
 
         // 阻塞线程，并等待返回结果
-        ActionDialect result = this.connector.send(notifier, actionDialect);
+        ActionDialect result = this.connector.send(this.receiver.inject(), actionDialect);
+        if (!result.containsParam("contact")) {
+            return null;
+        }
 
         JSONObject data = result.getParamAsJson("contact");
-
         Contact contact = new Contact(data);
-
         return contact;
     }
 
