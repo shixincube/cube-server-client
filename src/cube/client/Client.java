@@ -41,7 +41,10 @@ import cube.client.tool.TokenTools;
 import cube.common.action.ClientAction;
 import cube.common.action.ContactAction;
 import cube.common.entity.*;
+import cube.common.notice.ListContactBehaviors;
+import cube.common.notice.NoticeData;
 import cube.common.state.AuthStateCode;
+import cube.common.state.RiskMgmtStateCode;
 import cube.report.LogLine;
 import cube.util.FileUtils;
 import org.json.JSONArray;
@@ -733,6 +736,59 @@ public class Client {
     }
 
     /**
+     * 批量获取联系人行为。
+     *
+     * @param contactId 指定联系人 ID 。
+     * @param domain 指定访问域。
+     * @param beginTime 指定查询起始时间戳。
+     * @param endTime 指定查询截止时间戳。
+     * @return 返回联系人行为列表。
+     */
+    public List<ContactBehavior> listContactBehaviors(long contactId, String domain, long beginTime, long endTime) {
+        return this.listContactBehaviors(contactId, domain, beginTime, endTime, null);
+    }
+
+    /**
+     * 批量获取联系人行为。
+     *
+     * @param contactId 指定联系人 ID 。
+     * @param domain 指定访问域。
+     * @param beginTime 指定查询起始时间戳。
+     * @param endTime 指定查询截止时间戳。
+     * @param behavior 指定行为。
+     * @return 返回联系人行为列表。
+     */
+    public List<ContactBehavior> listContactBehaviors(long contactId, String domain, long beginTime, long endTime,
+                                             String behavior) {
+        if (!this.connector.isConnected()) {
+            return null;
+        }
+
+        ActionDialect actionDialect = new ActionDialect(ClientAction.ListContactBehaviors.name);
+        ListContactBehaviors parameter = new ListContactBehaviors(contactId, domain, beginTime, endTime, behavior);
+        actionDialect.addParam(NoticeData.PARAMETER, parameter);
+
+        ActionDialect result = this.connector.send(this.receiver.inject(), actionDialect);
+        if (null == result) {
+            return null;
+        }
+
+        if (RiskMgmtStateCode.Ok.code != result.getParamAsInt(NoticeData.CODE)) {
+            return null;
+        }
+
+        List<ContactBehavior> list = new ArrayList<>();
+        JSONObject data = result.getParamAsJson(NoticeData.DATA);
+        JSONArray array = data.getJSONArray("list");
+        for (int i = 0; i < array.length(); ++i) {
+            JSONObject json = array.getJSONObject(i);
+            ContactBehavior contactBehavior = new ContactBehavior(json);
+            list.add(contactBehavior);
+        }
+        return list;
+    }
+
+    /**
      * 创建联系人。
      *
      * @param domain 指定域。
@@ -746,10 +802,6 @@ public class Client {
             return null;
         }
 
-        Notifier notifier = new Notifier();
-
-        this.receiver.inject(notifier);
-
         ActionDialect actionDialect = new ActionDialect(ClientAction.CreateContact.name);
         actionDialect.addParam("domain", domain);
         actionDialect.addParam("id", id.longValue());
@@ -759,10 +811,12 @@ public class Client {
         }
 
         // 阻塞线程，并等待返回结果
-        ActionDialect result = this.connector.send(notifier, actionDialect);
+        ActionDialect result = this.connector.send(this.receiver.inject(), actionDialect);
+        if (null == result) {
+            return null;
+        }
 
         JSONObject data = result.getParamAsJson("contact");
-
         Contact contact = new Contact(data);
 
         return contact;

@@ -92,6 +92,10 @@ public class FileStorage {
         }
     }
 
+    public List<SharingTag> searchSharingTags(long contactId, String domainName, long beginTime, long endTime) {
+        return null;
+    }
+
     /**
      * 批量获取分享标签。
      *
@@ -211,6 +215,10 @@ public class FileStorage {
         }
 
         return value.intValue();
+    }
+
+    public List<VisitTrace> getVisitTrace(String sharingCode) {
+        return null;
     }
 
     /**
