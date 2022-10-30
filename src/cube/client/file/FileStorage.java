@@ -6,6 +6,7 @@ import cube.client.ActionListener;
 import cube.client.Client;
 import cube.client.Notifier;
 import cube.common.action.ClientAction;
+import cube.common.entity.FileLabel;
 import cube.common.entity.FileStoragePerformance;
 import cube.common.entity.SharingTag;
 import cube.common.entity.VisitTrace;
@@ -92,8 +93,83 @@ public class FileStorage {
         }
     }
 
-    public List<SharingTag> searchSharingTags(long contactId, String domainName, long beginTime, long endTime) {
+    public List<FileLabel> searchFiles(long contactId, String domainName, long beginTime, long endTime) {
         return null;
+    }
+
+    /**
+     * 按照时间检索分享标签数据。
+     *
+     * @param contactId 指定联系人 ID 。
+     * @param domainName 指定访问域名称。
+     * @param beginTime 指定开始时间戳。
+     * @param endTime 指定结束时间戳。
+     * @param valid 指定是否是有效的标签。
+     * @return 返回搜索到的分享标签列表，如果查找时发生错误返回 {@code null} 值。
+     */
+    public List<SharingTag> searchSharingTags(long contactId, String domainName, long beginTime, long endTime, boolean valid) {
+        if (endTime <= beginTime) {
+            return null;
+        }
+
+        List<SharingTag> list = new ArrayList<>();
+
+        AtomicInteger total = new AtomicInteger(0);
+        Notifier notifier = this.client.getReceiver().inject();
+
+        ActionDialect actionDialect = new ActionDialect(ClientAction.ListSharingTags.name);
+        actionDialect.addParam(NoticeData.PARAMETER, new ListSharingTags(contactId, domainName, beginTime,
+                endTime, valid));
+
+        ActionListener actionListener = new ActionListener() {
+            @Override
+            public void onAction(ActionDialect actionDialect) {
+                JSONObject notifierJson = actionDialect.getParamAsJson(Notifier.AsyncParamName);
+                if (notifier.equals(notifierJson)) {
+                    JSONObject data = actionDialect.getParamAsJson("data");
+                    SharingTag tag = new SharingTag(data);
+                    list.add(tag);
+
+                    if (total.get() == list.size()) {
+                        synchronized (list) {
+                            list.notify();
+                        }
+                    }
+                }
+            }
+        };
+        this.client.getReceiver().addActionListener(ClientAction.ListSharingTags.name, actionListener);
+
+        ActionDialect result = this.client.getConnector().send(notifier, actionDialect);
+        if (null == result) {
+            // 移除监听器
+            this.client.getReceiver().removeActionListener(ClientAction.ListSharingTags.name, actionListener);
+            Logger.w(this.getClass(), "#searchSharingTags - Network error");
+            return null;
+        }
+
+        if (result.getParamAsInt("code") == FileStorageStateCode.Ok.code) {
+            JSONObject data = result.getParamAsJson("data");
+            total.set(data.getInt("total"));
+        }
+
+        if (total.get() == 0) {
+            // 移除监听器
+            this.client.getReceiver().removeActionListener(ClientAction.ListSharingTags.name, actionListener);
+            return list;
+        }
+
+        synchronized (list) {
+            try {
+                list.wait(60 * 60 * 1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+        // 移除监听器
+        this.client.getReceiver().removeActionListener(ClientAction.ListSharingTags.name, actionListener);
+        return list;
     }
 
     /**
@@ -228,7 +304,7 @@ public class FileStorage {
      * @param domainName 指定访问域名称。
      * @param beginTime 指定开始时间戳。
      * @param endTime 指定结束时间戳。
-     * @return 返回搜索到的访问记录列表，如果查找是发生错误返回 {@code null} 值。
+     * @return 返回搜索到的访问记录列表，如果查找时发生错误返回 {@code null} 值。
      */
     public List<VisitTrace> searchVisitTraces(long contactId, String domainName, long beginTime, long endTime) {
         if (endTime <= beginTime) {
