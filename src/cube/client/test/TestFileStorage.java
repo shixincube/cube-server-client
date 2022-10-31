@@ -28,10 +28,7 @@ package cube.client.test;
 
 import cube.client.Client;
 import cube.client.file.FileStorage;
-import cube.common.entity.Contact;
-import cube.common.entity.FileStoragePerformance;
-import cube.common.entity.SharingTag;
-import cube.common.entity.VisitTrace;
+import cube.common.entity.*;
 
 import java.util.List;
 
@@ -82,6 +79,25 @@ public class TestFileStorage {
         System.out.println("*** END testSearchSharingTags ***");
     }
 
+    public static void testSearchFiles(FileStorage storage) {
+        System.out.println("*** START testSearchFiles ***");
+
+        long now = System.currentTimeMillis();
+        long beginTime = now - 30L * 24 * 60 * 60 * 1000;
+        long endTime = now;
+
+        List<FileLabel> list = storage.searchFiles(50001001, "shixincube.com",
+                beginTime, endTime);
+
+        System.out.println("Expended time: " + Math.round(System.currentTimeMillis() - now) / 1000.0f + "s");
+        System.out.println("Size: " + list.size());
+        for (FileLabel fileLabel : list) {
+            System.out.println("File: " + fileLabel.getFileName());
+        }
+
+        System.out.println("*** END testSearchFiles ***");
+    }
+
     public static void main(String[] args) {
         Client client = new Client("127.0.0.1", "admin", "shixincube.com");
 
@@ -97,7 +113,9 @@ public class TestFileStorage {
 
 //        testSearchVisitTraces(client.getFileStorage());
 
-        testSearchSharingTags(client.getFileStorage());
+//        testSearchSharingTags(client.getFileStorage());
+
+        testSearchFiles(client.getFileStorage());
 
         client.destroy();
     }

@@ -10,10 +10,7 @@ import cube.common.entity.FileLabel;
 import cube.common.entity.FileStoragePerformance;
 import cube.common.entity.SharingTag;
 import cube.common.entity.VisitTrace;
-import cube.common.notice.GetSharingTag;
-import cube.common.notice.ListSharingTags;
-import cube.common.notice.ListSharingTraces;
-import cube.common.notice.NoticeData;
+import cube.common.notice.*;
 import cube.common.state.FileStorageStateCode;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -93,8 +90,79 @@ public class FileStorage {
         }
     }
 
+    /**
+     * 按照文件上传完成的时间条件检索文件列表。
+     *
+     * @param contactId 指定联系人 ID 。
+     * @param domainName 指定域名称。
+     * @param beginTime 指定查询的开始时间戳。
+     * @param endTime 指定查询的截止时间戳。
+     * @return 返回符合条件的文件列表。如果查找时发生错误返回 {@code null} 值。
+     */
     public List<FileLabel> searchFiles(long contactId, String domainName, long beginTime, long endTime) {
-        return null;
+        if (endTime <= beginTime || !this.client.isReady()) {
+            return null;
+        }
+
+        List<FileLabel> list = new ArrayList<>();
+
+        AtomicInteger total = new AtomicInteger(0);
+        Notifier notifier = this.client.getReceiver().inject();
+
+        ActionDialect actionDialect = new ActionDialect(ClientAction.ListFiles.name);
+        actionDialect.addParam(NoticeData.PARAMETER, new ListFiles(contactId, domainName, beginTime,
+                endTime));
+
+        ActionListener actionListener = new ActionListener() {
+            @Override
+            public void onAction(ActionDialect actionDialect) {
+                JSONObject notifierJson = actionDialect.getParamAsJson(Notifier.AsyncParamName);
+                if (notifier.equals(notifierJson)) {
+                    JSONObject data = actionDialect.getParamAsJson(NoticeData.DATA);
+                    FileLabel fileLabel = new FileLabel(data);
+                    list.add(fileLabel);
+
+                    if (total.get() == list.size()) {
+                        synchronized (list) {
+                            list.notify();
+                        }
+                    }
+                }
+            }
+        };
+        this.client.getReceiver().addActionListener(ClientAction.ListFiles.name, actionListener);
+
+        ActionDialect result = this.client.getConnector().send(notifier, actionDialect);
+        if (null == result) {
+            // 移除监听器
+            this.client.getReceiver().removeActionListener(ClientAction.ListFiles.name, actionListener);
+            Logger.w(this.getClass(), "#searchFiles - Network error");
+            return null;
+        }
+
+        if (result.getParamAsInt(NoticeData.CODE) == FileStorageStateCode.Ok.code) {
+            JSONObject data = result.getParamAsJson(NoticeData.DATA);
+            total.set(data.getInt("total"));
+        }
+
+        if (total.get() == 0) {
+            // 移除监听器
+            this.client.getReceiver().removeActionListener(ClientAction.ListFiles.name, actionListener);
+            return list;
+        }
+
+        synchronized (list) {
+            try {
+                list.wait(60 * 60 * 1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+        // 移除监听器
+        this.client.getReceiver().removeActionListener(ClientAction.ListFiles.name, actionListener);
+
+        return list;
     }
 
     /**
