@@ -40,6 +40,7 @@ public class TestFileStorage {
         FileStoragePerformance performance = storage.getStoragePerformance(50001001, "shixincube.com");
         if (null != performance) {
             System.out.println(performance.toJSON().toString(4));
+            System.out.println("Space size: " + performance.getSpaceSize());
         }
         else {
             System.err.println("No performance");
@@ -109,13 +110,13 @@ public class TestFileStorage {
         Contact contact = new Contact(10000, "shixincube.com");
         client.prepare(contact);
 
-//        testPerformance(client.getFileStorage());
+        testPerformance(client.getFileStorage());
 
 //        testSearchVisitTraces(client.getFileStorage());
 
 //        testSearchSharingTags(client.getFileStorage());
 
-        testSearchFiles(client.getFileStorage());
+//        testSearchFiles(client.getFileStorage());
 
         client.destroy();
     }
