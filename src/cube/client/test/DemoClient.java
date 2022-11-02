@@ -34,6 +34,7 @@ public class DemoClient {
         long beginTime = System.currentTimeMillis() - 7L * 24 * 60 * 60 * 1000;
         List<ContactBehavior> behaviors = client.listContactBehaviors(contact.getId(), contact.getDomain().getName(),
                 beginTime, System.currentTimeMillis());
+        System.out.println("Behavior size: " + behaviors.size());
         for (ContactBehavior behavior : behaviors) {
             System.out.println("Behavior: " + behavior.getBehavior());
             System.out.println("Time: " + Utils.gsDateFormat.format(new Date(behavior.getTimestamp())));
