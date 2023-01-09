@@ -3,7 +3,7 @@
  *
  * The MIT License (MIT)
  *
- * Copyright (c) 2020-2022 Cube Team.
+ * Copyright (c) 2020-2023 Cube Team.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -37,6 +37,7 @@ import cube.client.file.FileUploader;
 import cube.client.hub.HubController;
 import cube.client.listener.ContactListener;
 import cube.client.message.MessageService;
+import cube.client.robot.RobotController;
 import cube.client.tool.TokenTools;
 import cube.common.action.ClientAction;
 import cube.common.action.ContactAction;
@@ -84,6 +85,8 @@ public class Client {
     private FileStorage storage;
 
     private HubController hubController;
+
+    private RobotController robotController;
 
     private Timer timer;
 
@@ -325,6 +328,11 @@ public class Client {
     public void prepare(Contact pretender) {
         this.pretender = pretender;
         this.description.setPretender(pretender);
+
+        if (null == this.robotController) {
+            this.robotController = new RobotController(this);
+        }
+        this.robotController.prepare(this.connector, this.receiver);
     }
 
     /**
@@ -446,6 +454,19 @@ public class Client {
         }
 
         return this.hubController;
+    }
+
+    /**
+     * 获取 Robot 控制器。
+     *
+     * @return 返回 Robot 控制器。
+     */
+    public RobotController getRobotController() {
+        if (null == this.robotController) {
+            this.robotController = new RobotController(this);
+        }
+
+        return this.robotController;
     }
 
     /**

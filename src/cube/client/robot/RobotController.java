@@ -24,26 +24,28 @@
  * SOFTWARE.
  */
 
-package cube.client.file;
+package cube.client.robot;
 
-import cube.common.action.FileProcessorAction;
-import cube.file.ImageOperation;
-import org.json.JSONObject;
+import cube.client.Client;
+import cube.client.Connector;
+import cube.client.Receiver;
 
-/**
- * 图像文件操作。
- */
-public class ImageProcessing extends FileProcessing {
+public class RobotController {
 
-    private ImageOperation operation;
+    public final static String NAME = "Robot";
 
-    public ImageProcessing(ImageOperation operation) {
-        super(FileProcessorAction.Image.name);
-        this.operation = operation;
+    private Client client;
+
+    private Connector connector;
+
+    private Receiver receiver;
+
+    public RobotController(Client client) {
+        this.client = client;
     }
 
-    @Override
-    public JSONObject getParameter() {
-        return this.operation.toJSON();
+    public void prepare(Connector connector, Receiver receiver) {
+        this.connector = connector;
+        this.receiver = receiver;
     }
 }
