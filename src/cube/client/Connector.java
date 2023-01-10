@@ -31,6 +31,7 @@ import cell.core.Version;
 import cell.core.talk.PrimitiveOutputStream;
 import cell.core.talk.dialect.ActionDialect;
 import cube.client.hub.HubController;
+import cube.client.robot.RobotController;
 
 /**
  * 与服务进行网络连接的连接器。
@@ -95,6 +96,7 @@ public class Connector {
     public void setListener(TalkListener listener) {
         this.nucleus.getTalkService().setListener(Client.NAME, listener);
         this.nucleus.getTalkService().setListener(HubController.NAME, listener);
+        this.nucleus.getTalkService().setListener(RobotController.NAME, listener);
     }
 
     public void send(ActionDialect actionDialect) {
@@ -121,7 +123,9 @@ public class Connector {
         // 增加通知字段
         actionDialect.addParam(Notifier.ParamName, notifier.toJSON());
 
-        this.nucleus.getTalkService().speak(celletName, actionDialect);
+        if (!this.nucleus.getTalkService().speak(celletName, actionDialect)) {
+            return null;
+        }
 
         // 阻塞等待结果
         return notifier.waiting();

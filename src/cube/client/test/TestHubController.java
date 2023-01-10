@@ -28,7 +28,6 @@ package cube.client.test;
 
 import cell.util.Utils;
 import cube.client.Client;
-import cube.client.hub.HubController;
 import cube.common.entity.Contact;
 import cube.common.entity.ConversationType;
 import cube.common.entity.Group;

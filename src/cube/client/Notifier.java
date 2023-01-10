@@ -55,7 +55,7 @@ public class Notifier {
     public ActionDialect waiting() {
         synchronized (this) {
             try {
-                this.wait(5 * 60 * 1000);
+                this.wait(2 * 60 * 1000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }

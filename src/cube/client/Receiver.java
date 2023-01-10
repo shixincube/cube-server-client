@@ -38,6 +38,7 @@ import cube.client.hub.HubController;
 import cube.client.listener.MessageReceiveListener;
 import cube.client.listener.MessageSendListener;
 import cube.client.listener.WorkflowListener;
+import cube.client.robot.RobotController;
 import cube.common.action.ClientAction;
 import cube.common.entity.Contact;
 import cube.common.entity.Device;
@@ -282,6 +283,21 @@ public class Receiver implements TalkListener {
                     Logger.w(this.getClass(), "Unknown action [" + HubController.NAME + "]: " + actionDialect.getName());
                 }
             }
+        }
+        else if (RobotController.NAME.equals(cellet)) {
+            ActionDialect actionDialect = DialectFactory.getInstance().createActionDialect(primitive);
+
+            if (actionDialect.containsParam(Notifier.ParamName)) {
+                this.processNotifier(actionDialect);
+            }
+            else {
+                if (!this.client.getRobotController().processAction(actionDialect, speakable)) {
+                    Logger.w(this.getClass(), "Unknown action [" + RobotController.NAME + "]: " + actionDialect.getName());
+                }
+            }
+        }
+        else {
+            Logger.w(this.getClass(), "Unknown cellet: " + cellet);
         }
     }
 

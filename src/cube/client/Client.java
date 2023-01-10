@@ -216,6 +216,7 @@ public class Client {
 
     protected void setSessionId(long sessionId) {
         this.sessionId = sessionId;
+        Logger.i(this.getClass(), "Set session id: " + sessionId);
     }
 
     /**
