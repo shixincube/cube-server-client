@@ -32,8 +32,10 @@ import cell.util.log.Logger;
 import cube.client.Client;
 import cube.client.Connector;
 import cube.client.Receiver;
+import cube.robot.Report;
 import cube.robot.RobotAction;
 import cube.robot.RobotStateCode;
+import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -44,6 +46,8 @@ import java.util.List;
 public class RobotController {
 
     public final static String NAME = "Robot";
+
+    private final static String EVENT_REPORT = "Report";
 
     private Client client;
 
@@ -108,6 +112,22 @@ public class RobotController {
     }
 
     public boolean processAction(ActionDialect actionDialect, Speakable speaker) {
+        String action = actionDialect.getName();
+        if (RobotAction.Event.name.equals(action)) {
+            String name = actionDialect.getParamAsString("name");
+            if (EVENT_REPORT.equals(name)) {
+                JSONObject data = actionDialect.getParamAsJson("data");
+                Report report = new Report(data);
+                synchronized (this.reportListeners) {
+                    for (RobotReportListener listener : this.reportListeners) {
+                        listener.onReport(report);
+                    }
+                }
+            }
+
+            return true;
+        }
+
         return false;
     }
 }

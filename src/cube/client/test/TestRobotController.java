@@ -46,6 +46,17 @@ public class TestRobotController {
         boolean result = client.getRobotController().register(listener);
         System.out.println("Register result : " + result);
 
+        result = client.getRobotController().deregister(listener);
+        System.out.println("Deregister result : " + result);
+
+        System.out.println("*** END ***");
+    }
+
+    public static void testListener(Client client) {
+        System.out.println("*** START testListener ***");
+
+
+
         System.out.println("*** END ***");
     }
 
@@ -62,6 +73,8 @@ public class TestRobotController {
         client.prepare(contact);
 
         testRegisterListener(client);
+
+        testListener(client);
 
         client.destroy();
     }
