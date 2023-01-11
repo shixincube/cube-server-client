@@ -31,6 +31,8 @@ import cube.client.robot.RobotReportListener;
 import cube.common.entity.Contact;
 import cube.robot.Report;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
 public class TestRobotController {
 
     public static void testRegisterListener(Client client) {
@@ -55,7 +57,42 @@ public class TestRobotController {
     public static void testListener(Client client) {
         System.out.println("*** START testListener ***");
 
+        AtomicBoolean received = new AtomicBoolean(false);
 
+        RobotReportListener listener = new RobotReportListener() {
+            @Override
+            public void onReport(Report report) {
+                received.set(true);
+
+                System.out.println("Report:\n" + report.toJSON().toString(4));
+            }
+        };
+
+        boolean result = client.getRobotController().register(listener);
+        if (result) {
+            int count = 0;
+            while (!received.get()) {
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+
+                ++count;
+                if (count % 10 == 0) {
+                    System.out.println("waiting report");
+                }
+                else if (count > 120) {
+                    System.out.println("wait report timeout");
+                    break;
+                }
+            }
+        }
+        else {
+            System.out.println("register failed");
+        }
+
+        client.getRobotController().deregister(listener);
 
         System.out.println("*** END ***");
     }
@@ -72,7 +109,7 @@ public class TestRobotController {
         Contact contact = new Contact(10000, "shixincube.com");
         client.prepare(contact);
 
-        testRegisterListener(client);
+//        testRegisterListener(client);
 
         testListener(client);
 

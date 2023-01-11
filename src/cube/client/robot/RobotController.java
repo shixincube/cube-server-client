@@ -113,7 +113,9 @@ public class RobotController {
 
     public boolean processAction(ActionDialect actionDialect, Speakable speaker) {
         String action = actionDialect.getName();
+
         if (RobotAction.Event.name.equals(action)) {
+            // 事件名
             String name = actionDialect.getParamAsString("name");
             if (EVENT_REPORT.equals(name)) {
                 JSONObject data = actionDialect.getParamAsJson("data");
