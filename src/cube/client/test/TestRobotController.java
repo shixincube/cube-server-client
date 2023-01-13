@@ -30,6 +30,7 @@ import cube.client.Client;
 import cube.client.robot.RobotReportListener;
 import cube.common.entity.Contact;
 import cube.robot.Report;
+import cube.robot.TaskNames;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -97,6 +98,15 @@ public class TestRobotController {
         System.out.println("*** END ***");
     }
 
+    public static void testFulfill(Client client) {
+        System.out.println("*** START testFulfill ***");
+
+        boolean success = client.getRobotController().fulfill(TaskNames.ReportDouYinAccountData);
+        System.out.println("Fulfill " + TaskNames.ReportDouYinAccountData + " - " + success);
+
+        System.out.println("*** END ***");
+    }
+
     public static void main(String[] args) {
         // 111.203.186.243
         Client client = new Client("127.0.0.1", "admin", "shixincube.com");
@@ -111,7 +121,9 @@ public class TestRobotController {
 
 //        testRegisterListener(client);
 
-        testListener(client);
+//        testListener(client);
+
+        testFulfill(client);
 
         client.destroy();
     }

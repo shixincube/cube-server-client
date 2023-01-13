@@ -111,6 +111,24 @@ public class RobotController {
         return true;
     }
 
+    public boolean fulfill(String taskName) {
+        ActionDialect dialect = new ActionDialect(RobotAction.Fulfill.name);
+        dialect.addParam("name", taskName);
+
+        ActionDialect response = this.connector.synSend(this.receiver.inject(), NAME, dialect);
+        if (null == response) {
+            return false;
+        }
+
+        int stateCode = response.getParamAsInt("code");
+        if (stateCode != RobotStateCode.Ok.code) {
+            Logger.w(this.getClass(), "#fulfill - State error : " + stateCode);
+            return false;
+        }
+
+        return true;
+    }
+
     public boolean processAction(ActionDialect actionDialect, Speakable speaker) {
         String action = actionDialect.getName();
 
