@@ -31,6 +31,7 @@ import cube.client.robot.RobotReportListener;
 import cube.common.entity.Contact;
 import cube.robot.Report;
 import cube.robot.TaskNames;
+import org.json.JSONObject;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -101,8 +102,26 @@ public class TestRobotController {
     public static void testFulfill(Client client) {
         System.out.println("*** START testFulfill ***");
 
-        boolean success = client.getRobotController().fulfill(TaskNames.ReportDouYinAccountData);
+        JSONObject parameter = new JSONObject();
+        parameter.put("word", "光明网");
+        boolean success = client.getRobotController().fulfill(TaskNames.ReportDouYinAccountData, parameter);
         System.out.println("Fulfill " + TaskNames.ReportDouYinAccountData + " - " + success);
+
+        System.out.println("*** END ***");
+    }
+
+    public static void testFulfillAndReport(Client client) {
+        System.out.println("*** START testFulfillAndReport ***");
+
+        RobotReportListener listener = new RobotReportListener() {
+            @Override
+            public void onReport(Report report) {
+
+            }
+        };
+
+        boolean result = client.getRobotController().register(listener);
+
 
         System.out.println("*** END ***");
     }

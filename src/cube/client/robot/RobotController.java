@@ -112,8 +112,15 @@ public class RobotController {
     }
 
     public boolean fulfill(String taskName) {
+        return this.fulfill(taskName, null);
+    }
+
+    public boolean fulfill(String taskName, JSONObject parameter) {
         ActionDialect dialect = new ActionDialect(RobotAction.Fulfill.name);
         dialect.addParam("name", taskName);
+        if (null != parameter) {
+            dialect.addParam("parameter", parameter);
+        }
 
         ActionDialect response = this.connector.synSend(this.receiver.inject(), NAME, dialect);
         if (null == response) {
