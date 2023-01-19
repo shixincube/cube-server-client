@@ -256,6 +256,11 @@ public class FileProcessor {
 
         this.receiver.setStreamListener(fileLabel.getFileName(), new StreamListener() {
             @Override
+            public void onStarted(String streamName) {
+                // Nothing
+            }
+
+            @Override
             public void onCompleted(String streamName, File streamFile) {
                 synchronized (fileLabel) {
                     fileLabel.notify();
@@ -502,6 +507,11 @@ public class FileProcessor {
                 for (FileResult result : resultList) {
                     // 添加监听器
                     receiver.setStreamListener(result.streamName, new StreamListener() {
+                        @Override
+                        public void onStarted(String streamName) {
+                            // Nothing
+                        }
+
                         @Override
                         public void onCompleted(String streamName, File streamFile) {
                             // 设置结果文件

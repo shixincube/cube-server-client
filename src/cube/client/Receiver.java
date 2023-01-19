@@ -412,6 +412,11 @@ public class Receiver implements TalkListener {
         this.executor.execute(new Runnable() {
             @Override
             public void run() {
+                StreamListener listener = streamListenerMap.get(primitiveInputStream.getName());
+                if (null != listener) {
+                    listener.onStarted(primitiveInputStream.getName());
+                }
+
                 File targetFile = new File(client.getFilePath(), primitiveInputStream.getName());
                 if (targetFile.exists()) {
                     targetFile.delete();
@@ -443,7 +448,6 @@ public class Receiver implements TalkListener {
 
                 receivingStreamMap.remove(primitiveInputStream.getName());
 
-                StreamListener listener = streamListenerMap.get(primitiveInputStream.getName());
                 if (null != listener) {
                     listener.onCompleted(primitiveInputStream.getName(), targetFile);
                 }

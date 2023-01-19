@@ -85,7 +85,7 @@ public class TestRobotController {
                     System.out.println("waiting report");
                 }
                 else if (count > 120) {
-                    System.out.println("wait report timeout");
+                    System.out.println("waiting report timeout");
                     break;
                 }
             }
@@ -113,15 +113,57 @@ public class TestRobotController {
     public static void testFulfillAndReport(Client client) {
         System.out.println("*** START testFulfillAndReport ***");
 
+        AtomicBoolean received = new AtomicBoolean(false);
+
         RobotReportListener listener = new RobotReportListener() {
             @Override
             public void onReport(Report report) {
+                received.set(true);
 
+                System.out.println("Report:\n" + report.toJSON().toString(4));
             }
         };
 
         boolean result = client.getRobotController().register(listener);
+        if (result) {
+            // 执行任务
+            JSONObject parameter = new JSONObject();
+            parameter.put("word", "光明网");
+            parameter.put("maxNumVideo", 2);
+            boolean success = client.getRobotController().fulfill(TaskNames.ReportDouYinAccountData, parameter);
+            System.out.println("Fulfill " + TaskNames.ReportDouYinAccountData + " - " + success);
 
+            int count = 0;
+            while (success && !received.get()) {
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+
+                ++count;
+                if (count % 10 == 0) {
+                    System.out.println("waiting report");
+                }
+                else if (count > 120) {
+                    System.out.println("waiting report timeout");
+                    break;
+                }
+            }
+        }
+        else {
+            System.out.println("register failed");
+        }
+
+        client.getRobotController().deregister(listener);
+
+        System.out.println("*** END ***");
+    }
+
+    public static void testDownloadFile(Client client) {
+        System.out.println("*** START testDownloadFile ***");
+
+        client.getRobotController().downloadReportFile("4_2023-01-17_15-13-40.png");
 
         System.out.println("*** END ***");
     }
@@ -142,7 +184,9 @@ public class TestRobotController {
 
 //        testListener(client);
 
-        testFulfill(client);
+//        testFulfill(client);
+
+        testFulfillAndReport(client);
 
         client.destroy();
     }

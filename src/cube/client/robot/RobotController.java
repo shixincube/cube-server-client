@@ -32,11 +32,13 @@ import cell.util.log.Logger;
 import cube.client.Client;
 import cube.client.Connector;
 import cube.client.Receiver;
+import cube.client.StreamListener;
 import cube.robot.Report;
 import cube.robot.RobotAction;
 import cube.robot.RobotStateCode;
 import org.json.JSONObject;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -134,6 +136,52 @@ public class RobotController {
         }
 
         return true;
+    }
+
+    /**
+     * 下载报告文件。
+     *
+     * @param filename
+     * @return
+     */
+    public File downloadReportFile(String filename) {
+        StringBuilder filePath = new StringBuilder();
+
+        StreamListener streamListener = new StreamListener() {
+            @Override
+            public void onStarted(String streamName) {
+            }
+
+            @Override
+            public void onCompleted(String streamName, File streamFile) {
+                synchronized (filePath) {
+                    filePath.append(streamFile.getAbsolutePath());
+
+                    filePath.notify();
+                }
+            }
+        };
+
+        this.receiver.setStreamListener(filename, streamListener);
+
+        ActionDialect actionDialect = new ActionDialect(RobotAction.GetReportFile.name);
+        actionDialect.addParam("filename", filename);
+        this.connector.send(actionDialect);
+
+        synchronized (filePath) {
+            try {
+                filePath.wait(2 * 60 * 1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+        if (filePath.length() > 0) {
+            return new File(filePath.toString());
+        }
+        else {
+            return null;
+        }
     }
 
     public boolean processAction(ActionDialect actionDialect, Speakable speaker) {

@@ -34,6 +34,15 @@ import java.io.File;
 public interface StreamListener {
 
     /**
+     * 流已开始传输。
+     *
+     * @param streamName
+     */
+    void onStarted(String streamName);
+
+    /**
+     * 流已传输完成。
+     *
      * @param streamName
      * @param streamFile
      */
