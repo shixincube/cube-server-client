@@ -33,6 +33,7 @@ import cube.robot.Report;
 import cube.robot.TaskNames;
 import org.json.JSONObject;
 
+import java.io.File;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class TestRobotController {
@@ -163,7 +164,17 @@ public class TestRobotController {
     public static void testDownloadFile(Client client) {
         System.out.println("*** START testDownloadFile ***");
 
-        client.getRobotController().downloadReportFile("4_2023-01-17_15-13-40.png");
+        String filename = "4_2023-01-17_15-13-40.png";
+
+        long start = System.currentTimeMillis();
+        File file = client.getRobotController().downloadReportFile(filename);
+        if (null != file) {
+            System.out.println("Download \"" + filename + "\" - " + (System.currentTimeMillis() - start));
+            System.out.println("File path: " + file.getAbsolutePath());
+        }
+        else {
+            System.out.println("Download failed: " + filename);
+        }
 
         System.out.println("*** END ***");
     }
@@ -186,7 +197,9 @@ public class TestRobotController {
 
 //        testFulfill(client);
 
-        testFulfillAndReport(client);
+//        testFulfillAndReport(client);
+
+        testDownloadFile(client);
 
         client.destroy();
     }

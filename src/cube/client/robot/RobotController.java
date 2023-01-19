@@ -166,7 +166,7 @@ public class RobotController {
 
         ActionDialect actionDialect = new ActionDialect(RobotAction.GetReportFile.name);
         actionDialect.addParam("filename", filename);
-        this.connector.send(actionDialect);
+        this.connector.send(NAME, actionDialect);
 
         synchronized (filePath) {
             try {

@@ -103,6 +103,10 @@ public class Connector {
         this.nucleus.getTalkService().speak(Client.NAME, actionDialect);
     }
 
+    public void send(String celletName, ActionDialect actionDialect) {
+        this.nucleus.getTalkService().speak(celletName, actionDialect);
+    }
+
     public ActionDialect send(Notifier notifier, ActionDialect actionDialect) {
         // 增加通知字段
         actionDialect.addParam(Notifier.ParamName, notifier.toJSON());
