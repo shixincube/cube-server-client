@@ -43,7 +43,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Robot 服务控制器。
+ * Robot 服务的控制器。
  */
 public class RobotController {
 
@@ -69,6 +69,12 @@ public class RobotController {
         this.receiver = receiver;
     }
 
+    /**
+     * 注册报告监听器。
+     *
+     * @param listener 指定监听器。
+     * @return 如果注册成功返回 <code>true</code> ，否则返回 <code>false</code> 。
+     */
     public boolean register(RobotReportListener listener) {
         ActionDialect dialect = new ActionDialect(RobotAction.RegisterListener.name);
         dialect.addParam("name", "Report");
@@ -92,6 +98,12 @@ public class RobotController {
         return true;
     }
 
+    /**
+     * 注销报告监听器。
+     *
+     * @param listener 指定监听器。
+     * @return 如果注销成功返回 <code>true</code> ，否则返回 <code>false</code> 。
+     */
     public boolean deregister(RobotReportListener listener) {
         ActionDialect dialect = new ActionDialect(RobotAction.DeregisterListener.name);
         dialect.addParam("name", "Report");
@@ -113,10 +125,23 @@ public class RobotController {
         return true;
     }
 
+    /**
+     * 向机器人下发执行任务请求。机器人实时根据任务配置执行任务。
+     *
+     * @param taskName 指定任务名称。
+     * @return 机器人接受到执行指令返回 <code>true</code> 。
+     */
     public boolean fulfill(String taskName) {
         return this.fulfill(taskName, null);
     }
 
+    /**
+     * 向机器人下发执行任务请求。机器人实时根据任务配置执行任务。
+     *
+     * @param taskName 指定任务名称。
+     * @param parameter 指定任务参数。
+     * @return 机器人接受到执行指令返回 <code>true</code> 。
+     */
     public boolean fulfill(String taskName, JSONObject parameter) {
         ActionDialect dialect = new ActionDialect(RobotAction.Fulfill.name);
         dialect.addParam("name", taskName);
@@ -141,8 +166,8 @@ public class RobotController {
     /**
      * 下载报告文件。
      *
-     * @param filename
-     * @return
+     * @param filename 指定任务报告名。
+     * @return 返回下载成功保存在本地的文件。
      */
     public File downloadReportFile(String filename) {
         StringBuilder filePath = new StringBuilder();

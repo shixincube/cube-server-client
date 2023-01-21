@@ -4,6 +4,7 @@ cube.client.hub
 cube.client.listener
 cube.client.message
 cube.client.risk
+cube.client.robot
 cube.client.simulator
 cube.client.tool
 cube.client.util
