@@ -197,9 +197,9 @@ public class TestRobotController {
 
 //        testFulfill(client);
 
-//        testFulfillAndReport(client);
+        testFulfillAndReport(client);
 
-        testDownloadFile(client);
+//        testDownloadFile(client);
 
         client.destroy();
     }

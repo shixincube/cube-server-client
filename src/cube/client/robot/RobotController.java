@@ -165,6 +165,7 @@ public class RobotController {
 
     /**
      * 下载报告文件。
+     * 该函数以阻塞方式执行，直到文件下载完成或者超时才返回。
      *
      * @param filename 指定任务报告名。
      * @return 返回下载成功保存在本地的文件。
