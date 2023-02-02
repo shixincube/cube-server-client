@@ -237,13 +237,22 @@ public class TestRobotController {
     }
 
     public static void testListScriptFiles(Client client) {
-        System.out.println("*** START testCancel ***");
+        System.out.println("*** START testListScriptFiles ***");
 
         List<ScriptFile> list = client.getRobotController().listScriptFiles();
         System.out.println("Total: " + list.size());
 
         for (ScriptFile file : list) {
             System.out.println(file.relativePath);
+
+            System.out.println("Download file: " + file.relativePath);
+            File localFile = client.getRobotController().downloadScriptFile(file);
+            if (null != localFile) {
+                System.out.println("File downloaded: " + localFile.getAbsolutePath());
+            }
+            else {
+                System.out.println("Download failed");
+            }
         }
 
         System.out.println("*** END ***");
@@ -257,7 +266,6 @@ public class TestRobotController {
             client.destroy();
             return;
         }
-
 
         Contact contact = new Contact(10000, "shixincube.com");
         client.prepare(contact);

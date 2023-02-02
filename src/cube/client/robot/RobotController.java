@@ -37,10 +37,16 @@ import cube.robot.Report;
 import cube.robot.RobotAction;
 import cube.robot.RobotStateCode;
 import cube.robot.ScriptFile;
+import cube.util.FileUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -52,6 +58,8 @@ public class RobotController {
     public final static String NAME = "Robot";
 
     private final static String EVENT_REPORT = "Report";
+
+    private final static Path SCRIPT_PATH = Paths.get("data/robot/");
 
     private Client client;
 
@@ -69,6 +77,14 @@ public class RobotController {
     public void prepare(Connector connector, Receiver receiver) {
         this.connector = connector;
         this.receiver = receiver;
+
+        if (!Files.exists(SCRIPT_PATH)) {
+            try {
+                Files.createDirectories(SCRIPT_PATH);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     /**
@@ -152,7 +168,83 @@ public class RobotController {
         return list;
     }
 
-    
+    /**
+     * 下载脚本文件。
+     *
+     * @param scriptFile 指定脚本文件。
+     * @return 返回下载的本地文件实例。如果下载失败返回 <code>null</code> 值。
+     */
+    public File downloadScriptFile(ScriptFile scriptFile) {
+        return this.downloadScriptFile(scriptFile.relativePath);
+    }
+
+    /**
+     * 下载脚本文件。
+     *
+     * @param relativePath 指定脚本文件在服务器上的相对路径。
+     * @return 返回下载的本地文件实例。如果下载失败返回 <code>null</code> 值。
+     */
+    public File downloadScriptFile(String relativePath) {
+        StringBuilder path = new StringBuilder();
+
+        this.receiver.setStreamListener(relativePath, new StreamListener() {
+            @Override
+            public void onStarted(String streamName) {
+            }
+
+            @Override
+            public void onCompleted(String streamName, File streamFile) {
+                Path source = Paths.get(streamFile.getAbsolutePath());
+                Path target = Paths.get(SCRIPT_PATH.toString() + "/" + streamName);
+
+                String dirString = FileUtils.extractPath(target.toString());
+                if (dirString.length() > 0) {
+                    File dir = new File(dirString);
+                    if (!dir.exists()) {
+                        dir.mkdirs();
+                    }
+                }
+
+                try {
+                    Files.move(source, target, StandardCopyOption.REPLACE_EXISTING);
+                    path.append(target.toString());
+
+                    synchronized (path) {
+                        path.notify();
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+
+        ActionDialect dialect = new ActionDialect(RobotAction.GetScriptFile.name);
+        dialect.addParam("relativePath", relativePath);
+
+        ActionDialect response = this.connector.synSend(this.receiver.inject(), NAME, dialect);
+        if (null == response) {
+            this.receiver.removeStreamListener(relativePath);
+            return null;
+        }
+
+        int stateCode = response.getParamAsInt("code");
+        if (stateCode != RobotStateCode.Ok.code) {
+            this.receiver.removeStreamListener(relativePath);
+            return null;
+        }
+
+        if (path.length() < 1) {
+            synchronized (path) {
+                try {
+                    path.wait(30 * 1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        return new File(path.toString());
+    }
 
     /**
      * 向机器人下发执行任务请求。机器人实时根据任务配置执行任务。

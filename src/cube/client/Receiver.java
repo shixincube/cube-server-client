@@ -45,6 +45,7 @@ import cube.common.entity.Device;
 import cube.common.entity.Group;
 import cube.common.entity.Message;
 import cube.file.event.FileWorkflowEvent;
+import cube.util.FileUtils;
 import org.json.JSONObject;
 
 import java.io.File;
@@ -417,7 +418,9 @@ public class Receiver implements TalkListener {
                     listener.onStarted(primitiveInputStream.getName());
                 }
 
-                File targetFile = new File(client.getFilePath(), primitiveInputStream.getName());
+                File file = new File(primitiveInputStream.getName());
+
+                File targetFile = new File(client.getFilePath(), file.getName());
                 if (targetFile.exists()) {
                     targetFile.delete();
                 }
