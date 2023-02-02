@@ -36,6 +36,8 @@ import cube.client.StreamListener;
 import cube.robot.Report;
 import cube.robot.RobotAction;
 import cube.robot.RobotStateCode;
+import cube.robot.ScriptFile;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.File;
@@ -124,6 +126,33 @@ public class RobotController {
         }
         return true;
     }
+
+    /**
+     * 获取当前服务器上的所有脚本文件列表。
+     *
+     * @return 返回脚本文件清单。
+     */
+    public List<ScriptFile> listScriptFiles() {
+        List<ScriptFile> list = new ArrayList<>();
+
+        ActionDialect dialect = new ActionDialect(RobotAction.ListScriptFiles.name);
+
+        ActionDialect response = this.connector.synSend(this.receiver.inject(), NAME, dialect);
+        if (null == response) {
+            return list;
+        }
+
+        JSONObject data = response.getParamAsJson("data");
+        JSONArray array = data.getJSONArray("list");
+        for (int i = 0; i < array.length(); ++i) {
+            JSONObject fileJson = array.getJSONObject(i);
+            ScriptFile file = new ScriptFile(fileJson);
+            list.add(file);
+        }
+        return list;
+    }
+
+    
 
     /**
      * 向机器人下发执行任务请求。机器人实时根据任务配置执行任务。

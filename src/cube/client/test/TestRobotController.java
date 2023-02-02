@@ -30,10 +30,12 @@ import cube.client.Client;
 import cube.client.robot.RobotReportListener;
 import cube.common.entity.Contact;
 import cube.robot.Report;
+import cube.robot.ScriptFile;
 import cube.robot.TaskNames;
 import org.json.JSONObject;
 
 import java.io.File;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class TestRobotController {
@@ -161,6 +163,53 @@ public class TestRobotController {
         System.out.println("*** END ***");
     }
 
+    public static void testWeiXinMonitor(Client client) {
+        System.out.println("*** START testWeiXinMonitor ***");
+
+        AtomicBoolean received = new AtomicBoolean(false);
+
+        RobotReportListener listener = new RobotReportListener() {
+            @Override
+            public void onReport(Report report) {
+                received.set(true);
+
+                System.out.println("Report:\n" + report.toJSON().toString(4));
+            }
+        };
+
+        boolean result = client.getRobotController().register(listener);
+        if (result) {
+            JSONObject parameter = new JSONObject();
+            boolean success = client.getRobotController().fulfill(TaskNames.MonitorWeiXin, parameter);
+            System.out.println("Fulfill " + TaskNames.MonitorWeiXin + " - " + success);
+
+            int count = 0;
+            while (success && !received.get()) {
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+
+                ++count;
+                if (count % 10 == 0) {
+                    System.out.println("waiting report");
+                }
+                else if (count > 120) {
+                    System.out.println("waiting report timeout");
+                    break;
+                }
+            }
+        }
+        else {
+            System.out.println("register failed");
+        }
+
+        client.getRobotController().deregister(listener);
+
+        System.out.println("*** END ***");
+    }
+
     public static void testDownloadFile(Client client) {
         System.out.println("*** START testDownloadFile ***");
 
@@ -179,6 +228,27 @@ public class TestRobotController {
         System.out.println("*** END ***");
     }
 
+    public static void testCancel(Client client) {
+        System.out.println("*** START testCancel ***");
+
+        client.getRobotController();
+
+        System.out.println("*** END ***");
+    }
+
+    public static void testListScriptFiles(Client client) {
+        System.out.println("*** START testCancel ***");
+
+        List<ScriptFile> list = client.getRobotController().listScriptFiles();
+        System.out.println("Total: " + list.size());
+
+        for (ScriptFile file : list) {
+            System.out.println(file.relativePath);
+        }
+
+        System.out.println("*** END ***");
+    }
+
     public static void main(String[] args) {
         // 111.203.186.243
         Client client = new Client("127.0.0.1", "admin", "shixincube.com");
@@ -187,6 +257,7 @@ public class TestRobotController {
             client.destroy();
             return;
         }
+
 
         Contact contact = new Contact(10000, "shixincube.com");
         client.prepare(contact);
@@ -197,9 +268,13 @@ public class TestRobotController {
 
 //        testFulfill(client);
 
-        testFulfillAndReport(client);
+//        testFulfillAndReport(client);
 
 //        testDownloadFile(client);
+
+//        testWeiXinMonitor(client);
+
+        testListScriptFiles(client);
 
         client.destroy();
     }
