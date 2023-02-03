@@ -258,6 +258,23 @@ public class TestRobotController {
         System.out.println("*** END ***");
     }
 
+    public static void testUploadScriptFile(Client client) {
+        System.out.println("*** START testUploadScriptFile ***");
+
+        File file = new File("data/robot/Cube.js");
+
+        File localFile = client.getRobotController().uploadScriptFile(file,
+                "Cube.js");
+        if (null != localFile) {
+            System.out.println("File: " + localFile.getName());
+        }
+        else {
+            System.out.println("Error");
+        }
+
+        System.out.println("*** END ***");
+    }
+
     public static void main(String[] args) {
         // 111.203.186.243
         Client client = new Client("127.0.0.1", "admin", "shixincube.com");
@@ -282,7 +299,9 @@ public class TestRobotController {
 
 //        testWeiXinMonitor(client);
 
-        testListScriptFiles(client);
+//        testListScriptFiles(client);
+
+        testUploadScriptFile(client);
 
         client.destroy();
     }

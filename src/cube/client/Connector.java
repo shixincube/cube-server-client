@@ -123,6 +123,10 @@ public class Connector {
         return this.nucleus.getTalkService().speakStream(Client.NAME, streamName);
     }
 
+    public PrimitiveOutputStream sendStream(String celletName, String streamName) {
+        return this.nucleus.getTalkService().speakStream(celletName, streamName);
+    }
+
     public ActionDialect synSend(Notifier notifier, String celletName, ActionDialect actionDialect) {
         // 增加通知字段
         actionDialect.addParam(Notifier.ParamName, notifier.toJSON());

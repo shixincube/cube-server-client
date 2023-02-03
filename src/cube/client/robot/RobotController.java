@@ -27,6 +27,7 @@
 package cube.client.robot;
 
 import cell.api.Speakable;
+import cell.core.talk.PrimitiveOutputStream;
 import cell.core.talk.dialect.ActionDialect;
 import cell.util.log.Logger;
 import cube.client.Client;
@@ -42,6 +43,8 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -218,7 +221,7 @@ public class RobotController {
             }
         });
 
-        ActionDialect dialect = new ActionDialect(RobotAction.GetScriptFile.name);
+        ActionDialect dialect = new ActionDialect(RobotAction.DownloadScriptFile.name);
         dialect.addParam("relativePath", relativePath);
 
         ActionDialect response = this.connector.synSend(this.receiver.inject(), NAME, dialect);
@@ -243,7 +246,67 @@ public class RobotController {
             }
         }
 
+        this.receiver.removeStreamListener(relativePath);
+
         return new File(path.toString());
+    }
+
+    /**
+     *
+     * @param source
+     * @param scriptFile
+     * @return
+     */
+    public File uploadScriptFile(File source, ScriptFile scriptFile) {
+        return this.uploadScriptFile(source, scriptFile.relativePath);
+    }
+
+    /**
+     *
+     * @param source
+     * @param relativePath
+     * @return
+     */
+    public File uploadScriptFile(File source, String relativePath) {
+        // 发送请求
+        ActionDialect dialect = new ActionDialect(RobotAction.UploadScriptFile.name);
+        dialect.addParam("relativePath", relativePath);
+        ActionDialect response = this.connector.synSend(this.receiver.inject(), NAME, dialect);
+        if (null == response) {
+            return null;
+        }
+
+        int stateCode = response.getParamAsInt("code");
+        if (stateCode != RobotStateCode.Ok.code) {
+            return null;
+        }
+
+        // 发送数据
+        PrimitiveOutputStream os = this.connector.sendStream(NAME, relativePath);
+        FileInputStream is = null;
+
+        try {
+            is = new FileInputStream(source);
+            byte[] buf = new byte[1024];
+            int length = 0;
+            while ((length = is.read(buf)) > 0) {
+                os.write(buf, 0, length);
+            }
+        } catch (IOException e) {
+            return null;
+        } finally {
+            try {
+                os.close();
+            } catch (IOException e) {
+            }
+
+            try {
+                is.close();
+            } catch (IOException e) {
+            }
+        }
+
+        return source;
     }
 
     /**
