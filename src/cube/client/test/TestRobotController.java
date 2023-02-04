@@ -297,11 +297,11 @@ public class TestRobotController {
 
 //        testDownloadFile(client);
 
-//        testWeiXinMonitor(client);
+        testWeiXinMonitor(client);
 
 //        testListScriptFiles(client);
 
-        testUploadScriptFile(client);
+//        testUploadScriptFile(client);
 
         client.destroy();
     }

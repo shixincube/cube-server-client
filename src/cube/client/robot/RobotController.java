@@ -252,20 +252,24 @@ public class RobotController {
     }
 
     /**
+     * 上传脚本文件。
+     * 如果文件已存在则会在服务器端先备份原文件，再使用新文件覆盖。
      *
-     * @param source
-     * @param scriptFile
-     * @return
+     * @param source 源文件。
+     * @param scriptFile 脚本文件。
+     * @return 上传成功返回文件句柄，否则返回 <code>null</code> 值。
      */
     public File uploadScriptFile(File source, ScriptFile scriptFile) {
         return this.uploadScriptFile(source, scriptFile.relativePath);
     }
 
     /**
+     * 上传脚本文件。
+     * 如果文件已存在则会在服务器端先备份原文件，再使用新文件覆盖。
      *
-     * @param source
-     * @param relativePath
-     * @return
+     * @param source 源文件。
+     * @param relativePath 在服务器上的文件相对路径。
+     * @return 上传成功返回文件句柄，否则返回 <code>null</code> 值。
      */
     public File uploadScriptFile(File source, String relativePath) {
         // 发送请求
