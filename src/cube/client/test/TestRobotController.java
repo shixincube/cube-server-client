@@ -30,6 +30,7 @@ import cube.client.Client;
 import cube.client.robot.RobotReportListener;
 import cube.common.entity.Contact;
 import cube.robot.Report;
+import cube.robot.Schedule;
 import cube.robot.ScriptFile;
 import cube.robot.TaskNames;
 import org.json.JSONObject;
@@ -107,8 +108,8 @@ public class TestRobotController {
 
         JSONObject parameter = new JSONObject();
         parameter.put("word", "光明网");
-        boolean success = client.getRobotController().fulfill(TaskNames.ReportDouYinAccountData, parameter);
-        System.out.println("Fulfill " + TaskNames.ReportDouYinAccountData + " - " + success);
+        boolean success = client.getRobotController().fulfill(TaskNames.DouYinAccountData, parameter);
+        System.out.println("Fulfill " + TaskNames.DouYinAccountData + " - " + success);
 
         System.out.println("*** END ***");
     }
@@ -133,8 +134,8 @@ public class TestRobotController {
             JSONObject parameter = new JSONObject();
             parameter.put("word", "光明网");
             parameter.put("maxNumVideo", 2);
-            boolean success = client.getRobotController().fulfill(TaskNames.ReportDouYinAccountData, parameter);
-            System.out.println("Fulfill " + TaskNames.ReportDouYinAccountData + " - " + success);
+            boolean success = client.getRobotController().fulfill(TaskNames.DouYinAccountData, parameter);
+            System.out.println("Fulfill " + TaskNames.DouYinAccountData + " - " + success);
 
             int count = 0;
             while (success && !received.get()) {
@@ -163,8 +164,8 @@ public class TestRobotController {
         System.out.println("*** END ***");
     }
 
-    public static void testWeiXinMonitor(Client client) {
-        System.out.println("*** START testWeiXinMonitor ***");
+    public static void testWeiXinMessageList(Client client) {
+        System.out.println("*** START testWeiXinMessageList ***");
 
         AtomicBoolean received = new AtomicBoolean(false);
 
@@ -180,8 +181,8 @@ public class TestRobotController {
         boolean result = client.getRobotController().register(listener);
         if (result) {
             JSONObject parameter = new JSONObject();
-            boolean success = client.getRobotController().fulfill(TaskNames.MonitorWeiXin, parameter);
-            System.out.println("Fulfill " + TaskNames.MonitorWeiXin + " - " + success);
+            boolean success = client.getRobotController().fulfill(TaskNames.WeiXinMessageList, parameter);
+            System.out.println("Fulfill " + TaskNames.WeiXinMessageList + " - " + success);
 
             int count = 0;
             while (success && !received.get()) {
@@ -231,7 +232,13 @@ public class TestRobotController {
     public static void testCancel(Client client) {
         System.out.println("*** START testCancel ***");
 
-        client.getRobotController();
+        Schedule schedule = client.getRobotController().cancel(2, TaskNames.DouYinDailyOperation);
+        if (null != schedule) {
+            System.out.println("Cancel success: " + schedule.sn);
+        }
+        else {
+            System.out.println("Cancel failed");
+        }
 
         System.out.println("*** END ***");
     }
@@ -275,6 +282,18 @@ public class TestRobotController {
         System.out.println("*** END ***");
     }
 
+    public static void testDouYinDailyOperation(Client client) {
+        System.out.println("*** START testDouYinDailyOperation ***");
+
+        JSONObject parameter = new JSONObject();
+        parameter.put("duration", 2 * 60);
+
+        boolean success = client.getRobotController().fulfill(TaskNames.DouYinDailyOperation, parameter);
+        System.out.println("Fulfill " + TaskNames.DouYinDailyOperation + " - " + success);
+
+        System.out.println("*** END ***");
+    }
+
     public static void main(String[] args) {
         // 111.203.186.243
         Client client = new Client("127.0.0.1", "admin", "shixincube.com");
@@ -293,15 +312,19 @@ public class TestRobotController {
 
 //        testFulfill(client);
 
+        testCancel(client);
+
 //        testFulfillAndReport(client);
 
 //        testDownloadFile(client);
 
-        testWeiXinMonitor(client);
+//        testWeiXinMessageList(client);
 
 //        testListScriptFiles(client);
 
 //        testUploadScriptFile(client);
+
+//        testDouYinDailyOperation(client);
 
         client.destroy();
     }

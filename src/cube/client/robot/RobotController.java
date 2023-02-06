@@ -34,10 +34,7 @@ import cube.client.Client;
 import cube.client.Connector;
 import cube.client.Receiver;
 import cube.client.StreamListener;
-import cube.robot.Report;
-import cube.robot.RobotAction;
-import cube.robot.RobotStateCode;
-import cube.robot.ScriptFile;
+import cube.robot.*;
 import cube.util.FileUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -349,6 +346,33 @@ public class RobotController {
         }
 
         return true;
+    }
+
+    /**
+     * 取消任务。
+     *
+     * @param accountId
+     * @param taskName
+     * @return
+     */
+    public Schedule cancel(long accountId, String taskName) {
+        ActionDialect dialect = new ActionDialect(RobotAction.Cancel.name);
+        dialect.addParam("accountId", accountId);
+        dialect.addParam("name", taskName);
+
+        ActionDialect response = this.connector.synSend(this.receiver.inject(), NAME, dialect);
+        if (null == response) {
+            return null;
+        }
+
+        int stateCode = response.getParamAsInt("code");
+        if (stateCode != RobotStateCode.Ok.code) {
+            Logger.w(this.getClass(), "#cancel - State error : " + stateCode);
+            return null;
+        }
+
+        JSONObject scheduleJson = response.getParamAsJson("data");
+        return new Schedule(scheduleJson);
     }
 
     /**
