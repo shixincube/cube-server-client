@@ -316,8 +316,8 @@ public class RobotController {
      * @param taskName 指定任务名称。
      * @return 机器人接受到执行指令返回 <code>true</code> 。
      */
-    public boolean fulfill(String taskName) {
-        return this.fulfill(taskName, null);
+    public boolean perform(String taskName) {
+        return this.perform(taskName, null);
     }
 
     /**
@@ -327,8 +327,8 @@ public class RobotController {
      * @param parameter 指定任务参数。
      * @return 机器人接受到执行指令返回 <code>true</code> 。
      */
-    public boolean fulfill(String taskName, JSONObject parameter) {
-        ActionDialect dialect = new ActionDialect(RobotAction.Fulfill.name);
+    public boolean perform(String taskName, JSONObject parameter) {
+        ActionDialect dialect = new ActionDialect(RobotAction.Perform.name);
         dialect.addParam("name", taskName);
         if (null != parameter) {
             dialect.addParam("parameter", parameter);

@@ -103,19 +103,19 @@ public class TestRobotController {
         System.out.println("*** END ***");
     }
 
-    public static void testFulfill(Client client) {
-        System.out.println("*** START testFulfill ***");
+    public static void testPerform(Client client) {
+        System.out.println("*** START testPerform ***");
 
         JSONObject parameter = new JSONObject();
         parameter.put("word", "光明网");
-        boolean success = client.getRobotController().fulfill(TaskNames.DouYinAccountData, parameter);
+        boolean success = client.getRobotController().perform(TaskNames.DouYinAccountData, parameter);
         System.out.println("Fulfill " + TaskNames.DouYinAccountData + " - " + success);
 
         System.out.println("*** END ***");
     }
 
-    public static void testFulfillAndReport(Client client) {
-        System.out.println("*** START testFulfillAndReport ***");
+    public static void testPerformAndReport(Client client) {
+        System.out.println("*** START testPerformAndReport ***");
 
         AtomicBoolean received = new AtomicBoolean(false);
 
@@ -134,7 +134,7 @@ public class TestRobotController {
             JSONObject parameter = new JSONObject();
             parameter.put("word", "光明网");
             parameter.put("maxNumVideo", 2);
-            boolean success = client.getRobotController().fulfill(TaskNames.DouYinAccountData, parameter);
+            boolean success = client.getRobotController().perform(TaskNames.DouYinAccountData, parameter);
             System.out.println("Fulfill " + TaskNames.DouYinAccountData + " - " + success);
 
             int count = 0;
@@ -181,7 +181,7 @@ public class TestRobotController {
         boolean result = client.getRobotController().register(listener);
         if (result) {
             JSONObject parameter = new JSONObject();
-            boolean success = client.getRobotController().fulfill(TaskNames.WeiXinMessageList, parameter);
+            boolean success = client.getRobotController().perform(TaskNames.WeiXinMessageList, parameter);
             System.out.println("Fulfill " + TaskNames.WeiXinMessageList + " - " + success);
 
             int count = 0;
@@ -288,7 +288,7 @@ public class TestRobotController {
         JSONObject parameter = new JSONObject();
         parameter.put("duration", 2 * 60);
 
-        boolean success = client.getRobotController().fulfill(TaskNames.DouYinDailyOperation, parameter);
+        boolean success = client.getRobotController().perform(TaskNames.DouYinDailyOperation, parameter);
         System.out.println("Fulfill " + TaskNames.DouYinDailyOperation + " - " + success);
 
         System.out.println("*** END ***");
@@ -310,11 +310,11 @@ public class TestRobotController {
 
 //        testListener(client);
 
-//        testFulfill(client);
+//        testPerform(client);
 
         testCancel(client);
 
-//        testFulfillAndReport(client);
+//        testPerformAndReport(client);
 
 //        testDownloadFile(client);
 
