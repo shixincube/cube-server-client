@@ -463,8 +463,6 @@ public class FileProcessor {
             return null;
         }
 
-        Notifier notifier = this.receiver.inject();
-
         ActionDialect actionDialect = new ActionDialect(ClientAction.ProcessFile.name);
         actionDialect.addParam("domain", this.domainName);
         actionDialect.addParam("fileCode", fileLabel.getFileCode());
@@ -475,7 +473,7 @@ public class FileProcessor {
             actionDialect.addParam("parameter", parameter);
         }
 
-        ActionDialect result = this.connector.send(notifier, actionDialect);
+        ActionDialect result = this.connector.send(this.receiver.inject(), actionDialect);
         if (null == result) {
             Logger.w(this.getClass(), "#call timeout");
             return null;
@@ -495,6 +493,38 @@ public class FileProcessor {
         }
 
         return processResult;
+    }
+
+    /**
+     * 对指定 URL 的文件进行操作。
+     *
+     * @param fileProcessing
+     * @param fileURL
+     * @return
+     */
+    public FileProcessResult call(FileProcessing fileProcessing, String fileURL) {
+        ActionDialect actionDialect = new ActionDialect(ClientAction.ProcessFile.name);
+        actionDialect.addParam("domain", this.domainName);
+        actionDialect.addParam("fileURL", fileURL);
+        actionDialect.addParam("process", fileProcessing.process);
+        JSONObject parameter = fileProcessing.getParameter();
+        if (null != parameter) {
+            actionDialect.addParam("parameter", parameter);
+        }
+
+        ActionDialect result = this.connector.send(this.receiver.inject(), actionDialect);
+        if (null == result) {
+            Logger.w(this.getClass(), "#call timeout");
+            return null;
+        }
+
+        int code = result.getParamAsInt("code");
+        if (code != FileProcessorStateCode.Ok.code) {
+            Logger.w(FileProcessor.class, "#call - " + fileProcessing.process + " - error : " + code);
+            return null;
+        }
+
+        return null;
     }
 
     private void waitingForStream(FileProcessResult fileProcessResult) {

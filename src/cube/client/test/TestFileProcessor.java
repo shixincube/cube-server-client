@@ -112,8 +112,11 @@ public class TestFileProcessor {
         ExtractAudioOperation operation = new ExtractAudioOperation();
         operation.outputType = FileType.WAV;
 
+        // http://static.shixincube.com/tmp/video_douyin_yuebing.mp4
+//        FileProcessResult result = fileProcessor.call(new VideoProcessing(operation),
+//                new File("data/video_douyin_yuebing.mp4"));
         FileProcessResult result = fileProcessor.call(new VideoProcessing(operation),
-                new File("data/video_douyin_yuebing.mp4"));
+                "http://static.shixincube.com/tmp/video_douyin_yuebing.mp4");
         if (null == result) {
             System.out.println("*** ERROR ***");
             return;
