@@ -490,6 +490,7 @@ public class TestFileProcessor {
 //        testOfficeConvertTo(fileProcessor);
 
 //        testSnapshotVideo(fileProcessor);
+
         testExtractAudioVideo(fileProcessor);
 
         client.destroy();

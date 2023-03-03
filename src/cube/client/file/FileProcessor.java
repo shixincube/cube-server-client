@@ -524,7 +524,14 @@ public class FileProcessor {
             return null;
         }
 
-        return null;
+        JSONObject data = result.getParamAsJson("result");
+        FileProcessResult processResult = new FileProcessResult(data);
+
+        if (processResult.hasResult()) {
+            waitingForStream(processResult);
+        }
+
+        return processResult;
     }
 
     private void waitingForStream(FileProcessResult fileProcessResult) {
