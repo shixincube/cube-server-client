@@ -45,11 +45,11 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * 令牌工具。
  */
-public final class TokenTools {
+public final class TokenHelper {
 
     private final static ConcurrentHashMap<Long, AuthToken> sContactTokenMap = new ConcurrentHashMap<>();
 
-    private TokenTools() {
+    private TokenHelper() {
     }
 
     /**

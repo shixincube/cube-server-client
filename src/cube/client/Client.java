@@ -38,7 +38,7 @@ import cube.client.hub.HubController;
 import cube.client.listener.ContactListener;
 import cube.client.message.MessageService;
 import cube.client.robot.RobotController;
-import cube.client.tool.TokenTools;
+import cube.client.tool.TokenHelper;
 import cube.common.action.ClientAction;
 import cube.common.action.ContactAction;
 import cube.common.entity.*;
@@ -688,7 +688,7 @@ public class Client {
      * @return 返回联系人当前使用的访问令牌。
      */
     public AuthToken getAuthToken(long contactId) {
-        return TokenTools.getAuthToken(this.connector, this.receiver, contactId);
+        return TokenHelper.getAuthToken(this.connector, this.receiver, contactId);
     }
 
     /**
@@ -702,7 +702,7 @@ public class Client {
             return null;
         }
 
-        return TokenTools.injectAuthToken(this.connector, this.receiver, authToken);
+        return TokenHelper.injectAuthToken(this.connector, this.receiver, authToken);
     }
 
     /**

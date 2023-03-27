@@ -33,7 +33,7 @@ import cube.auth.AuthToken;
 import cube.client.*;
 import cube.client.listener.FileUploadListener;
 import cube.client.listener.WorkflowListener;
-import cube.client.tool.TokenTools;
+import cube.client.tool.TokenHelper;
 import cube.client.util.*;
 import cube.common.action.ClientAction;
 import cube.common.entity.FileLabel;
@@ -310,7 +310,7 @@ public class FileProcessor {
      * @return
      */
     public String getMediaSource(String dispatcherHttpAddress, String fileCode) {
-        AuthToken authToken = TokenTools.getAuthToken(this.connector, this.receiver, this.contactId);
+        AuthToken authToken = TokenHelper.getAuthToken(this.connector, this.receiver, this.contactId);
         if (null == authToken) {
             return null;
         }
@@ -390,7 +390,7 @@ public class FileProcessor {
         }
 
         // 获取令牌
-        AuthToken authToken = TokenTools.getAuthToken(this.connector, this.receiver, this.contactId);
+        AuthToken authToken = TokenHelper.getAuthToken(this.connector, this.receiver, this.contactId);
 
         StringBuilder buf = new StringBuilder(sourceURL);
         buf.append("?t=");

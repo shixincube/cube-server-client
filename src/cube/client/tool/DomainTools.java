@@ -27,7 +27,6 @@
 package cube.client.tool;
 
 import cell.core.net.Endpoint;
-import cell.util.Utils;
 import cell.util.log.Logger;
 import cube.client.Client;
 import cube.common.entity.AuthDomain;

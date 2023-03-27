@@ -29,7 +29,7 @@ package cube.client.test;
 
 import cube.auth.AuthToken;
 import cube.client.Client;
-import cube.client.tool.TokenTools;
+import cube.client.tool.TokenHelper;
 
 /**
  * 测试操作令牌。
@@ -52,10 +52,10 @@ public class TestAuthToken {
 
         System.out.println("[TestAuthToken] token : " + token.getCode());
 
-        TokenTools.saveAuthToken(token, "data/mytoken.json");
+        TokenHelper.saveAuthToken(token, "data/mytoken.json");
 
         // 加载
-        AuthToken tokenFromFile = TokenTools.loadAuthToken("data/mytoken.json");
+        AuthToken tokenFromFile = TokenHelper.loadAuthToken("data/mytoken.json");
 
         System.out.println("[TestAuthToken] token : " + tokenFromFile.getCode());
 
