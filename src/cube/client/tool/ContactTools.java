@@ -26,6 +26,7 @@
 
 package cube.client.tool;
 
+import cell.util.Utils;
 import cell.util.log.Logger;
 import cube.auth.AuthToken;
 import cube.client.Client;
@@ -95,20 +96,25 @@ public final class ContactTools {
 
 
     public static void main(String[] args) {
-        ContactTools tools = new ContactTools("127.0.0.1");
+        String address = "111.203.186.243";
+//        String address = "127.0.0.1";
+        ContactTools tools = new ContactTools(address);
 
-//        Contact contact = new Contact(20230001L, "shixincube.com", "ChatAssistant-001");
-//        Contact newContact = tools.newContact(contact);
-//        if (null != newContact) {
-//            System.out.println(newContact.toJSON().toString(4));
-//        }
-//        else {
-//            System.out.println("Error");
-//        }
+        long contactId = 20231004;
 
-        // String code, String domain, String appKey, Long cid, long issues, long expiry, boolean ferry
-        AuthToken authToken = new AuthToken("dbCdxBbfCWAMQprkXroWcLjDWRrtMMsi",
-                "shixincube.com", "shixin-cubeteam-opensource-appkey", 20230001L,
+        // 新建联系人
+        Contact contact = new Contact(contactId, "shixincube.com", "Assistant-104");
+        Contact newContact = tools.newContact(contact);
+        if (null != newContact) {
+            System.out.println(newContact.toJSON().toString(4));
+        }
+        else {
+            System.out.println("Error");
+        }
+
+        // 注入访问令牌
+        AuthToken authToken = new AuthToken(Utils.randomString(32),
+                "shixincube.com", "shixin-cubeteam-opensource-appkey", contactId,
                 System.currentTimeMillis(), System.currentTimeMillis() + 10 * 365 * 24 * 60 * 60 * 1000L, false);
         AuthToken newAuthToken = tools.injectAuthToken(authToken);
         if (null != newAuthToken) {

@@ -31,6 +31,7 @@ import cell.core.talk.dialect.ActionDialect;
 import cell.util.Utils;
 import cell.util.log.Logger;
 import cube.auth.AuthToken;
+import cube.client.aigc.AIGCController;
 import cube.client.file.FileProcessor;
 import cube.client.file.FileStorage;
 import cube.client.file.FileUploader;
@@ -64,7 +65,7 @@ import java.util.TimerTask;
  */
 public class Client {
 
-    public final static String VERSION = "1.0.1";
+    public final static String VERSION = "1.0.2";
 
     public final static String NAME = "Client";
 
@@ -87,6 +88,8 @@ public class Client {
     private HubController hubController;
 
     private RobotController robotController;
+
+    private AIGCController aigcController;
 
     private Timer timer;
 
@@ -329,11 +332,6 @@ public class Client {
     public void prepare(Contact pretender) {
         this.pretender = pretender;
         this.description.setPretender(pretender);
-
-        if (null == this.robotController) {
-            this.robotController = new RobotController(this);
-        }
-        this.robotController.prepare(this.connector, this.receiver);
     }
 
     /**
@@ -449,7 +447,7 @@ public class Client {
      *
      * @return 返回 Hub 控制器。
      */
-    public HubController getHubController() {
+    public synchronized HubController getHubController() {
         if (null == this.hubController) {
             this.hubController = new HubController(this);
         }
@@ -462,12 +460,27 @@ public class Client {
      *
      * @return 返回 Robot 控制器。
      */
-    public RobotController getRobotController() {
+    public synchronized RobotController getRobotController() {
         if (null == this.robotController) {
             this.robotController = new RobotController(this);
+            this.robotController.prepare(this.connector, this.receiver);
         }
 
         return this.robotController;
+    }
+
+    /**
+     * 获取 AIGC 控制器。
+     *
+     * @return 返回 AIGC 控制器。
+     */
+    public synchronized AIGCController getAIGCController() {
+        if (null == this.aigcController) {
+            this.aigcController = new AIGCController(this);
+            this.aigcController.prepare(this.connector, this.receiver);
+        }
+
+        return this.aigcController;
     }
 
     /**

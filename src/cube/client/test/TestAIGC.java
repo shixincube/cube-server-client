@@ -28,35 +28,42 @@ package cube.client.test;
 
 
 import cube.client.Client;
+import cube.client.aigc.AIGCController;
 import cube.common.entity.Contact;
 
 import java.util.List;
 
 /**
- * 测试联系人。
+ * 测试 AIGC 。
  */
-public class TestContact {
+public class TestAIGC {
+
+
+    public static void testServiceInfo(Client client) {
+        System.out.println("*** testServiceInfo ***");
+
+        AIGCController.ServiceInfo info = client.getAIGCController().getServiceInfo();
+        if (null == info) {
+            System.out.println("[Error] return null");
+            return;
+        }
+
+        System.out.println(info.toString());
+    }
 
 
     public static void main(String[] args) {
+        System.out.println("*** START ***");
+        Client client = new Client("127.0.0.1", "baize", "shixincube.com");
 
-        Client client = new Client("111.203.186.243", "admin", "shixincube.com");
-
-        Helper.sleepInSeconds(3);
-
-        System.out.println("[TestContact] getOnlineContacts");
-
-        List<Contact> list = client.getOnlineContacts();
-
-        System.out.println("[TestContact] num : " + list.size());
-
-        for (Contact contact : list) {
-            System.out.println("[TestContact] contact: " + contact.getId());
+        if (!client.waitReady()) {
+            System.out.println("[Error] client error");
+            return;
         }
 
-        Helper.sleepInSeconds(1);
+        testServiceInfo(client);
 
-        System.out.println("*** END ***");
         client.destroy();
+        System.out.println("*** END ***");
     }
 }
