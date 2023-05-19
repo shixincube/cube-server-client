@@ -95,12 +95,12 @@ public class AIGCController {
         @Override
         public String toString() {
             StringBuilder buf = new StringBuilder();
-            buf.append("#Units\n");
+            buf.append("#Units (" + this.unitList.size() + ")\n");
             for (AIGCUnit unit : this.unitList) {
                 buf.append(unit.toJSON().toString(4));
                 buf.append("\n");
             }
-            buf.append("#Channel\n");
+            buf.append("#Channel (" + this.channelList.size() + ")\n");
             for (AIGCChannel channel : this.channelList) {
                 buf.append(channel.toInfo().toString(4));
                 buf.append("\n");

@@ -54,7 +54,7 @@ public class TestAIGC {
 
     public static void main(String[] args) {
         System.out.println("*** START ***");
-        Client client = new Client("127.0.0.1", "baize", "shixincube.com");
+        Client client = new Client("36.133.49.214", "baize", "shixincube.com");
 
         if (!client.waitReady()) {
             System.out.println("[Error] client error");

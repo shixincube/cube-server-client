@@ -94,34 +94,83 @@ public final class ContactTools {
         return result;
     }
 
+    /**
+     * 激活新账号。
+     *
+     * @param contactId
+     * @param contactName
+     * @return
+     */
+    public boolean activateNewContact(long contactId, String contactName) {
+        Client client = new Client(this.serverAddress, this.user, this.password);
+        if (!client.waitReady()) {
+            Logger.w(this.getClass(), "#activateNewContact - client is not ready: " + this.serverAddress);
+            return false;
+        }
+
+        // 新建联系人
+        Contact contact = new Contact(contactId, "shixincube.com", contactName);
+        Contact newContact = client.injectContact(contact);
+        if (null == newContact) {
+            Logger.w(this.getClass(), "#activateNewContact - create contact failed: " + contactId);
+            return false;
+        }
+
+        Logger.i(this.getClass(), "New contact:\n" + newContact.toJSON().toString(4));
+
+        // 注入访问令牌
+        AuthToken authToken = new AuthToken(Utils.randomString(32),
+                "shixincube.com", "shixin-cubeteam-opensource-appkey", contactId,
+                System.currentTimeMillis(), System.currentTimeMillis() + 10 * 365 * 24 * 60 * 60 * 1000L, false);
+        AuthToken newAuthToken = client.injectAuthToken(authToken);
+        if (null == newAuthToken) {
+            Logger.w(this.getClass(), "#activateNewContact - inject auth token failed: " + contactId);
+            return false;
+        }
+
+        Logger.i(this.getClass(), "Auth token:\n" + newAuthToken.toJSON().toString(4));
+
+        client.destroy();
+
+        return true;
+    }
+
 
     public static void main(String[] args) {
         String address = "111.203.186.243";
 //        String address = "127.0.0.1";
         ContactTools tools = new ContactTools(address);
 
-        long contactId = 20231004;
-
-        // 新建联系人
-        Contact contact = new Contact(contactId, "shixincube.com", "Assistant-104");
-        Contact newContact = tools.newContact(contact);
-        if (null != newContact) {
-            System.out.println(newContact.toJSON().toString(4));
-        }
-        else {
-            System.out.println("Error");
+        for (int i = 0; i < 10; ++i) {
+            long contactId = 67890006 + i;
+            String contactName = "用户-" + (6 + i);
+            if (!tools.activateNewContact(contactId, contactName)) {
+                Logger.e("main", "Activate contact error: " + contactId + " - " + contactName);
+            }
         }
 
-        // 注入访问令牌
-        AuthToken authToken = new AuthToken(Utils.randomString(32),
-                "shixincube.com", "shixin-cubeteam-opensource-appkey", contactId,
-                System.currentTimeMillis(), System.currentTimeMillis() + 10 * 365 * 24 * 60 * 60 * 1000L, false);
-        AuthToken newAuthToken = tools.injectAuthToken(authToken);
-        if (null != newAuthToken) {
-            System.out.println(newAuthToken.toJSON().toString(4));
-        }
-        else {
-            System.out.println("Error");
-        }
+//        long contactId = 67890005;
+//
+//        // 新建联系人
+//        Contact contact = new Contact(contactId, "shixincube.com", "未命名用户0005");
+//        Contact newContact = tools.newContact(contact);
+//        if (null != newContact) {
+//            System.out.println(newContact.toJSON().toString(4));
+//        }
+//        else {
+//            System.out.println("Error");
+//        }
+//
+//        // 注入访问令牌
+//        AuthToken authToken = new AuthToken(Utils.randomString(32),
+//                "shixincube.com", "shixin-cubeteam-opensource-appkey", contactId,
+//                System.currentTimeMillis(), System.currentTimeMillis() + 10 * 365 * 24 * 60 * 60 * 1000L, false);
+//        AuthToken newAuthToken = tools.injectAuthToken(authToken);
+//        if (null != newAuthToken) {
+//            System.out.println(newAuthToken.toJSON().toString(4));
+//        }
+//        else {
+//            System.out.println("Error");
+//        }
     }
 }
